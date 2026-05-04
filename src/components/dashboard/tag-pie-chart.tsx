@@ -1,13 +1,5 @@
 'use client';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Cell, Tooltip } from 'recharts';
 import { LeetcodeRecord } from '@/lib/types';
 import { useMemo } from 'react';
 
@@ -19,10 +11,55 @@ const COLORS = [
   '#0ea5e9', '#22c55e', '#f59e0b', '#ef4444',
   '#8b5cf6', '#ec4899', '#14b8a6', '#f97316',
   '#a78bfa', '#34d399', '#fbbf24', '#f87171',
+  '#38bdf8', '#86efac', '#fcd34d', '#fb923c',
 ];
 
-const BAR_HEIGHT = 32;
-const MAX_VISIBLE = 7;
+const BAR_SLOT = 60; // px 每個 bar 佔寬
+const CHART_H = 200; // bar 區高度（不含 X 軸 chip）
+const CHIP_H = 22;   // chip 框高度
+const AXIS_MARGIN = CHIP_H + 8; // X 軸留給 chip 的空間
+
+interface TickProps {
+  x?: number;
+  y?: number;
+  payload?: { value: string; index: number };
+  index?: number;
+}
+
+function ChipTick({ x = 0, y = 0, payload, index = 0 }: TickProps) {
+  if (!payload) return null;
+  const color = COLORS[index % COLORS.length];
+  const text = payload.value;
+  const chipW = Math.max(text.length * 6.4 + 18, 44);
+
+  return (
+    <g>
+      <rect
+        x={x - chipW / 2}
+        y={y + 6}
+        width={chipW}
+        height={CHIP_H}
+        rx={5}
+        fill={color}
+        fillOpacity={0.13}
+        stroke={color}
+        strokeWidth={1}
+        strokeOpacity={0.45}
+      />
+      <text
+        x={x}
+        y={y + 6 + CHIP_H / 2}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={10}
+        fontWeight={600}
+        fill={color}
+      >
+        {text}
+      </text>
+    </g>
+  );
+}
 
 export default function TagChart({ records }: Props) {
   const data = useMemo(() => {
@@ -37,59 +74,64 @@ export default function TagChart({ records }: Props) {
       .map(([name, value]) => ({ name, value }));
   }, [records]);
 
-  const maxVal = data[0]?.value ?? 1;
-  const chartHeight = data.length * BAR_HEIGHT;
-  const containerMaxH = MAX_VISIBLE * BAR_HEIGHT;
+  const chartW = Math.max(data.length * BAR_SLOT + 24, 300);
+  const totalH = CHART_H + AXIS_MARGIN;
 
   return (
     <div className="space-y-3 h-full flex flex-col">
-      <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground shrink-0">Tags</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground shrink-0">
+        Tags
+      </h2>
 
-      <div
-        className="overflow-y-auto pr-1 custom-scrollbar"
-        style={{ maxHeight: containerMaxH }}
-      >
-        <div style={{ height: chartHeight, minHeight: chartHeight }}>
-          <ResponsiveContainer width="100%" height={chartHeight}>
-            <BarChart
-              layout="vertical"
-              data={data}
-              margin={{ top: 2, right: 36, left: 0, bottom: 2 }}
-              barSize={14}
-            >
-              <XAxis type="number" domain={[0, maxVal + 1]} hide />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={110}
-                tick={{ fontSize: 11, fill: '#888', fontWeight: 500 }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip
-                cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                contentStyle={{
-                  background: '#111',
-                  border: '1px solid #333',
-                  borderRadius: 8,
-                  fontSize: 12,
-                  color: '#eee',
-                }}
-                formatter={(value) => [`${value} 題`, '出現次數']}
-              />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                {data.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+      {/* 橫向捲動容器 */}
+      <div className="overflow-x-auto custom-scrollbar-x pb-1">
+        <div style={{ width: chartW, height: totalH }}>
+          <BarChart
+            width={chartW}
+            height={totalH}
+            data={data}
+            margin={{ top: 8, right: 12, left: 12, bottom: AXIS_MARGIN }}
+            barSize={28}
+          >
+            <YAxis
+              hide
+              domain={[0, (max: number) => max + 1]}
+            />
+            <XAxis
+              dataKey="name"
+              tickLine={false}
+              axisLine={false}
+              interval={0}
+              tick={(props) => <ChipTick {...props} index={props.index} />}
+              height={AXIS_MARGIN}
+            />
+            <Tooltip
+              cursor={{ fill: 'rgba(255,255,255,0.04)', radius: 4 }}
+              contentStyle={{
+                background: '#111',
+                border: '1px solid #2a2a2a',
+                borderRadius: 8,
+                fontSize: 12,
+                color: '#eee',
+              }}
+              formatter={(value) => [`${value} 題`, '出現次數']}
+            />
+            <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+              {data.map((_, i) => (
+                <Cell
+                  key={i}
+                  fill={COLORS[i % COLORS.length]}
+                  fillOpacity={0.85}
+                />
+              ))}
+            </Bar>
+          </BarChart>
         </div>
       </div>
 
-      {data.length > MAX_VISIBLE && (
+      {data.length > 8 && (
         <p className="text-[10px] text-muted-foreground/50 text-right shrink-0">
-          共 {data.length} 個 Tag，向下滾動查看更多
+          共 {data.length} 個 Tag · 向右滾動查看更多
         </p>
       )}
     </div>
