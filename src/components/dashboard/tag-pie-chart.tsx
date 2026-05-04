@@ -14,10 +14,13 @@ const COLORS = [
   '#38bdf8', '#86efac', '#fcd34d', '#fb923c',
 ];
 
-const BAR_SLOT = 60; // px 每個 bar 佔寬
 const CHART_H = 200; // bar 區高度（不含 X 軸 chip）
 const CHIP_H = 22;   // chip 框高度
 const AXIS_MARGIN = CHIP_H + 8; // X 軸留給 chip 的空間
+
+function chipWidth(text: string) {
+  return Math.max(text.length * 6.4 + 18, 44);
+}
 
 interface TickProps {
   x?: number;
@@ -74,7 +77,14 @@ export default function TagChart({ records }: Props) {
       .map(([name, value]) => ({ name, value }));
   }, [records]);
 
-  const chartW = Math.max(data.length * BAR_SLOT + 24, 300);
+  // 每個 bar 的寬度至少要能容納其 chip 標籤，加 12px 左右間距
+  const barSlot = useMemo(() => {
+    if (data.length === 0) return 60;
+    const maxChip = Math.max(...data.map((d) => chipWidth(d.name)));
+    return Math.max(maxChip + 12, 60);
+  }, [data]);
+
+  const chartW = Math.max(data.length * barSlot + 24, 300);
   const totalH = CHART_H + AXIS_MARGIN;
 
   return (
