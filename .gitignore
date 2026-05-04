@@ -30,8 +30,17 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env.local
+.env.*.local
+# .env.local.example 不在此列，需要版控
+
+# Chrome Extension build output
+/extension/dist/
+
+# Claude Code 本機設定（不需版控）
+.claude/settings.local.json
 
 # vercel
 .vercel
