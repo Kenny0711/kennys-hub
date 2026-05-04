@@ -1,5 +1,5 @@
 'use client';
-import { BarChart, Bar, XAxis, YAxis, Cell, Tooltip } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Cell, Tooltip, LabelList } from 'recharts';
 import { LeetcodeRecord } from '@/lib/types';
 import { useMemo } from 'react';
 
@@ -118,15 +118,22 @@ export default function TagChart({ records }: Props) {
             <Tooltip
               cursor={{ fill: 'rgba(255,255,255,0.04)', radius: 4 }}
               contentStyle={{
-                background: '#111',
-                border: '1px solid #2a2a2a',
+                background: '#1c1c1c',
+                border: '1px solid #3a3a3a',
                 borderRadius: 8,
                 fontSize: 12,
-                color: '#eee',
+                color: '#f1f5f9',
               }}
+              labelStyle={{ color: '#94a3b8', marginBottom: 2 }}
+              itemStyle={{ color: '#f1f5f9' }}
               formatter={(value) => [`${value} 題`, '出現次數']}
             />
             <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+              <LabelList
+                dataKey="value"
+                position="top"
+                style={{ fill: '#e2e8f0', fontSize: 11, fontWeight: 700 }}
+              />
               {data.map((_, i) => (
                 <Cell
                   key={i}
