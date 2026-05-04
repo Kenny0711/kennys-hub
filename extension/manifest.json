@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "LeetCode Tracker",
+  "version": "1.0.0",
+  "description": "一鍵擷取 LeetCode 解題資料，傳送到個人 Dashboard",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LC Tracker"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://leetcode.com/problems/*"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
