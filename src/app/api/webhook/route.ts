@@ -68,7 +68,6 @@ export async function POST(req: NextRequest) {
         title: body.title,
         difficulty: body.difficulty,
         tags: body.tags ?? [],
-        ...(body.lc_slug ? { lc_slug: body.lc_slug } : {}),
       })
       .eq('id', existing.id);
 
@@ -85,7 +84,6 @@ export async function POST(req: NextRequest) {
       tags: body.tags,
       proficiency: '理解',
       solutions: [solution],
-      ...(body.lc_slug ? { lc_slug: body.lc_slug } : {}),
     })
     .select('id')
     .single();
