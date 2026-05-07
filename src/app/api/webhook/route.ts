@@ -34,9 +34,11 @@ export async function POST(req: NextRequest) {
 
   if (existing) {
     const solutions = [...(existing.solutions ?? []), solution];
+    const updatePayload: Record<string, unknown> = { solutions };
+    if (body.lc_slug) updatePayload.lc_slug = body.lc_slug;
     const { error } = await supabase
       .from('leetcode_records')
-      .update({ solutions })
+      .update(updatePayload)
       .eq('id', existing.id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -52,6 +54,7 @@ export async function POST(req: NextRequest) {
       tags: body.tags,
       proficiency: '理解',
       solutions: [solution],
+      ...(body.lc_slug ? { lc_slug: body.lc_slug } : {}),
     })
     .select('id')
     .single();

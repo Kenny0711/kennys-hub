@@ -18,6 +18,7 @@ export interface LeetcodeRecord {
   tags: string[];
   proficiency: Proficiency;
   solutions: Solution[];
+  lc_slug?: string;          // LeetCode 題目 slug，如 "two-sum"
   created_at: string;
   updated_at: string;
 }
@@ -29,4 +30,5 @@ export interface WebhookPayload {
   tags: string[];
   code: string;
   language: string;
+  lc_slug?: string;          // 由 Extension 從 URL 擷取
 }

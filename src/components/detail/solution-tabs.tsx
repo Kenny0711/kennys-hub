@@ -38,34 +38,33 @@ export default function SolutionTabs({ solutions }: Props) {
 
       {solutions.map((s, i) => (
         <TabsContent key={i} value={String(i)} className="space-y-5 mt-0">
-          {/* Metadata badges */}
-          <div className="flex flex-wrap gap-2">
-            {s.language && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-mono font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                {s.language}
-              </span>
-            )}
-            {s.time_complexity && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/5 text-muted-foreground border border-white/10">
-                <Clock className="w-3 h-3 shrink-0" />
-                Time: {s.time_complexity}
-              </span>
-            )}
-            {s.space_complexity && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/5 text-muted-foreground border border-white/10">
-                <Database className="w-3 h-3 shrink-0" />
-                Space: {s.space_complexity}
-              </span>
-            )}
-          </div>
+          {/* Complexity badges — language 已移入 code block header，這裡只顯示複雜度 */}
+          {(s.time_complexity || s.space_complexity) && (
+            <div className="flex flex-wrap gap-2">
+              {s.time_complexity && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/5 text-muted-foreground border border-white/10">
+                  <Clock className="w-3 h-3 shrink-0" />
+                  Time: {s.time_complexity}
+                </span>
+              )}
+              {s.space_complexity && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/5 text-muted-foreground border border-white/10">
+                  <Database className="w-3 h-3 shrink-0" />
+                  Space: {s.space_complexity}
+                </span>
+              )}
+            </div>
+          )}
 
-          {/* Code block */}
+          {/* Code block — header 顯示語言 badge */}
           {s.code && (
             <div className="rounded-xl border border-white/8 overflow-hidden">
-              <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-                <span className="text-xs text-muted-foreground font-mono">
-                  {s.language ?? 'code'}
-                </span>
+              <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
+                {s.language && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                    {s.language}
+                  </span>
+                )}
               </div>
               <div className="overflow-x-auto custom-scrollbar-x [&_pre]:!m-0 [&_pre]:!rounded-none [&_pre]:!border-0 [&_pre]:p-4 [&_pre]:text-sm [&_code]:!bg-transparent">
                 <Markdown rehypePlugins={[rehypeHighlight]}>

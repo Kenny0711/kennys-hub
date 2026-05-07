@@ -37,7 +37,10 @@ export default function ProblemInfoPanel({ record }: { record: LeetcodeRecord })
     setSaving(false);
   };
 
-  const slug = record.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  // 優先使用 Extension 擷取的真實 slug；fallback 才用 title 反推
+  const slug =
+    record.lc_slug ??
+    record.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
   return (
     <div className="rounded-xl border border-white/8 bg-white/[0.015] p-5 space-y-4">
