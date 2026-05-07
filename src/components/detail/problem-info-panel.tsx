@@ -4,7 +4,7 @@ import { LeetcodeRecord, Proficiency } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, ExternalLink, Code2, Calendar } from 'lucide-react';
 
 const PROFICIENCY_ORDER: Proficiency[] = ['生疏', '理解', '熟練'];
 
@@ -37,96 +37,83 @@ export default function ProblemInfoPanel({ record }: { record: LeetcodeRecord })
     setSaving(false);
   };
 
-  const leetcodeSlug = record.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const slug = record.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
   return (
-    <div className="space-y-6">
-      {/* Number + Title */}
-      <div>
-        <p className="text-xs text-muted-foreground font-mono mb-1 select-none">
-          #{record.problem_id}
-        </p>
-        <h1 className="text-xl font-bold leading-snug">{record.title}</h1>
+    <div className="rounded-xl border border-white/8 bg-white/[0.015] p-5 space-y-4">
+      {/* Title row */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <span className="text-[11px] font-mono text-muted-foreground/50 select-none">
+            #{record.problem_id}
+          </span>
+          <h1 className="text-xl font-bold leading-snug mt-0.5">{record.title}</h1>
+        </div>
+        <a
+          href={`https://leetcode.com/problems/${slug}/`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1 shrink-0 text-xs text-muted-foreground/60 hover:text-foreground transition-colors mt-1"
+        >
+          LeetCode <ExternalLink className="w-3 h-3" />
+        </a>
       </div>
 
-      {/* Difficulty + LeetCode link */}
-      <div className="flex items-center gap-3">
+      {/* One-line: Difficulty ┊ Proficiency [更新] ┊ Tags */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Difficulty */}
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${DIFFICULTY_STYLE[record.difficulty]}`}
         >
           {record.difficulty}
         </span>
-        <a
-          href={`https://leetcode.com/problems/${leetcodeSlug}/`}
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+
+        <span className="h-4 w-px bg-white/12 shrink-0" />
+
+        {/* Proficiency + cycle button */}
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${PROFICIENCY_STYLE[proficiency]}`}
         >
-          在 LeetCode 查看 ↗
-        </a>
+          {proficiency}
+        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground gap-1 -ml-1"
+          onClick={cycleProficiency}
+          disabled={saving}
+        >
+          <RotateCcw className="w-3 h-3" />
+          更新
+        </Button>
+
+        {record.tags.length > 0 && (
+          <span className="h-4 w-px bg-white/12 shrink-0" />
+        )}
+
+        {/* Tags */}
+        {record.tags.map((tag) => (
+          <Badge
+            key={tag}
+            variant="secondary"
+            className="text-[11px] px-2 py-0 bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10"
+          >
+            {tag}
+          </Badge>
+        ))}
       </div>
 
-      {/* Tags */}
-      {record.tags.length > 0 && (
-        <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 font-semibold">
-            Tags
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {record.tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-xs bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Proficiency */}
-      <div>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 font-semibold">
-          熟練度
-        </p>
-        <div className="flex items-center gap-2">
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${PROFICIENCY_STYLE[proficiency]}`}
-          >
-            {proficiency}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-            onClick={cycleProficiency}
-            disabled={saving}
-          >
-            <RotateCcw className="w-3 h-3" />
-            更新
-          </Button>
-        </div>
-        <p className="text-[10px] text-muted-foreground/50 mt-1">
-          點擊「更新」循環切換熟練度
-        </p>
-      </div>
-
-      {/* Meta info */}
-      <div className="pt-4 border-t border-white/5 space-y-1.5">
-        <p className="text-xs text-muted-foreground">
-          <span className="text-muted-foreground/50">解法數：</span>
-          <span className="text-sky-400 font-medium">{record.solutions.length}</span>
-        </p>
-        <p className="text-xs text-muted-foreground">
-          <span className="text-muted-foreground/50">建立：</span>
-          {new Date(record.created_at).toLocaleDateString('zh-TW')}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          <span className="text-muted-foreground/50">最後更新：</span>
-          {new Date(record.updated_at).toLocaleDateString('zh-TW')}
-        </p>
+      {/* Footer meta */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-3 border-t border-white/5 text-[11px] text-muted-foreground/50">
+        <span className="flex items-center gap-1">
+          <Code2 className="w-3 h-3" />
+          {record.solutions.length} 個解法
+        </span>
+        <span className="flex items-center gap-1">
+          <Calendar className="w-3 h-3" />
+          建立 {new Date(record.created_at).toLocaleDateString('zh-TW')}
+        </span>
+        <span>最後更新 {new Date(record.updated_at).toLocaleDateString('zh-TW')}</span>
       </div>
     </div>
   );

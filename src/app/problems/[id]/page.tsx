@@ -46,11 +46,9 @@ export default async function ProblemDetailPage({
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
-          <ProblemInfoPanel record={record} />
-          <SolutionTabs solutions={record.solutions} />
-        </div>
+      <div className="container mx-auto px-6 py-8 space-y-6">
+        <ProblemInfoPanel record={record} />
+        <SolutionTabs solutions={record.solutions} />
       </div>
     </div>
   );
