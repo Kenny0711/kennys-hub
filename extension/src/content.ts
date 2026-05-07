@@ -52,18 +52,25 @@ function extractProblemData(): ProblemData {
       : getCodeFallback();
 
   // ── Language ─────────────────────────────────────────────────
-  // LeetCode 新版 UI：語言顯示在 Editor 右上角的按鈕
-  const langBtn = document.querySelector<HTMLElement>(
-    // 新版 React dropwdown
-    '[id*="headlessui-listbox-button"] span,' +
-    // Monaco 右上角 select
-    '.ant-select-selection-item,' +
-    // 另一個常見 selector
-    'button[data-e2e-locator="console-lang-select"] span,' +
-    // tab bar 上的語言標籤
-    '.tab-text'
-  );
-  const language = normalizeLanguage(langBtn?.innerText?.trim() ?? 'python3');
+  // 多個 selector 依序嘗試，任一命中即停
+  const langSelectors = [
+    '[id*="headlessui-listbox-button"] span',  // 新版 React dropdown
+    'button[data-e2e-locator="console-lang-select"] span',
+    '.ant-select-selection-item',              // 舊版 Ant Design select
+    '[class*="SelectContainer"] button',       // 另一個變體
+    '.tab-text',
+  ];
+  let rawLang = '';
+  for (const sel of langSelectors) {
+    const el = document.querySelector<HTMLElement>(sel);
+    const text = el?.innerText?.trim() ?? '';
+    if (text.length > 0 && text.length < 30) {
+      rawLang = text;
+      break;
+    }
+  }
+  // 最後 fallback：從 URL slug 推語言（如 /problems/two-sum/ 無資訊就用預設）
+  const language = normalizeLanguage(rawLang || 'python3');
 
   return { problem_id, title, difficulty, tags, code, language, lc_slug };
 }

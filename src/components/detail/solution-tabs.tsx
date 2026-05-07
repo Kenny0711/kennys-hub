@@ -6,6 +6,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Solution } from '@/lib/types';
 import { Clock, Database } from 'lucide-react';
 
+// 讓 badge 顯示人類可讀的語言名稱
+const LANG_DISPLAY: Record<string, string> = {
+  python: 'Python',
+  javascript: 'JavaScript',
+  typescript: 'TypeScript',
+  java: 'Java',
+  cpp: 'C++',
+  csharp: 'C#',
+  go: 'Go',
+  rust: 'Rust',
+  kotlin: 'Kotlin',
+  swift: 'Swift',
+  ruby: 'Ruby',
+  scala: 'Scala',
+  php: 'PHP',
+  sql: 'SQL',
+  r: 'R',
+};
+
 interface Props {
   solutions: Solution[];
 }
@@ -62,7 +81,7 @@ export default function SolutionTabs({ solutions }: Props) {
               <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
                 {s.language && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                    {s.language}
+                    {LANG_DISPLAY[s.language] ?? s.language}
                   </span>
                 )}
               </div>
