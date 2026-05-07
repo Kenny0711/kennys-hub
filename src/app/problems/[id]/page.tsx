@@ -29,6 +29,7 @@ export default async function ProblemDetailPage({
   }
 
   if (!record) return notFound();
+  const now = new Date().toISOString();
 
   return (
     <div className="min-h-screen">
@@ -47,9 +48,14 @@ export default async function ProblemDetailPage({
 
       {/* Content */}
       <div className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
-          <ProblemInfoPanel record={record} />
-          <SolutionTabs solutions={record.solutions} />
+        <div className="space-y-8">
+          <ProblemInfoPanel record={record} now={now} />
+          <SolutionTabs
+            solutions={record.solutions}
+            createdAt={record.created_at}
+            updatedAt={record.updated_at}
+            recordId={record.id}
+          />
         </div>
       </div>
     </div>

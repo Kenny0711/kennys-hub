@@ -44,7 +44,7 @@ export default function ActivityHeatmap({ records }: Props) {
   const activeDays = Object.values(activityMap).filter((v) => v > 0).length;
   const streak = useMemo(() => {
     let s = 0;
-    const d = new Date(today);
+    const d = new Date();
     while (true) {
       const key = d.toISOString().slice(0, 10);
       if (!activityMap[key]) break;

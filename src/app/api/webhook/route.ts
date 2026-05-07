@@ -2,6 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { WebhookPayload } from '@/lib/types';
 
+function stripCodeFence(code: string): string {
+  return code
+    .replace(/^\s*```[\w+-]*\s*\n?/, '')
+    .replace(/\n?\s*```\s*$/, '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\u200b/g, '')
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
+
+function normalizeLanguage(language: string | undefined, code: string): string {
+  const raw = (language ?? '').toLowerCase();
+  if (
+    (raw === 'python' || raw === 'python3' || !raw) &&
+    /\bclass\s+Solution\b/.test(code) &&
+    /#include|vector<|std::|public:|private:|long long|unordered_map|unordered_set/.test(code)
+  ) {
+    return 'cpp';
+  }
+  if (raw === 'python3') return 'python';
+  if (raw === 'c++') return 'cpp';
+  return raw || 'code';
+}
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('x-webhook-secret');
   if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
@@ -17,10 +41,13 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createClient();
 
+  const code = stripCodeFence(body.code ?? '');
+  const language = normalizeLanguage(body.language, code);
+
   const solution = {
-    method: 'Initial Capture',
-    code: body.code ?? '',
-    language: body.language ?? 'python',
+    method: '',
+    code,
+    language,
     time_complexity: '',
     space_complexity: '',
     notes: '',
@@ -36,7 +63,13 @@ export async function POST(req: NextRequest) {
     const solutions = [...(existing.solutions ?? []), solution];
     const { error } = await supabase
       .from('leetcode_records')
-      .update({ solutions })
+      .update({
+        solutions,
+        title: body.title,
+        difficulty: body.difficulty,
+        tags: body.tags ?? [],
+        ...(body.lc_slug ? { lc_slug: body.lc_slug } : {}),
+      })
       .eq('id', existing.id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -52,6 +85,7 @@ export async function POST(req: NextRequest) {
       tags: body.tags,
       proficiency: '理解',
       solutions: [solution],
+      ...(body.lc_slug ? { lc_slug: body.lc_slug } : {}),
     })
     .select('id')
     .single();

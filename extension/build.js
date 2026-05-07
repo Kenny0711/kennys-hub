@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const esbuild = require('esbuild');
 const path = require('path');
 
@@ -16,6 +17,13 @@ async function build() {
       entryPoints: [path.join(dir, 'src/content.ts')],
       bundle: true,
       outfile: path.join(dir, 'dist/content.js'),
+      target: ['chrome110'],
+      platform: 'browser',
+    }),
+    esbuild.build({
+      entryPoints: [path.join(dir, 'src/main_world.ts')],
+      bundle: true,
+      outfile: path.join(dir, 'dist/main_world.js'),
       target: ['chrome110'],
       platform: 'browser',
     }),

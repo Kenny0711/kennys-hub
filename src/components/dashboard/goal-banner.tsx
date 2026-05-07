@@ -1,111 +1,74 @@
-import { LeetcodeRecord } from '@/lib/types';
-import { Target, CheckCircle2, Circle } from 'lucide-react';
+import { ArrowUpRight, Target } from 'lucide-react';
 
-interface Props {
-  records: LeetcodeRecord[];
-}
-
-const TARGET_TOTAL = 150;
-const TARGET_HARD = 20;
-
-const FOCUS_TOPICS = [
-  { name: 'Graph / BFS / DFS', done: false },
-  { name: 'Dynamic Programming', done: false },
-  { name: 'Binary Search', done: false },
-  { name: 'Sliding Window', done: true },
-  { name: 'Two Pointers', done: true },
-  { name: 'Heap / Priority Queue', done: false },
+const GOOGLE_LETTERS = [
+  { letter: 'G', color: 'text-blue-400', line: 'bg-blue-400' },
+  { letter: 'o', color: 'text-red-400', line: 'bg-red-400' },
+  { letter: 'o', color: 'text-yellow-300', line: 'bg-yellow-300' },
+  { letter: 'g', color: 'text-blue-400', line: 'bg-blue-400' },
+  { letter: 'l', color: 'text-green-400', line: 'bg-green-400' },
+  { letter: 'e', color: 'text-red-400', line: 'bg-red-400' },
 ];
 
-export default function GoalBanner({ records }: Props) {
-  const solved = records.length;
-  const hard = records.filter((r) => r.difficulty === 'Hard').length;
-  const mastered = records.filter((r) => r.proficiency === '熟練').length;
-
-  const totalPct = Math.min(Math.round((solved / TARGET_TOTAL) * 100), 100);
-  const hardPct = Math.min(Math.round((hard / TARGET_HARD) * 100), 100);
-
+export default function GoalBanner() {
   return (
-    <div className="rounded-xl border border-white/8 bg-gradient-to-br from-white/[0.03] to-sky-500/[0.04] overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-white/8">
-        <div className="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/25 flex items-center justify-center shrink-0">
-          <Target className="w-4 h-4 text-sky-400" />
-        </div>
-        <div>
-          <h2 className="text-sm font-bold text-foreground tracking-tight">目標：Google SWE</h2>
-          <p className="text-xs text-muted-foreground">Stay hungry. Stay foolish.</p>
-        </div>
-        <div className="ml-auto text-right">
-          <p className="text-xl font-bold text-sky-400">{totalPct}%</p>
-          <p className="text-[10px] text-muted-foreground">整體進度</p>
-        </div>
+    <section className="relative overflow-hidden rounded-xl border border-white/10 bg-[#111]">
+      <div className="absolute inset-0 opacity-70">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-blue-400 via-yellow-300 to-red-400" />
+        <div className="absolute -right-20 -top-24 h-56 w-56 rounded-full bg-blue-500/12 blur-3xl" />
+        <div className="absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px)',
+            backgroundSize: '34px 34px',
+          }}
+        />
       </div>
 
-      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Progress bars */}
-        <div className="space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">刷題進度</p>
+      <div className="relative p-6 md:p-7">
+        <div className="flex flex-col justify-between gap-8">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              <Target className="h-3.5 w-3.5 text-sky-300" />
+              North Star
+            </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-foreground/80">總題數</span>
-              <span className="text-sky-400 font-semibold font-mono">{solved} / {TARGET_TOTAL}</span>
-            </div>
-            <div className="h-2 rounded-full bg-white/8 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-sky-600 to-sky-400 transition-all"
-                style={{ width: `${totalPct}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-foreground/80">Hard 題</span>
-              <span className="text-rose-400 font-semibold font-mono">{hard} / {TARGET_HARD}</span>
-            </div>
-            <div className="h-2 rounded-full bg-white/8 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-rose-700 to-rose-400 transition-all"
-                style={{ width: `${hardPct}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-foreground/80">熟練題目</span>
-              <span className="text-violet-400 font-semibold font-mono">{mastered} / {solved}</span>
-            </div>
-            <div className="h-2 rounded-full bg-white/8 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-violet-700 to-violet-400 transition-all"
-                style={{ width: solved > 0 ? `${Math.round(mastered / solved * 100)}%` : '0%' }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Focus topics checklist */}
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Google 高頻考點</p>
-          <div className="space-y-2">
-            {FOCUS_TOPICS.map(({ name, done }) => (
-              <div
-                key={name}
-                className={`flex items-center gap-2.5 text-sm ${done ? 'text-muted-foreground/50 line-through' : 'text-foreground/80'}`}
-              >
-                {done
-                  ? <CheckCircle2 className="w-4 h-4 text-emerald-500/60 shrink-0" />
-                  : <Circle className="w-4 h-4 text-white/20 shrink-0" />
-                }
-                {name}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/35">
+                Target Company
+              </p>
+              <div className="mt-2 flex items-end gap-1.5">
+                {GOOGLE_LETTERS.map((item, index) => (
+                  <span
+                    key={`${item.letter}-${index}`}
+                    className={`relative font-mono text-5xl font-black leading-none md:text-6xl ${item.color}`}
+                  >
+                    {item.letter}
+                    <span className={`absolute -bottom-1 left-1 right-1 h-0.5 rounded-full ${item.line}`} />
+                  </span>
+                ))}
               </div>
-            ))}
+              <h2 className="mt-5 text-2xl font-bold tracking-tight text-foreground">
+                SWE Interview Ready
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                每一道題都往同一個方向前進：想清楚、寫乾淨、講明白。
+              </p>
+            </div>
           </div>
+
+          <a
+            href="https://careers.google.com/students/"
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex w-fit items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:border-white/20 hover:bg-white/[0.08]"
+          >
+            Google Careers
+            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </a>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

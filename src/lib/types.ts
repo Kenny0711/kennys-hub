@@ -18,6 +18,7 @@ export interface LeetcodeRecord {
   tags: string[];
   proficiency: Proficiency;
   solutions: Solution[];
+  lc_slug?: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,4 +30,5 @@ export interface WebhookPayload {
   tags: string[];
   code: string;
   language: string;
+  lc_slug?: string;
 }

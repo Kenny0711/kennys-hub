@@ -23,23 +23,26 @@ function chipWidth(text: string) {
 }
 
 interface TickProps {
-  x?: number;
-  y?: number;
-  payload?: { value: string; index: number };
+  x?: number | string;
+  y?: number | string;
+  payload?: { value?: string; index?: number };
   index?: number;
 }
 
 function ChipTick({ x = 0, y = 0, payload, index = 0 }: TickProps) {
   if (!payload) return null;
-  const color = COLORS[index % COLORS.length];
-  const text = payload.value;
+  const tickX = Number(x);
+  const tickY = Number(y);
+  const colorIndex = payload.index ?? index;
+  const color = COLORS[colorIndex % COLORS.length];
+  const text = String(payload.value ?? '');
   const chipW = Math.max(text.length * 6.4 + 18, 44);
 
   return (
     <g>
       <rect
-        x={x - chipW / 2}
-        y={y + 6}
+        x={tickX - chipW / 2}
+        y={tickY + 6}
         width={chipW}
         height={CHIP_H}
         rx={5}
@@ -50,8 +53,8 @@ function ChipTick({ x = 0, y = 0, payload, index = 0 }: TickProps) {
         strokeOpacity={0.45}
       />
       <text
-        x={x}
-        y={y + 6 + CHIP_H / 2}
+        x={tickX}
+        y={tickY + 6 + CHIP_H / 2}
         textAnchor="middle"
         dominantBaseline="central"
         fontSize={10}

@@ -5,58 +5,61 @@ interface ProblemData {
   tags: string[];
   code: string;
   language: string;
+  lc_slug: string;
 }
 
-function extractProblemData(): ProblemData {
-  // Title element — try multiple selectors across LeetCode UI versions
-  const titleEl = document.querySelector<HTMLElement>(
-    '.text-title-large a, .text-title-large, [data-cy="question-title"], h4[data-cy]'
-  );
-  const rawTitle = titleEl?.innerText?.trim() ?? document.title.split(' - ')[0].trim();
+interface LeetCodeQuestionMeta {
+  questionFrontendId?: string;
+  title?: string;
+  difficulty?: string;
+  topicTags?: { name: string }[];
+}
 
-  // Parse "1. Two Sum" format → id + clean title
-  const titleMatch = rawTitle.match(/^(\d+)\.\s+(.+)$/);
-  const problem_id = titleMatch ? parseInt(titleMatch[1], 10) : parseIdFromUrl();
-  const title = titleMatch ? titleMatch[2] : rawTitle.replace(/^\d+\.\s*/, '');
+interface TrackerSettings {
+  webhookUrl?: string;
+  webhookSecret?: string;
+}
 
-  // Difficulty
-  const diffEl = document.querySelector<HTMLElement>(
-    '[class*="text-difficulty-easy"], [class*="text-difficulty-medium"], [class*="text-difficulty-hard"]'
-  );
-  let difficulty = diffEl?.innerText?.trim() ?? '';
-  if (!['Easy', 'Medium', 'Hard'].includes(difficulty)) {
-    difficulty = detectDifficultyByClass(diffEl) ?? 'Medium';
-  }
+const SUBMISSION_TIMEOUT_MS = 90_000;
+const FAILURE_STATUSES = [
+  'Wrong Answer',
+  'Time Limit Exceeded',
+  'Memory Limit Exceeded',
+  'Runtime Error',
+  'Compile Error',
+  'Compilation Error',
+  'Output Limit Exceeded',
+];
+const JUDGING_STATUSES = ['Pending', 'Judging', 'Running', 'Submitting'];
 
-  // Tags (only visible ones — user may need to expand the Topics section)
-  const tagEls = document.querySelectorAll<HTMLElement>(
-    'a[href*="/tag/"] div, a[href*="/tag/"] span'
-  );
-  const tags = Array.from(new Set(
-    Array.from(tagEls)
-      .map((el) => el.innerText?.trim())
-      .filter((t): t is string => Boolean(t) && t.length > 0 && t.length < 50)
-  ));
+let waitingForAccepted = false;
+let syncing = false;
+let lastSyncedKey = '';
 
-  // Code from Monaco editor
-  const codeLines = document.querySelectorAll<HTMLElement>('.view-line');
-  const code =
-    codeLines.length > 0
-      ? Array.from(codeLines).map((el) => el.innerText).join('\n').trim()
-      : getCodeFallback();
+function getMonacoCode(): Promise<string> {
+  return new Promise((resolve) => {
+    const handleResult = (event: Event) => {
+      window.clearTimeout(timeoutId);
+      resolve((event as CustomEvent<string>).detail || '');
+    };
+    const timeoutId = window.setTimeout(() => {
+      document.removeEventListener('__lc_code_result__', handleResult);
+      resolve('');
+    }, 2000);
 
-  // Language from the dropdown button label
-  const langBtn = document.querySelector<HTMLElement>(
-    'button[id*="headlessui-listbox-button"] span, .ant-select-selection-item'
-  );
-  const language = normalizeLanguage(langBtn?.innerText?.trim() ?? 'python3');
-
-  return { problem_id, title, difficulty, tags, code, language };
+    document.addEventListener('__lc_code_result__', handleResult, { once: true });
+    document.dispatchEvent(new CustomEvent('__lc_get_code__'));
+  });
 }
 
 function parseIdFromUrl(): number {
   const m = window.location.pathname.match(/\/problems\/[^/]+-(\d+)\//);
   return m ? parseInt(m[1], 10) : 0;
+}
+
+function parseSlugFromUrl(): string {
+  const match = window.location.pathname.match(/\/problems\/([^/]+)/);
+  return match?.[1] ?? '';
 }
 
 function detectDifficultyByClass(el: HTMLElement | null): string | null {
@@ -73,32 +76,275 @@ function getCodeFallback(): string {
   return ta?.value ?? '';
 }
 
+function normalizeCode(code: string): string {
+  return code
+    .replace(/^\s*```[\w+-]*\s*\n?/, '')
+    .replace(/\n?\s*```\s*$/, '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\u200b/g, '')
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
+
 function normalizeLanguage(raw: string): string {
   const map: Record<string, string> = {
-    python3: 'python',
-    python: 'python',
-    javascript: 'javascript',
-    typescript: 'typescript',
-    java: 'java',
-    'c++': 'cpp',
-    cpp: 'cpp',
-    'c#': 'csharp',
-    csharp: 'csharp',
-    go: 'go',
-    golang: 'go',
-    rust: 'rust',
-    kotlin: 'kotlin',
-    swift: 'swift',
-    ruby: 'ruby',
-    scala: 'scala',
+    python3: 'python', python: 'python',
+    javascript: 'javascript', typescript: 'typescript',
+    java: 'java', 'c++': 'cpp', cpp: 'cpp',
+    'c#': 'csharp', csharp: 'csharp',
+    go: 'go', golang: 'go', rust: 'rust',
+    kotlin: 'kotlin', swift: 'swift',
+    ruby: 'ruby', scala: 'scala',
   };
   return map[raw.toLowerCase()] ?? raw.toLowerCase();
 }
 
+function inferLanguageFromCode(code: string, fallback: string): string {
+  if (
+    /\bclass\s+Solution\b/.test(code) &&
+    /#include|vector<|std::|public:|private:|long long|unordered_map|unordered_set/.test(code)
+  ) {
+    return 'cpp';
+  }
+  if (/^\s*def\s+\w+\(|:\s*$|from typing import|List\[/.test(code)) {
+    return 'python';
+  }
+  return fallback;
+}
+
+async function fetchQuestionMeta(titleSlug: string): Promise<LeetCodeQuestionMeta | null> {
+  if (!titleSlug) return null;
+
+  try {
+    const res = await fetch('https://leetcode.com/graphql', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `
+          query questionData($titleSlug: String!) {
+            question(titleSlug: $titleSlug) {
+              questionFrontendId
+              title
+              difficulty
+              topicTags { name }
+            }
+          }
+        `,
+        variables: { titleSlug },
+      }),
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.data?.question ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function extractProblemData(): Promise<ProblemData> {
+  const titleSlug = parseSlugFromUrl();
+  const meta = await fetchQuestionMeta(titleSlug);
+
+  const titleEl = document.querySelector<HTMLElement>(
+    '.text-title-large a, .text-title-large, [data-cy="question-title"], h4[data-cy]'
+  );
+  const rawTitle = titleEl?.innerText?.trim() ?? document.title.split(' - ')[0].trim();
+  const titleMatch = rawTitle.match(/^(\d+)\.\s+(.+)$/);
+  const problem_id = titleMatch
+    ? parseInt(titleMatch[1], 10)
+    : meta?.questionFrontendId
+      ? parseInt(meta.questionFrontendId, 10)
+      : parseIdFromUrl();
+  const title = meta?.title ?? (titleMatch ? titleMatch[2] : rawTitle.replace(/^\d+\.\s*/, ''));
+
+  const diffEl = document.querySelector<HTMLElement>(
+    '[class*="text-difficulty-easy"], [class*="text-difficulty-medium"], [class*="text-difficulty-hard"]'
+  );
+  let difficulty = meta?.difficulty ?? diffEl?.innerText?.trim() ?? '';
+  if (!['Easy', 'Medium', 'Hard'].includes(difficulty)) {
+    difficulty = detectDifficultyByClass(diffEl) ?? 'Medium';
+  }
+
+  const tagEls = document.querySelectorAll<HTMLElement>('a[href*="/tag/"] div, a[href*="/tag/"] span');
+  const tags = meta?.topicTags?.map((tag) => tag.name) ?? Array.from(new Set(
+    Array.from(tagEls)
+      .map((el) => el.innerText?.trim())
+      .filter((t): t is string => Boolean(t) && t.length > 0 && t.length < 50)
+  ));
+
+  // Try Monaco API via injected script first, then DOM fallback
+  let code = await getMonacoCode();
+  if (!code) {
+    const codeLines = document.querySelectorAll<HTMLElement>('.view-line');
+    code = codeLines.length > 0
+      ? Array.from(codeLines).map((el) => el.innerText).join('\n').trim()
+      : getCodeFallback();
+  }
+  code = normalizeCode(code);
+
+  const langSelectors = [
+    '[id*="headlessui-listbox-button"] span',
+    'button[data-e2e-locator="console-lang-select"] span',
+    '.ant-select-selection-item',
+    '[class*="SelectContainer"] button',
+    '.tab-text',
+  ];
+  let rawLang = '';
+  for (const selector of langSelectors) {
+    const el = document.querySelector<HTMLElement>(selector);
+    const text = el?.innerText?.trim() ?? '';
+    if (text.length > 0 && text.length < 30) {
+      rawLang = text;
+      break;
+    }
+  }
+  const language = inferLanguageFromCode(code, normalizeLanguage(rawLang || 'python3'));
+
+  return { problem_id, title, difficulty, tags, code, language, lc_slug: titleSlug };
+}
+
+function readSettings(): Promise<TrackerSettings> {
+  return chrome.storage.local.get(['webhookUrl', 'webhookSecret']);
+}
+
+async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
+  if (syncing) return;
+  const { webhookUrl, webhookSecret } = await readSettings();
+  if (!webhookUrl) {
+    console.warn('[LC Tracker] Auto sync skipped: Webhook URL is not configured.');
+    return;
+  }
+
+  syncing = true;
+  try {
+    const data = await extractProblemData();
+    const syncKey = `${data.problem_id}:${data.language}:${data.code}`;
+    if (source === 'auto' && syncKey === lastSyncedKey) return;
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (webhookSecret) headers['x-webhook-secret'] = webhookSecret;
+
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Webhook failed (${res.status})${text ? `: ${text}` : ''}`);
+    }
+
+    lastSyncedKey = syncKey;
+    console.info(`[LC Tracker] ${source} sync completed:`, data.problem_id, data.title);
+  } catch (error) {
+    console.error('[LC Tracker] Sync failed:', error);
+  } finally {
+    syncing = false;
+  }
+}
+
+function getVisiblePageText(): string {
+  return document.body?.innerText ?? '';
+}
+
+function hasAcceptedResult(): boolean {
+  return /\bAccepted\b/.test(getVisiblePageText());
+}
+
+function hasTerminalFailureResult(): boolean {
+  const pageText = getVisiblePageText();
+  return FAILURE_STATUSES.some((status) => pageText.includes(status));
+}
+
+function hasJudgingState(): boolean {
+  const pageText = getVisiblePageText();
+  return JUDGING_STATUSES.some((status) => pageText.includes(status));
+}
+
+function isSubmitButton(element: HTMLElement): boolean {
+  const button = element.closest('button, [role="button"]');
+  if (!button) return false;
+
+  const text = (button.textContent ?? '').trim().toLowerCase();
+  const locator = button.getAttribute('data-e2e-locator') ?? '';
+  const testId = button.getAttribute('data-testid') ?? '';
+  const ariaLabel = button.getAttribute('aria-label') ?? '';
+
+  return (
+    text === 'submit' ||
+    text.includes('submit') ||
+    locator.toLowerCase().includes('submit') ||
+    testId.toLowerCase().includes('submit') ||
+    ariaLabel.toLowerCase().includes('submit')
+  );
+}
+
+function waitForAcceptedSubmission(): void {
+  if (waitingForAccepted) return;
+  waitingForAccepted = true;
+
+  const startedAt = Date.now();
+  const hadAcceptedBeforeSubmit = hasAcceptedResult();
+  let sawSubmissionActivity = false;
+
+  const isFreshAcceptedResult = () => {
+    if (hasJudgingState()) sawSubmissionActivity = true;
+    return hasAcceptedResult() && (!hadAcceptedBeforeSubmit || sawSubmissionActivity);
+  };
+
+  const observer = new MutationObserver(() => {
+    if (isFreshAcceptedResult()) {
+      cleanup();
+      void syncToWebhook('auto');
+      return;
+    }
+
+    if (hasTerminalFailureResult()) {
+      cleanup();
+    }
+  });
+
+  const intervalId = window.setInterval(() => {
+    if (Date.now() - startedAt > SUBMISSION_TIMEOUT_MS) {
+      cleanup();
+      return;
+    }
+
+    if (isFreshAcceptedResult()) {
+      cleanup();
+      void syncToWebhook('auto');
+    } else if (hasTerminalFailureResult()) {
+      cleanup();
+    }
+  }, 1000);
+
+  const cleanup = () => {
+    waitingForAccepted = false;
+    observer.disconnect();
+    window.clearInterval(intervalId);
+  };
+
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
+document.addEventListener(
+  'click',
+  (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && isSubmitButton(target)) {
+      waitForAcceptedSubmission();
+    }
+  },
+  true
+);
+
 chrome.runtime.onMessage.addListener(
   (message, _sender, sendResponse: (data: ProblemData) => void) => {
     if (message.type === 'EXTRACT') {
-      sendResponse(extractProblemData());
+      extractProblemData().then(sendResponse);
     }
     return true;
   }

@@ -4,11 +4,18 @@
   "version": "1.0.0",
   "description": "一鍵擷取 LeetCode 解題資料，傳送到個人 Dashboard",
   "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*", "https://leetcode.com/*"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "LC Tracker"
   },
   "content_scripts": [
+    {
+      "matches": ["https://leetcode.com/problems/*"],
+      "js": ["dist/main_world.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": ["https://leetcode.com/problems/*"],
       "js": ["dist/content.js"],

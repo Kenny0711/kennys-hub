@@ -7,16 +7,12 @@ import { MOCK_RECORDS } from '@/lib/mock-data';
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
 export function useRecords() {
-  const [records, setRecords] = useState<LeetcodeRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<LeetcodeRecord[]>(USE_MOCK ? MOCK_RECORDS : []);
+  const [loading, setLoading] = useState(!USE_MOCK);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (USE_MOCK) {
-      setRecords(MOCK_RECORDS);
-      setLoading(false);
-      return;
-    }
+    if (USE_MOCK) return;
     const supabase = createClient();
     supabase
       .from('leetcode_records')

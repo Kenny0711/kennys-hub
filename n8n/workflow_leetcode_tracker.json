@@ -1,69 +1,70 @@
 {
-  "_comment": "n8n Workflow 設定檔 — 請在 n8n 介面手動建立以下節點流程",
-  "workflow_name": "LeetCode Tracker Webhook",
+  "name": "LeetCode Tracker",
   "nodes": [
     {
-      "type": "n8n-nodes-base.webhook",
-      "name": "Receive LeetCode Data",
-      "description": "接收 Chrome Extension 傳來的 POST 請求",
-      "config": {
+      "parameters": {
         "httpMethod": "POST",
         "path": "leetcode-tracker",
-        "responseMode": "onReceived"
-      }
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "a1a1a1a1-0000-0000-0000-000000000001",
+      "name": "Receive from Extension",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "leetcode-tracker"
     },
     {
-      "type": "n8n-nodes-base.function",
-      "name": "Build Solution Object",
-      "description": "將 payload 組裝成 Supabase 所需格式",
-      "code": "const body = $input.first().json.body;\nconst solution = {\n  method: 'Initial Capture',\n  code: body.code || '',\n  language: body.language || 'python',\n  time_complexity: '',\n  space_complexity: '',\n  notes: ''\n};\nreturn [{ json: { ...body, solution } }];"
-    },
-    {
-      "type": "n8n-nodes-base.httpRequest",
-      "name": "Check Existing Problem",
-      "description": "查詢 Supabase 是否已有此 problem_id",
-      "config": {
-        "method": "GET",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leetcode_records?problem_id=eq.{{ $json.problem_id }}&select=id,solutions",
-        "headers": {
-          "apikey": "={{ $env.SUPABASE_ANON_KEY }}",
-          "Authorization": "Bearer {{ $env.SUPABASE_ANON_KEY }}"
-        }
-      }
-    },
-    {
-      "type": "n8n-nodes-base.if",
-      "name": "Record Exists?",
-      "description": "根據查詢結果決定 INSERT 或 UPDATE"
-    },
-    {
-      "type": "n8n-nodes-base.httpRequest",
-      "name": "INSERT New Record",
-      "description": "插入新題目資料",
-      "config": {
+      "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leetcode_records",
-        "headers": {
-          "apikey": "={{ $env.SUPABASE_ANON_KEY }}",
-          "Authorization": "Bearer {{ $env.SUPABASE_ANON_KEY }}",
-          "Content-Type": "application/json",
-          "Prefer": "return=representation"
-        }
-      }
+        "url": "http://localhost:3000/api/webhook",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "dev-secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "a1a1a1a1-0000-0000-0000-000000000002",
+      "name": "Forward to Next.js API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [460, 300]
     },
     {
-      "type": "n8n-nodes-base.httpRequest",
-      "name": "UPDATE Append Solution",
-      "description": "在既有題目後面 append 新解法",
-      "config": {
-        "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leetcode_records?id=eq.{{ $json.id }}",
-        "headers": {
-          "apikey": "={{ $env.SUPABASE_ANON_KEY }}",
-          "Authorization": "Bearer {{ $env.SUPABASE_ANON_KEY }}",
-          "Content-Type": "application/json"
-        }
-      }
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "a1a1a1a1-0000-0000-0000-000000000003",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
     }
-  ]
+  ],
+  "connections": {
+    "Receive from Extension": {
+      "main": [
+        [{ "node": "Forward to Next.js API", "type": "main", "index": 0 }]
+      ]
+    },
+    "Forward to Next.js API": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
 }

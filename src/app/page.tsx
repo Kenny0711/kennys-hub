@@ -1,4 +1,6 @@
 import { MOCK_RECORDS } from '@/lib/mock-data';
+import { createClient } from '@/lib/supabase/server';
+import { LeetcodeRecord } from '@/lib/types';
 import StatsCards from '@/components/dashboard/stats-cards';
 import ActivityHeatmap from '@/components/dashboard/activity-heatmap';
 import TagChart from '@/components/dashboard/tag-pie-chart';
@@ -7,8 +9,27 @@ import GoalBanner from '@/components/dashboard/goal-banner';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
+
+async function getDashboardRecords(): Promise<LeetcodeRecord[]> {
+  if (USE_MOCK) return MOCK_RECORDS;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('leetcode_records')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Failed to load dashboard records:', error.message);
+    return [];
+  }
+
+  return (data as LeetcodeRecord[]) ?? [];
+}
+
 export default async function HomePage() {
-  const records = MOCK_RECORDS;
+  const records = await getDashboardRecords();
   const today = new Date().toLocaleDateString('zh-TW', {
     month: 'long',
     day: 'numeric',
@@ -62,7 +83,7 @@ export default async function HomePage() {
         </Link>
 
         {/* Goal banner */}
-        <GoalBanner records={records} />
+        <GoalBanner />
       </div>
     </div>
   );
