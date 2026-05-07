@@ -16,6 +16,12 @@ webhookInput.addEventListener('change', () => {
 secretInput.addEventListener('change', () => {
   chrome.storage.local.set({ webhookSecret: secretInput.value.trim() });
 });
+webhookInput.addEventListener('input', () => {
+  chrome.storage.local.set({ webhookUrl: webhookInput.value.trim() });
+});
+secretInput.addEventListener('input', () => {
+  chrome.storage.local.set({ webhookSecret: secretInput.value.trim() });
+});
 
 // Detect if we're on a LeetCode problem page
 chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {

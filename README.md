@@ -1,152 +1,191 @@
 # LeetCode Learning Tracker
 
-個人 LeetCode 刷題學習追蹤器。自動擷取解題資料，搭配視覺化 Dashboard 追蹤學習進度。
+個人用的 LeetCode 學習追蹤系統：Chrome Extension 會從 LeetCode 題目頁擷取題目資訊、程式碼與 tags，送進 Supabase；Next.js Dashboard 用來檢視題庫、複習狀態、解法筆記與練習趨勢。
 
-## 架構概覽
+## Features
 
-```
-Chrome Extension
-      │  點擊擷取，DOM 解析題目資訊
-      ▼
-n8n Webhook
-      │  驗證 → 清洗 → Upsert
-      ▼
-Supabase (PostgreSQL)
-      │  即時讀取
-      ▼
-Next.js Dashboard
-      │  統計 / 熱力圖 / 題庫 / 筆記
-```
+- Dashboard 顯示目前題庫總覽、難度分布、活動 heatmap、tags 統計與 Google SWE 目標提醒。
+- 題庫頁支援搜尋、難度、熟練度與 tags 篩選。
+- 題目詳情頁顯示難度、熟練度、tags、複習建議、程式碼與 Markdown 筆記。
+- Chrome Extension 可手動擷取目前 LeetCode 題目。
+- 按 LeetCode `Submit` 後，若結果為 `Accepted`，Extension 會自動同步到 Dashboard。
+- Extension 會透過 LeetCode GraphQL 抓官方 `topicTags`，並用 Monaco API 擷取較完整的程式碼。
+- Webhook 會清理 code fence、NBSP 空白，並修正常見語言標籤，例如 C++ 會存成 `cpp`。
+- 支援 n8n workflow 轉發，也可直接打 Next.js `/api/webhook`。
 
-## 技術選型
+## Tech Stack
 
-| 層級 | 技術 |
+| Area | Tech |
 |---|---|
-| Frontend | Next.js 16 (App Router), React 19, TypeScript |
-| 樣式 | Tailwind CSS v4, shadcn/ui |
-| 圖表 | Recharts |
-| 資料庫 | Supabase (PostgreSQL) |
-| 擴充功能 | Chrome Extension Manifest V3 |
-| 自動化 | n8n |
+| App | Next.js 16 App Router, React 19, TypeScript |
+| UI | Tailwind CSS v4, shadcn/ui |
+| Charts | Recharts |
+| Database | Supabase PostgreSQL |
+| Extension | Chrome Extension Manifest V3, esbuild |
+| Automation | n8n webhook workflow |
 
-## 專案結構
+## Project Structure
 
+```text
+vibe-leetcode/
+  extension/                    Chrome Extension
+    manifest.json
+    popup.html
+    build.js
+    src/
+      popup.ts
+      content.ts
+      main_world.ts             MAIN world script for Monaco access
+  n8n/
+    workflow_leetcode_tracker.json
+  supabase/
+    schema.sql
+  src/
+    app/                        Next.js routes and API
+    components/                 UI components
+    hooks/
+    lib/
 ```
-vibe_leetcode/
-├── extension/          # Chrome 擴充功能
-│   ├── manifest.json
-│   ├── popup.html
-│   └── src/
-│       ├── popup.ts
-│       └── content.ts
-├── n8n/
-│   └── workflow_leetcode_tracker.json  # n8n Workflow 設定參考
-├── supabase/
-│   └── schema.sql      # 建表 SQL
-├── src/
-│   ├── app/            # Next.js App Router
-│   ├── components/     # React 元件
-│   ├── hooks/          # 自定義 Hooks
-│   └── lib/            # 工具函式、型別、Supabase client
-└── .env.local.example  # 環境變數範例
-```
 
-## 快速開始
+## Setup
 
-### 1. 安裝依賴
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2. 設定環境變數
-
-複製 `.env.local.example` 為 `.env.local`，填入你的 Supabase 金鑰：
+Create local env:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
+Required env values:
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 WEBHOOK_SECRET=your-random-secret
-NEXT_PUBLIC_USE_MOCK=true   # 開發時用 Mock 資料，正式改為 false
+NEXT_PUBLIC_USE_MOCK=false
 ```
 
-### 3. 建立 Supabase Table
+Create the Supabase table by running:
 
-到 Supabase Dashboard → SQL Editor，執行 `supabase/schema.sql`。
+```text
+supabase/schema.sql
+```
 
-### 4. 啟動開發伺服器
+Then start the app:
 
 ```bash
 npm run dev
 ```
 
-開啟 [http://localhost:3000](http://localhost:3000)
+Open:
 
----
+[http://localhost:3000](http://localhost:3000)
 
-## Chrome Extension 安裝
+## Chrome Extension
 
-1. 執行 build：
+Build the extension:
 
 ```bash
 npm run ext:build
 ```
 
-2. Chrome → `chrome://extensions/` → 開啟開發人員模式
-3. 「載入未封裝項目」→ 選擇 `extension/` 資料夾
-4. 開啟任意 LeetCode 題目頁面，點擊擴充功能圖示 → 輸入 Webhook URL → 擷取
+Load it in Chrome:
 
----
+1. Open `chrome://extensions/`.
+2. Enable Developer mode.
+3. Click Load unpacked.
+4. Select the `extension/` folder.
+5. Open the extension popup and fill:
+   - Webhook URL, for local direct mode: `http://localhost:3000/api/webhook`
+   - Secret: same value as `WEBHOOK_SECRET`
 
-## n8n Workflow 設定
+After updating extension code, rebuild and reload the unpacked extension in `chrome://extensions/`.
 
-參考 `n8n/workflow_leetcode_tracker.json` 在 n8n 介面手動建立以下流程：
+## Sync Flow
 
+Manual sync:
+
+```text
+LeetCode page -> Extension popup button -> Webhook -> Supabase -> Dashboard
 ```
-Webhook → Build Solution Object → Check Existing → [INSERT | UPDATE]
+
+Auto sync:
+
+```text
+LeetCode Submit -> wait for Accepted -> Extension auto POST -> Webhook -> Supabase
 ```
 
-Chrome Extension 發送的 Payload 格式：
+The extension skips failed submissions such as Wrong Answer, Runtime Error, Compile Error and TLE.
+
+## Webhook Payload
 
 ```json
 {
-  "problem_id": 1,
-  "title": "Two Sum",
-  "difficulty": "Easy",
-  "tags": ["Array", "Hash Table"],
-  "code": "def twoSum(...):\n    ...",
-  "language": "python"
+  "problem_id": 567,
+  "title": "Permutation in String",
+  "difficulty": "Medium",
+  "tags": ["Hash Table", "Two Pointers", "String", "Sliding Window"],
+  "code": "class Solution { ... }",
+  "language": "cpp",
+  "lc_slug": "permutation-in-string"
 }
 ```
 
----
+## n8n Workflow
 
-## 資料庫 Schema
+`n8n/workflow_leetcode_tracker.json` contains a simple workflow:
+
+```text
+Webhook -> Forward to Next.js API -> Respond
+```
+
+For local development, forwarding target is:
+
+```text
+http://localhost:3000/api/webhook
+```
+
+If you do not need n8n, point the Chrome Extension directly to the Next.js API URL.
+
+## Database Schema
+
+Main table:
 
 ```sql
 leetcode_records (
-  id           uuid PRIMARY KEY,
-  problem_id   integer UNIQUE,
-  title        text,
-  difficulty   text,          -- 'Easy' | 'Medium' | 'Hard'
-  tags         text[],
-  proficiency  text,          -- '生疏' | '理解' | '熟練'
-  solutions    jsonb,         -- [{ method, code, language, time_complexity, space_complexity, notes }]
-  created_at   timestamptz,
-  updated_at   timestamptz
+  id            uuid primary key,
+  problem_id    integer unique,
+  title         text,
+  difficulty    text,       -- Easy | Medium | Hard
+  tags          text[],
+  proficiency   text,       -- 生疏 | 理解 | 熟練
+  solutions     jsonb,      -- [{ method, code, language, time_complexity, space_complexity, notes }]
+  lc_slug       text,
+  created_at    timestamptz,
+  updated_at    timestamptz
 )
 ```
 
----
+## Scripts
 
-## 開發進度
+```bash
+npm run dev        # Start Next.js dev server
+npm run build      # Production build
+npm run lint       # ESLint
+npm run ext:build  # Build Chrome Extension dist files
+```
 
-- [x] Phase 0：Next.js 骨架 + Mock Dashboard UI
-- [ ] Phase 1：Supabase 資料庫連接
-- [ ] Phase 2：Chrome Extension 擷取功能
-- [ ] Phase 3：n8n Webhook 整合
-- [ ] Phase 4：題目詳情頁 + Markdown 筆記編輯
+## Current Status
+
+- [x] Dashboard with Supabase data
+- [x] Problem list and filters
+- [x] Problem detail page with notes and code display
+- [x] Chrome Extension manual capture
+- [x] Accepted submission auto sync
+- [x] LeetCode tags and language cleanup
+- [x] n8n forwarding workflow

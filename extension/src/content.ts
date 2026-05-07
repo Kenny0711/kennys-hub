@@ -20,6 +20,13 @@ interface TrackerSettings {
   webhookSecret?: string;
 }
 
+interface SubmissionResult {
+  state?: string;
+  status?: string;
+  status_msg?: string;
+  submission_id?: string | number;
+}
+
 const SUBMISSION_TIMEOUT_MS = 90_000;
 const FAILURE_STATUSES = [
   'Wrong Answer',
@@ -31,10 +38,15 @@ const FAILURE_STATUSES = [
   'Output Limit Exceeded',
 ];
 const JUDGING_STATUSES = ['Pending', 'Judging', 'Running', 'Submitting'];
+const DEFAULT_WEBHOOK_URL = 'http://localhost:3000/api/webhook';
+const DEFAULT_WEBHOOK_SECRET = 'dev-secret';
+
+console.info('[LC Tracker] content script loaded', window.location.href);
 
 let waitingForAccepted = false;
 let syncing = false;
 let lastSyncedKey = '';
+let acceptedSyncCooldownUntil = 0;
 
 function getMonacoCode(): Promise<string> {
   return new Promise((resolve) => {
@@ -212,10 +224,7 @@ function readSettings(): Promise<TrackerSettings> {
 async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
   if (syncing) return;
   const { webhookUrl, webhookSecret } = await readSettings();
-  if (!webhookUrl) {
-    console.warn('[LC Tracker] Auto sync skipped: Webhook URL is not configured.');
-    return;
-  }
+  const targetUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
 
   syncing = true;
   try {
@@ -224,9 +233,9 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
     if (source === 'auto' && syncKey === lastSyncedKey) return;
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (webhookSecret) headers['x-webhook-secret'] = webhookSecret;
+    headers['x-webhook-secret'] = webhookSecret || DEFAULT_WEBHOOK_SECRET;
 
-    const res = await fetch(webhookUrl, {
+    const res = await fetch(targetUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(data),
@@ -264,11 +273,62 @@ function hasJudgingState(): boolean {
   return JUDGING_STATUSES.some((status) => pageText.includes(status));
 }
 
+function normalizeSubmissionStatus(detail: SubmissionResult): string {
+  return (detail.status_msg || detail.status || detail.state || '').trim();
+}
+
+function parseSubmissionDetail(event: Event): SubmissionResult | null {
+  const detail = (event as CustomEvent<string | SubmissionResult>).detail;
+  if (!detail) return null;
+  if (typeof detail === 'string') {
+    try {
+      return JSON.parse(detail) as SubmissionResult;
+    } catch {
+      return {};
+    }
+  }
+  return detail;
+}
+
+function startSubmissionWindow(): void {
+  waitingForAccepted = true;
+  console.info('[LC Tracker] Submission detected; waiting for Accepted result.');
+}
+
+function stopWaitingForAccepted(reason?: string): void {
+  if (reason) console.info(`[LC Tracker] Stop waiting for submission: ${reason}`);
+  waitingForAccepted = false;
+}
+
+function handleSubmissionResult(event: Event): void {
+  const detail = parseSubmissionDetail(event);
+  if (!detail) return;
+
+  const status = normalizeSubmissionStatus(detail);
+  if (!status) return;
+  console.info(`[LC Tracker] Submission status: ${status}`);
+
+  if (status === 'Accepted') {
+    if (Date.now() < acceptedSyncCooldownUntil) return;
+    acceptedSyncCooldownUntil = Date.now() + 5000;
+    stopWaitingForAccepted('accepted');
+    void syncToWebhook('auto');
+    return;
+  }
+
+  if (FAILURE_STATUSES.includes(status)) {
+    stopWaitingForAccepted(status);
+  }
+}
+
 function isSubmitButton(element: HTMLElement): boolean {
-  const button = element.closest('button, [role="button"]');
+  const button =
+    element.closest<HTMLElement>(
+    'button, [role="button"], [data-e2e-locator*="submit" i], [data-testid*="submit" i], [aria-label*="submit" i]'
+    ) ?? findClickableSubmitAncestor(element);
   if (!button) return false;
 
-  const text = (button.textContent ?? '').trim().toLowerCase();
+  const text = (button.textContent ?? element.textContent ?? '').trim().toLowerCase();
   const locator = button.getAttribute('data-e2e-locator') ?? '';
   const testId = button.getAttribute('data-testid') ?? '';
   const ariaLabel = button.getAttribute('aria-label') ?? '';
@@ -276,23 +336,41 @@ function isSubmitButton(element: HTMLElement): boolean {
   return (
     text === 'submit' ||
     text.includes('submit') ||
+    text.includes('提交') ||
     locator.toLowerCase().includes('submit') ||
     testId.toLowerCase().includes('submit') ||
     ariaLabel.toLowerCase().includes('submit')
   );
 }
 
+function findClickableSubmitAncestor(element: HTMLElement): HTMLElement | null {
+  let current: HTMLElement | null = element;
+  for (let depth = 0; current && depth < 6; depth++) {
+    const text = (current.textContent ?? '').trim().toLowerCase();
+    const className = typeof current.className === 'string' ? current.className.toLowerCase() : '';
+    if (
+      text === 'submit' ||
+      text.includes('submit') ||
+      text.includes('提交') ||
+      className.includes('submit')
+    ) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
 function waitForAcceptedSubmission(): void {
   if (waitingForAccepted) return;
-  waitingForAccepted = true;
+  startSubmissionWindow();
 
   const startedAt = Date.now();
-  const hadAcceptedBeforeSubmit = hasAcceptedResult();
   let sawSubmissionActivity = false;
 
   const isFreshAcceptedResult = () => {
     if (hasJudgingState()) sawSubmissionActivity = true;
-    return hasAcceptedResult() && (!hadAcceptedBeforeSubmit || sawSubmissionActivity);
+    return hasAcceptedResult() && (sawSubmissionActivity || Date.now() - startedAt > 2500);
   };
 
   const observer = new MutationObserver(() => {
@@ -322,7 +400,7 @@ function waitForAcceptedSubmission(): void {
   }, 1000);
 
   const cleanup = () => {
-    waitingForAccepted = false;
+    stopWaitingForAccepted();
     observer.disconnect();
     window.clearInterval(intervalId);
   };
@@ -340,6 +418,23 @@ document.addEventListener(
   },
   true
 );
+
+document.addEventListener(
+  'pointerdown',
+  (event) => {
+    const target = event.target;
+    if (target instanceof HTMLElement && isSubmitButton(target)) {
+      waitForAcceptedSubmission();
+    }
+  },
+  true
+);
+
+document.addEventListener('__lc_submission_started__', () => {
+  startSubmissionWindow();
+});
+
+document.addEventListener('__lc_submission_result__', handleSubmissionResult);
 
 chrome.runtime.onMessage.addListener(
   (message, _sender, sendResponse: (data: ProblemData) => void) => {
