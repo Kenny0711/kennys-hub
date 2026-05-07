@@ -9,6 +9,9 @@
     "default_popup": "popup.html",
     "default_title": "LC Tracker"
   },
+  "background": {
+    "service_worker": "dist/background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://leetcode.com/*"],

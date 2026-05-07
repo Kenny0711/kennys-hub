@@ -15,16 +15,17 @@ interface LeetCodeQuestionMeta {
   topicTags?: { name: string }[];
 }
 
-interface TrackerSettings {
-  webhookUrl?: string;
-  webhookSecret?: string;
-}
-
 interface SubmissionResult {
   state?: string;
   status?: string;
   status_msg?: string;
   submission_id?: string | number;
+}
+
+interface WebhookSyncResponse {
+  ok: boolean;
+  status: number;
+  body: string;
 }
 
 const SUBMISSION_TIMEOUT_MS = 90_000;
@@ -38,8 +39,6 @@ const FAILURE_STATUSES = [
   'Output Limit Exceeded',
 ];
 const JUDGING_STATUSES = ['Pending', 'Judging', 'Running', 'Submitting'];
-const DEFAULT_WEBHOOK_URL = 'http://localhost:3000/api/webhook';
-const DEFAULT_WEBHOOK_SECRET = 'dev-secret';
 
 console.info('[LC Tracker] content script loaded', window.location.href);
 
@@ -217,14 +216,25 @@ async function extractProblemData(): Promise<ProblemData> {
   return { problem_id, title, difficulty, tags, code, language, lc_slug: titleSlug };
 }
 
-function readSettings(): Promise<TrackerSettings> {
-  return chrome.storage.local.get(['webhookUrl', 'webhookSecret']);
+function sendWebhookSync(data: ProblemData): Promise<WebhookSyncResponse> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({ type: 'WEBHOOK_SYNC', data }, (response: WebhookSyncResponse | undefined) => {
+      const runtimeError = chrome.runtime.lastError;
+      if (runtimeError) {
+        reject(new Error(runtimeError.message));
+        return;
+      }
+      if (!response) {
+        reject(new Error('No webhook response from extension background.'));
+        return;
+      }
+      resolve(response);
+    });
+  });
 }
 
 async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
   if (syncing) return;
-  const { webhookUrl, webhookSecret } = await readSettings();
-  const targetUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
 
   syncing = true;
   try {
@@ -232,18 +242,11 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
     const syncKey = `${data.problem_id}:${data.language}:${data.code}`;
     if (source === 'auto' && syncKey === lastSyncedKey) return;
 
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    headers['x-webhook-secret'] = webhookSecret || DEFAULT_WEBHOOK_SECRET;
-
-    const res = await fetch(targetUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(data),
-    });
+    console.info(`[LC Tracker] ${source} sync sending:`, data.problem_id, data.title);
+    const res = await sendWebhookSync(data);
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`Webhook failed (${res.status})${text ? `: ${text}` : ''}`);
+      throw new Error(`Webhook failed (${res.status})${res.body ? `: ${res.body}` : ''}`);
     }
 
     lastSyncedKey = syncKey;

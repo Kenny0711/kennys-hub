@@ -14,6 +14,13 @@ async function build() {
       platform: 'browser',
     }),
     esbuild.build({
+      entryPoints: [path.join(dir, 'src/background.ts')],
+      bundle: true,
+      outfile: path.join(dir, 'dist/background.js'),
+      target: ['chrome110'],
+      platform: 'browser',
+    }),
+    esbuild.build({
       entryPoints: [path.join(dir, 'src/content.ts')],
       bundle: true,
       outfile: path.join(dir, 'dist/content.js'),
