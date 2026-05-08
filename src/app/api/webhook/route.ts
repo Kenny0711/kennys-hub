@@ -65,6 +65,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'skipped', id: existing.id });
     }
 
+    // Tags 補全模式：只更新 tags，不動 solutions
+    if (body.tags_only) {
+      const { error } = await supabase
+        .from('leetcode_records')
+        .update({ tags: body.tags ?? [] })
+        .eq('id', existing.id);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ status: 'tags_updated', id: existing.id });
+    }
+
     const solutions = [...(existing.solutions ?? []), solution];
     const { error } = await supabase
       .from('leetcode_records')

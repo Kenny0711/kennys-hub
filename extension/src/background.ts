@@ -23,6 +23,11 @@ interface BatchImportMessage {
   problems: ProblemData[];
 }
 
+interface BatchTagsMessage {
+  type: 'BATCH_TAGS';
+  problems: ProblemData[];
+}
+
 interface WebhookSyncResponse {
   ok: boolean;
   status: number;
@@ -107,14 +112,44 @@ async function runBatchImport(problems: ProblemData[]): Promise<void> {
   }
 }
 
+async function runBatchTags(problems: ProblemData[]): Promise<void> {
+  const { webhookUrl, webhookSecret } = await readSettings();
+  const targetUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
+  const total = problems.length;
+
+  for (let i = 0; i < problems.length; i++) {
+    try {
+      await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-webhook-secret': webhookSecret || DEFAULT_WEBHOOK_SECRET,
+        },
+        body: JSON.stringify({ ...problems[i], tags_only: true }),
+      });
+    } catch {
+      // 單題失敗繼續
+    }
+    await new Promise((r) => setTimeout(r, 80));
+  }
+
+  await chrome.storage.local.set({
+    tagsProgress: { current: total, total, done: true } satisfies ImportProgress,
+  });
+}
+
 chrome.runtime.onMessage.addListener(
-  (message: WebhookSyncMessage | BatchImportMessage, _sender, sendResponse) => {
+  (message: WebhookSyncMessage | BatchImportMessage | BatchTagsMessage, _sender, sendResponse) => {
     if (message.type === 'WEBHOOK_SYNC') {
       postToWebhook(message.data).then(sendResponse);
       return true;
     }
     if (message.type === 'BATCH_IMPORT') {
       runBatchImport(message.problems).then(() => sendResponse({ ok: true }));
+      return true;
+    }
+    if (message.type === 'BATCH_TAGS') {
+      runBatchTags(message.problems).then(() => sendResponse?.({ ok: true }));
       return true;
     }
     return false;

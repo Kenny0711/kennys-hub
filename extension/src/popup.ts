@@ -59,6 +59,84 @@ chrome.storage.local.get('importProgress', (store) => {
   }
 });
 
+// ── Tags 補全 UI ──────────────────────────────────────────────────────────────
+const tagsBtn = document.getElementById('tags-btn') as HTMLButtonElement;
+const tagsProgressEl = document.getElementById('tags-progress') as HTMLDivElement;
+const tagsMsg = document.getElementById('tags-msg') as HTMLSpanElement;
+const tagsBar = document.getElementById('tags-bar') as HTMLDivElement;
+
+function setTagsUI(msg: string, pct: number, color: string) {
+  tagsProgressEl.style.display = 'block';
+  tagsMsg.textContent = msg;
+  tagsMsg.style.color = color;
+  tagsBar.style.width = `${pct}%`;
+}
+
+let tagsTimer: ReturnType<typeof setInterval> | null = null;
+
+function startTagsPolling() {
+  if (tagsTimer) return;
+  tagsTimer = setInterval(() => {
+    chrome.storage.local.get('tagsProgress', (store) => {
+      const prog = store.tagsProgress as ImportProgress | undefined;
+      if (!prog) return;
+      const pct = prog.total > 0 ? Math.round((prog.current / prog.total) * 100) : 0;
+      if (prog.done) {
+        setTagsUI(`✓ Tags 補全完成！共 ${prog.total} 題`, 100, '#22c55e');
+        tagsBtn.disabled = false;
+        tagsBtn.textContent = '🏷️ 補全所有題目 Tags';
+        if (tagsTimer) { clearInterval(tagsTimer); tagsTimer = null; }
+      } else {
+        setTagsUI(`取得 Tags 中 ${prog.current}/${prog.total}（${pct}%）`, pct, '#94a3b8');
+      }
+    });
+  }, 500);
+}
+
+// 啟動時恢復 tags 進度
+chrome.storage.local.get('tagsProgress', (store) => {
+  const prog = store.tagsProgress as ImportProgress | undefined;
+  if (!prog) return;
+  const pct = prog.total > 0 ? Math.round((prog.current / prog.total) * 100) : 0;
+  if (prog.done) {
+    setTagsUI(`✓ 上次 Tags 補全完成，共 ${prog.total} 題`, 100, '#22c55e');
+  } else {
+    setTagsUI(`取得 Tags 中 ${prog.current}/${prog.total}（${pct}%）`, pct, '#94a3b8');
+    tagsBtn.disabled = true;
+    tagsBtn.textContent = '補全中...';
+    startTagsPolling();
+  }
+});
+
+tagsBtn.addEventListener('click', async () => {
+  const webhookUrl = webhookInput.value.trim();
+  if (!webhookUrl) {
+    setTagsUI('請先填入 Webhook URL', 0, '#ef4444');
+    return;
+  }
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id || !tab.url?.includes('leetcode.com')) {
+    setTagsUI('請先前往 LeetCode 任意頁面後再點擊', 0, '#f59e0b');
+    return;
+  }
+
+  tagsBtn.disabled = true;
+  tagsBtn.textContent = '補全中...';
+  setTagsUI('正在從 LeetCode 逐題取得 Tags（需約 30 秒）...', 0, '#94a3b8');
+
+  await chrome.storage.local.set({ tagsProgress: { current: 0, total: 0, done: false } });
+
+  try {
+    await chrome.tabs.sendMessage(tab.id, { type: 'FETCH_TAGS' });
+    startTagsPolling();
+  } catch (e) {
+    setTagsUI(`✗ 錯誤：${(e as Error).message}`, 0, '#ef4444');
+    tagsBtn.disabled = false;
+    tagsBtn.textContent = '🏷️ 補全所有題目 Tags';
+  }
+});
+
 importBtn.addEventListener('click', async () => {
   const webhookUrl = webhookInput.value.trim();
   if (!webhookUrl) {

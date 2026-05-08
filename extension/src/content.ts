@@ -485,13 +485,48 @@ async function fetchSolvedProblems(): Promise<FetchSolvedResult> {
   }
 }
 
+// ── Tags 補全：逐題呼叫 GraphQL 取得 topicTags ────────────────────────────────
+
+async function enrichWithTags(): Promise<void> {
+  const { problems, error } = await fetchSolvedProblems();
+  if (error || !problems.length) {
+    await chrome.storage.local.set({
+      tagsProgress: { current: 0, total: 0, done: true, error: error ?? 'no problems' },
+    });
+    return;
+  }
+
+  const total = problems.length;
+  const enriched: ProblemData[] = [];
+
+  for (let i = 0; i < total; i++) {
+    const p = problems[i];
+    const meta = await fetchQuestionMeta(p.lc_slug);
+    enriched.push({
+      ...p,
+      tags: meta?.topicTags?.map((t) => t.name) ?? [],
+      title: meta?.title ?? p.title,
+      difficulty: ((meta?.difficulty ?? p.difficulty) as ProblemData['difficulty']),
+    });
+    await chrome.storage.local.set({ tagsProgress: { current: i + 1, total, done: false } });
+    await new Promise((r) => setTimeout(r, 180));
+  }
+
+  // 傳給 background 逐一 POST 到 webhook
+  chrome.runtime.sendMessage({ type: 'BATCH_TAGS', problems: enriched });
+}
+
 chrome.runtime.onMessage.addListener(
-  (message, _sender, sendResponse: (data: ProblemData | FetchSolvedResult) => void) => {
+  (message, _sender, sendResponse: (data: ProblemData | FetchSolvedResult | { status: string }) => void) => {
     if (message.type === 'EXTRACT') {
       extractProblemData().then(sendResponse);
     }
     if (message.type === 'FETCH_SOLVED_PROBLEMS') {
       fetchSolvedProblems().then(sendResponse);
+    }
+    if (message.type === 'FETCH_TAGS') {
+      sendResponse({ status: 'started' });
+      void enrichWithTags();
     }
     return true;
   }
