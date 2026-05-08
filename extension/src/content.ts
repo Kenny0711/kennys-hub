@@ -6,6 +6,7 @@ interface ProblemData {
   code: string;
   language: string;
   lc_slug: string;
+  description?: string;
 }
 
 interface LeetCodeQuestionMeta {
@@ -13,6 +14,7 @@ interface LeetCodeQuestionMeta {
   title?: string;
   difficulty?: string;
   topicTags?: { name: string }[];
+  content?: string;
 }
 
 interface SubmissionResult {
@@ -139,6 +141,7 @@ async function fetchQuestionMeta(titleSlug: string): Promise<LeetCodeQuestionMet
               title
               difficulty
               topicTags { name }
+              content
             }
           }
         `,
@@ -213,7 +216,8 @@ async function extractProblemData(): Promise<ProblemData> {
   }
   const language = inferLanguageFromCode(code, normalizeLanguage(rawLang || 'python3'));
 
-  return { problem_id, title, difficulty, tags, code, language, lc_slug: titleSlug };
+  const description = meta?.content ?? undefined;
+  return { problem_id, title, difficulty, tags, code, language, lc_slug: titleSlug, description };
 }
 
 function sendWebhookSync(data: ProblemData): Promise<WebhookSyncResponse> {

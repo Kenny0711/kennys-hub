@@ -55,6 +55,7 @@ export default async function ProblemDetailPage({
             createdAt={record.created_at}
             updatedAt={record.updated_at}
             recordId={record.id}
+            problemTitle={record.title}
           />
         </div>
       </div>

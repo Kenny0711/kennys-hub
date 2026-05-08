@@ -10,8 +10,9 @@ import { Solution } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import {
   Clock, Database, CalendarPlus, CalendarCheck, Layers,
-  Pencil, X, Check, Loader2,
+  Pencil, X, Check, Loader2, Copy, CheckCheck, Trash2,
 } from 'lucide-react';
+// import CodeVisualizer from '@/components/detail/code-visualizer'; // 視覺化功能（暫時停用，填入 ANTHROPIC_API_KEY 後可重新啟用）
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
@@ -69,6 +70,7 @@ interface Props {
   createdAt: string;
   updatedAt: string;
   recordId: string;
+  problemTitle: string;
 }
 
 function EditForm({
@@ -176,11 +178,36 @@ function EditForm({
   );
 }
 
-export default function SolutionTabs({ solutions: initialSolutions, createdAt, updatedAt, recordId }: Props) {
+export default function SolutionTabs({ solutions: initialSolutions, createdAt, updatedAt, recordId, problemTitle }: Props) {
   const [solutions, setSolutions] = useState<Solution[]>(initialSolutions);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<Solution | null>(null);
   const [saving, setSaving] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState('0');
+  const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
+
+  const copyCode = (code: string, idx: number) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 2000);
+    });
+  };
+
+  const deleteSolution = async (i: number) => {
+    const newSolutions = solutions.filter((_, idx) => idx !== i);
+    setSolutions(newSolutions);
+    setConfirmDeleteIdx(null);
+    // Keep active tab in bounds
+    const newLen = newSolutions.length;
+    if (newLen > 0) {
+      const cur = parseInt(activeTab);
+      if (cur >= newLen) setActiveTab(String(newLen - 1));
+    }
+    if (USE_MOCK) return;
+    const supabase = createClient();
+    await supabase.from('leetcode_records').update({ solutions: newSolutions }).eq('id', recordId);
+  };
 
   const fmt = (d: string) => new Date(d).toLocaleDateString('zh-TW');
 
@@ -221,7 +248,7 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
           </p>
         </div>
       ) : (
-        <Tabs defaultValue="0">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-white/5 border border-white/8 mb-5">
             {solutions.map((s, i) => (
               <TabsTrigger
@@ -248,25 +275,68 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                 <>
                   {/* Complexity badges + edit button */}
                   <div className="flex flex-wrap items-center gap-2">
-                    {s.time_complexity && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/5 text-muted-foreground border border-white/10">
-                        <Clock className="w-3 h-3 shrink-0" />
-                        Time: {s.time_complexity}
-                      </span>
-                    )}
-                    {s.space_complexity && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/5 text-muted-foreground border border-white/10">
-                        <Database className="w-3 h-3 shrink-0" />
-                        Space: {s.space_complexity}
-                      </span>
-                    )}
                     <button
                       onClick={() => startEdit(i)}
                       disabled={editingIndex !== null}
-                      className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground border border-white/8 hover:border-white/20 hover:bg-white/5 disabled:opacity-30 transition-colors"
+                      title={s.time_complexity ? s.time_complexity : '點擊填入時間複雜度'}
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono border transition-colors ${
+                        s.time_complexity
+                          ? 'bg-white/5 text-muted-foreground border-white/10 hover:border-white/20'
+                          : 'bg-transparent text-muted-foreground/30 border-dashed border-white/15 hover:border-white/25 hover:text-muted-foreground/50'
+                      }`}
                     >
-                      <Pencil className="w-3 h-3" /> 編輯
+                      <Clock className="w-3 h-3 shrink-0" />
+                      Time: {s.time_complexity || 'O(?)'}
                     </button>
+                    <button
+                      onClick={() => startEdit(i)}
+                      disabled={editingIndex !== null}
+                      title={s.space_complexity ? s.space_complexity : '點擊填入空間複雜度'}
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono border transition-colors ${
+                        s.space_complexity
+                          ? 'bg-white/5 text-muted-foreground border-white/10 hover:border-white/20'
+                          : 'bg-transparent text-muted-foreground/30 border-dashed border-white/15 hover:border-white/25 hover:text-muted-foreground/50'
+                      }`}
+                    >
+                      <Database className="w-3 h-3 shrink-0" />
+                      Space: {s.space_complexity || 'O(?)'}
+                    </button>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      {confirmDeleteIdx === i ? (
+                        <>
+                          <button
+                            onClick={() => setConfirmDeleteIdx(null)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs text-muted-foreground border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors"
+                          >
+                            取消
+                          </button>
+                          <button
+                            onClick={() => deleteSolution(i)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-rose-400 border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
+                          >
+                            確認刪除
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => startEdit(i)}
+                            disabled={editingIndex !== null}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground border border-white/8 hover:border-white/20 hover:bg-white/5 disabled:opacity-30 transition-colors"
+                          >
+                            <Pencil className="w-3 h-3" /> 編輯
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteIdx(i)}
+                            disabled={editingIndex !== null}
+                            className="inline-flex items-center p-1.5 rounded-md text-muted-foreground/40 hover:text-rose-400 border border-transparent hover:border-rose-500/20 hover:bg-rose-500/10 disabled:opacity-30 transition-colors"
+                            title="刪除此解法"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Code block */}
@@ -281,6 +351,15 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                             </span>
                           );
                         })()}
+                        <button
+                          onClick={() => copyCode(stripCodeFence(s.code), i)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-muted-foreground/50 hover:text-muted-foreground border border-transparent hover:border-white/15 hover:bg-white/5 transition-colors"
+                          title="複製程式碼"
+                        >
+                          {copiedIdx === i
+                            ? <><CheckCheck className="w-3 h-3 text-emerald-400" /><span className="text-emerald-400">已複製</span></>
+                            : <><Copy className="w-3 h-3" />複製</>}
+                        </button>
                       </div>
                       <div className="overflow-x-auto custom-scrollbar-x bg-[#0d1117]">
                         {(() => {
@@ -319,6 +398,18 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                       + 新增筆記
                     </button>
                   )}
+
+                  {/* Visualization — 暫時停用，填入 ANTHROPIC_API_KEY 後取消此區塊註解
+                  {s.code && (
+                    <CodeVisualizer
+                      recordId={recordId}
+                      solutionIndex={i}
+                      code={s.code}
+                      language={s.language ?? ''}
+                      problemTitle={problemTitle}
+                    />
+                  )}
+                  */}
                 </>
               )}
             </TabsContent>

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   Clock4,
   Code2,
   ExternalLink,
@@ -79,6 +80,10 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [descOpen, setDescOpen] = useState(false);
+  const [description, setDescription] = useState<string | undefined>(record.description);
+  const [fetchingDesc, setFetchingDesc] = useState(false);
+  const [descError, setDescError] = useState<string | null>(null);
 
   const cycleProficiency = async () => {
     const next =
@@ -106,7 +111,28 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
     record.lc_slug ??
     record.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
+  const fetchDescription = async () => {
+    setFetchingDesc(true);
+    setDescError(null);
+    try {
+      const res = await fetch('/api/fetch-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: leetcodeSlug, recordId: record.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      setDescription(json.description);
+      setDescOpen(true);
+    } catch (e) {
+      setDescError((e as Error).message);
+    } finally {
+      setFetchingDesc(false);
+    }
+  };
+
   return (
+    <>
     <div className="rounded-xl border border-white/8 bg-white/[0.015] p-5 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -206,5 +232,48 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
         <ReviewBadge proficiency={proficiency} updatedAt={record.updated_at} now={now} />
       </div>
     </div>
+
+    {/* Collapsible problem description */}
+    <div className="rounded-xl border border-white/8 overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-3">
+        <button
+          onClick={() => description && setDescOpen((v) => !v)}
+          className="flex items-center gap-2 text-xs font-semibold text-muted-foreground/60 hover:text-foreground transition-colors"
+        >
+          <span>📄 題目描述</span>
+          {description && (
+            <ChevronDown
+              className={`w-4 h-4 transition-transform duration-200 ${descOpen ? 'rotate-180' : ''}`}
+            />
+          )}
+        </button>
+        {!description && (
+          <button
+            onClick={fetchDescription}
+            disabled={fetchingDesc}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border border-white/12 text-muted-foreground/60 hover:text-foreground hover:border-white/25 hover:bg-white/5 disabled:opacity-40 transition-colors"
+          >
+            {fetchingDesc ? '載入中...' : '載入描述'}
+          </button>
+        )}
+      </div>
+      {descError && (
+        <p className="px-5 pb-3 text-xs text-rose-400">{descError}</p>
+      )}
+      {description && descOpen && (
+        <div
+          className="px-6 pb-6 pt-1 border-t border-white/5 bg-white/[0.01] text-sm text-foreground/75 leading-relaxed
+            [&_p]:mb-3 [&_p:last-child]:mb-0
+            [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_li]:mb-1
+            [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3
+            [&_pre]:bg-white/5 [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:my-3 [&_pre]:text-xs [&_pre]:font-mono
+            [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono
+            [&_strong]:text-foreground [&_em]:text-foreground/60
+            [&_sup]:text-[10px]"
+          dangerouslySetInnerHTML={{ __html: description }}
+        />
+      )}
+    </div>
+    </>
   );
 }

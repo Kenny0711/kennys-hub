@@ -19,6 +19,7 @@ export interface LeetcodeRecord {
   proficiency: Proficiency;
   solutions: Solution[];
   lc_slug?: string;
+  description?: string;
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +32,7 @@ export interface WebhookPayload {
   code: string;
   language: string;
   lc_slug?: string;
+  description?: string;
   /** 匯入模式：若 problem_id 已存在則跳過，不新增 solution */
   skip_if_exists?: boolean;
   /** 只更新 tags 欄位，不新增 solution */
