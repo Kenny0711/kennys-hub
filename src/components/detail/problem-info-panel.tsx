@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LeetcodeRecord, Proficiency } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import {
   Code2,
   ExternalLink,
   RotateCcw,
+  Trash2,
 } from 'lucide-react';
 
 const PROFICIENCY_ORDER: Proficiency[] = ['生疏', '理解', '熟練'];
@@ -72,8 +74,11 @@ function ReviewBadge({
 }
 
 export default function ProblemInfoPanel({ record, now }: { record: LeetcodeRecord; now: string }) {
+  const router = useRouter();
   const [proficiency, setProficiency] = useState<Proficiency>(record.proficiency);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const cycleProficiency = async () => {
     const next =
@@ -84,6 +89,17 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
     const supabase = createClient();
     await supabase.from('leetcode_records').update({ proficiency: next }).eq('id', record.id);
     setSaving(false);
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setDeleting(true);
+    if (!USE_MOCK) {
+      const supabase = createClient();
+      await supabase.from('leetcode_records').delete().eq('id', record.id);
+    }
+    router.push('/problems');
+    router.refresh();
   };
 
   const leetcodeSlug =
@@ -99,14 +115,47 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
           </span>
           <h1 className="text-xl font-bold leading-snug mt-0.5">{record.title}</h1>
         </div>
-        <a
-          href={`https://leetcode.com/problems/${leetcodeSlug}/`}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-1 shrink-0 text-xs text-muted-foreground/60 hover:text-foreground transition-colors mt-1"
-        >
-          LeetCode <ExternalLink className="w-3 h-3" />
-        </a>
+        <div className="flex items-center gap-2 shrink-0 mt-1">
+          <a
+            href={`https://leetcode.com/problems/${leetcodeSlug}/`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-foreground transition-colors"
+          >
+            LeetCode <ExternalLink className="w-3 h-3" />
+          </a>
+          {confirmDelete ? (
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[11px] text-muted-foreground/50 hover:text-foreground"
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+              >
+                取消
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[11px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? '刪除中...' : '確認刪除'}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-muted-foreground/30 hover:text-rose-400 hover:bg-rose-500/10"
+              onClick={handleDelete}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
