@@ -40,7 +40,7 @@ export interface ImportProgress {
   done: boolean;
 }
 
-const DEFAULT_WEBHOOK_URL = 'http://localhost:3000/api/webhook';
+const DEFAULT_WEBHOOK_URL = 'https://vibe-leetcode.vercel.app/api/webhook';
 const DEFAULT_WEBHOOK_SECRET = 'dev-secret';
 
 function readSettings(): Promise<TrackerSettings> {

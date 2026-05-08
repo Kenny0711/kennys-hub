@@ -3,6 +3,7 @@ const secretInput = document.getElementById('webhook-secret') as HTMLInputElemen
 const captureBtn = document.getElementById('capture-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
 const resultEl = document.getElementById('result') as HTMLDivElement;
+const DEFAULT_WEBHOOK_URL = 'https://vibe-leetcode.vercel.app/api/webhook';
 
 // ── 歷史匯入 UI ───────────────────────────────────────────────────────────────
 const importBtn = document.getElementById('import-btn') as HTMLButtonElement;
@@ -210,6 +211,10 @@ importBtn.addEventListener('click', async () => {
 // Restore saved settings
 chrome.storage.local.get(['webhookUrl', 'webhookSecret'], ({ webhookUrl, webhookSecret }) => {
   if (webhookUrl) webhookInput.value = webhookUrl as string;
+  else {
+    webhookInput.value = DEFAULT_WEBHOOK_URL;
+    chrome.storage.local.set({ webhookUrl: DEFAULT_WEBHOOK_URL });
+  }
   if (webhookSecret) secretInput.value = webhookSecret as string;
 });
 

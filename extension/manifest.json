@@ -4,7 +4,12 @@
   "version": "1.0.0",
   "description": "一鍵擷取 LeetCode 解題資料，傳送到個人 Dashboard",
   "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*", "https://leetcode.com/*"],
+  "host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "https://vibe-leetcode.vercel.app/*",
+    "https://leetcode.com/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "LC Tracker"
