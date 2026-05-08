@@ -18,10 +18,21 @@ interface WebhookSyncMessage {
   data: ProblemData;
 }
 
+interface BatchImportMessage {
+  type: 'BATCH_IMPORT';
+  problems: ProblemData[];
+}
+
 interface WebhookSyncResponse {
   ok: boolean;
   status: number;
   body: string;
+}
+
+export interface ImportProgress {
+  current: number;
+  total: number;
+  done: boolean;
 }
 
 const DEFAULT_WEBHOOK_URL = 'http://localhost:3000/api/webhook';
@@ -60,11 +71,54 @@ async function postToWebhook(data: ProblemData): Promise<WebhookSyncResponse> {
   }
 }
 
-chrome.runtime.onMessage.addListener((message: WebhookSyncMessage, _sender, sendResponse) => {
-  if (message.type !== 'WEBHOOK_SYNC') return false;
+async function runBatchImport(problems: ProblemData[]): Promise<void> {
+  const { webhookUrl, webhookSecret } = await readSettings();
+  const targetUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
+  const total = problems.length;
 
-  postToWebhook(message.data).then(sendResponse);
-  return true;
-});
+  await chrome.storage.local.set({
+    importProgress: { current: 0, total, done: false } satisfies ImportProgress,
+  });
+
+  for (let i = 0; i < problems.length; i++) {
+    try {
+      await fetch(targetUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-webhook-secret': webhookSecret || DEFAULT_WEBHOOK_SECRET,
+        },
+        body: JSON.stringify({ ...problems[i], skip_if_exists: true }),
+      });
+    } catch {
+      // 單題失敗繼續
+    }
+
+    await chrome.storage.local.set({
+      importProgress: {
+        current: i + 1,
+        total,
+        done: i + 1 === total,
+      } satisfies ImportProgress,
+    });
+
+    // 限速：每題間隔 80ms，避免打爆 webhook
+    await new Promise((r) => setTimeout(r, 80));
+  }
+}
+
+chrome.runtime.onMessage.addListener(
+  (message: WebhookSyncMessage | BatchImportMessage, _sender, sendResponse) => {
+    if (message.type === 'WEBHOOK_SYNC') {
+      postToWebhook(message.data).then(sendResponse);
+      return true;
+    }
+    if (message.type === 'BATCH_IMPORT') {
+      runBatchImport(message.problems).then(() => sendResponse({ ok: true }));
+      return true;
+    }
+    return false;
+  }
+);
 
 export {};

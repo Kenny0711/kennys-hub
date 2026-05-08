@@ -60,6 +60,11 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (existing) {
+    // 歷史匯入模式：已存在就直接跳過，不新增 solution
+    if (body.skip_if_exists) {
+      return NextResponse.json({ status: 'skipped', id: existing.id });
+    }
+
     const solutions = [...(existing.solutions ?? []), solution];
     const { error } = await supabase
       .from('leetcode_records')

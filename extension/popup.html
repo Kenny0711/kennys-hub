@@ -92,6 +92,41 @@
       word-break: break-all;
       line-height: 1.5;
     }
+    .divider {
+      border: none;
+      border-top: 1px solid #1e1e1e;
+      margin: 14px 0;
+    }
+    #import-btn {
+      background: #1d4ed8;
+      font-size: 12px;
+    }
+    #import-btn:hover:not(:disabled) { background: #1e40af; opacity: 1; }
+    #import-progress {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 7px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+    .progress-bar-wrap {
+      height: 3px;
+      background: #2a2a2a;
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      background: #1d4ed8;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.2s;
+    }
   </style>
 </head>
 <body>
@@ -111,6 +146,16 @@
   <button id="capture-btn" disabled>擷取並送出</button>
 
   <div id="result" class="result">等待操作...</div>
+
+  <hr class="divider" />
+
+  <button id="import-btn">📥 匯入 LeetCode 歷史解題</button>
+  <div id="import-progress">
+    <span id="import-msg">準備中...</span>
+    <div class="progress-bar-wrap">
+      <div id="progress-bar"></div>
+    </div>
+  </div>
 
   <script src="dist/popup.js"></script>
 </body>

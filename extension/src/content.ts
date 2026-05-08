@@ -439,10 +439,59 @@ document.addEventListener('__lc_submission_started__', () => {
 
 document.addEventListener('__lc_submission_result__', handleSubmissionResult);
 
+// ── 歷史匯入：從 /api/problems/all/ 取得所有 AC 題目 ──────────────────────────
+
+interface RawStatPair {
+  stat: {
+    frontend_question_id: number;
+    question__title: string;
+    question__title_slug: string;
+  };
+  difficulty: { level: number };
+  status: string;
+}
+
+interface FetchSolvedResult {
+  problems: ProblemData[];
+  error?: string;
+}
+
+async function fetchSolvedProblems(): Promise<FetchSolvedResult> {
+  try {
+    const res = await fetch('https://leetcode.com/api/problems/all/', {
+      credentials: 'include',
+    });
+    if (!res.ok) return { problems: [], error: `HTTP ${res.status}` };
+
+    const json = await res.json();
+    const pairs: RawStatPair[] = json.stat_status_pairs ?? [];
+
+    const DIFF = ['', 'Easy', 'Medium', 'Hard'] as const;
+    const problems: ProblemData[] = pairs
+      .filter((p) => p.status === 'ac')
+      .map((p) => ({
+        problem_id: p.stat.frontend_question_id,
+        title: p.stat.question__title,
+        lc_slug: p.stat.question__title_slug,
+        difficulty: (DIFF[p.difficulty.level] ?? 'Medium') as ProblemData['difficulty'],
+        tags: [],
+        code: '',
+        language: 'python',
+      }));
+
+    return { problems };
+  } catch (e) {
+    return { problems: [], error: (e as Error).message };
+  }
+}
+
 chrome.runtime.onMessage.addListener(
-  (message, _sender, sendResponse: (data: ProblemData) => void) => {
+  (message, _sender, sendResponse: (data: ProblemData | FetchSolvedResult) => void) => {
     if (message.type === 'EXTRACT') {
       extractProblemData().then(sendResponse);
+    }
+    if (message.type === 'FETCH_SOLVED_PROBLEMS') {
+      fetchSolvedProblems().then(sendResponse);
     }
     return true;
   }
