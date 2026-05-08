@@ -78,16 +78,18 @@ function startTagsPolling() {
   if (tagsTimer) return;
   tagsTimer = setInterval(() => {
     chrome.storage.local.get('tagsProgress', (store) => {
-      const prog = store.tagsProgress as ImportProgress | undefined;
+      const prog = store.tagsProgress as (ImportProgress & { total: number }) | undefined;
       if (!prog) return;
-      const pct = prog.total > 0 ? Math.round((prog.current / prog.total) * 100) : 0;
       if (prog.done) {
         setTagsUI(`✓ Tags 補全完成！共 ${prog.total} 題`, 100, '#22c55e');
         tagsBtn.disabled = false;
         tagsBtn.textContent = '🏷️ 補全所有題目 Tags';
         if (tagsTimer) { clearInterval(tagsTimer); tagsTimer = null; }
+      } else if (prog.total === -1) {
+        setTagsUI('正在取得題目清單（需數秒）...', 0, '#94a3b8');
       } else {
-        setTagsUI(`取得 Tags 中 ${prog.current}/${prog.total}（${pct}%）`, pct, '#94a3b8');
+        const pct = prog.total > 0 ? Math.round((prog.current / prog.total) * 100) : 0;
+        setTagsUI(`寫入 Tags ${prog.current}/${prog.total}（${pct}%）`, pct, '#94a3b8');
       }
     });
   }, 500);

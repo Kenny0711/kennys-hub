@@ -117,6 +117,10 @@ async function runBatchTags(problems: ProblemData[]): Promise<void> {
   const targetUrl = webhookUrl || DEFAULT_WEBHOOK_URL;
   const total = problems.length;
 
+  await chrome.storage.local.set({
+    tagsProgress: { current: 0, total, done: false } satisfies ImportProgress,
+  });
+
   for (let i = 0; i < problems.length; i++) {
     try {
       await fetch(targetUrl, {
@@ -130,12 +134,12 @@ async function runBatchTags(problems: ProblemData[]): Promise<void> {
     } catch {
       // 單題失敗繼續
     }
+
+    await chrome.storage.local.set({
+      tagsProgress: { current: i + 1, total, done: i + 1 === total } satisfies ImportProgress,
+    });
     await new Promise((r) => setTimeout(r, 80));
   }
-
-  await chrome.storage.local.set({
-    tagsProgress: { current: total, total, done: true } satisfies ImportProgress,
-  });
 }
 
 chrome.runtime.onMessage.addListener(
