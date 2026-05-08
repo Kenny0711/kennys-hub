@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
     time_complexity: '',
     space_complexity: '',
     notes: '',
+    submitted_at: new Date().toISOString(),
   };
 
   const { data: existing } = await supabase

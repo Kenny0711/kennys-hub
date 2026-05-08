@@ -57,7 +57,7 @@ function ChipTick({ x = 0, y = 0, payload, index = 0 }: TickProps) {
         y={tickY + 6 + CHIP_H / 2}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={10}
+        fontSize={11}
         fontWeight={600}
         fill={color}
       >
@@ -91,8 +91,8 @@ export default function TagChart({ records }: Props) {
   const totalH = CHART_H + AXIS_MARGIN;
 
   return (
-    <div className="space-y-3 h-full flex flex-col">
-      <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground shrink-0">
+    <div className="flex h-full flex-col space-y-4">
+      <h2 className="shrink-0 text-base font-semibold uppercase tracking-widest text-muted-foreground">
         Tags
       </h2>
 
@@ -124,7 +124,7 @@ export default function TagChart({ records }: Props) {
                 background: '#1c1c1c',
                 border: '1px solid #3a3a3a',
                 borderRadius: 8,
-                fontSize: 12,
+                fontSize: 13,
                 color: '#f1f5f9',
               }}
               labelStyle={{ color: '#94a3b8', marginBottom: 2 }}
@@ -135,7 +135,7 @@ export default function TagChart({ records }: Props) {
               <LabelList
                 dataKey="value"
                 position="top"
-                style={{ fill: '#e2e8f0', fontSize: 11, fontWeight: 700 }}
+                style={{ fill: '#e2e8f0', fontSize: 12, fontWeight: 700 }}
               />
               {data.map((_, i) => (
                 <Cell
@@ -150,7 +150,7 @@ export default function TagChart({ records }: Props) {
       </div>
 
       {data.length > 8 && (
-        <p className="text-[10px] text-muted-foreground/50 text-right shrink-0">
+        <p className="shrink-0 text-right text-xs text-muted-foreground/60">
           共 {data.length} 個 Tag · 向右滾動查看更多
         </p>
       )}

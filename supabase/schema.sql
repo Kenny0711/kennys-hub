@@ -10,6 +10,7 @@ create table public.leetcode_records (
   proficiency  text not null default '理解' check (proficiency in ('生疏', '理解', '熟練')),
   solutions    jsonb not null default '[]'::jsonb,
   lc_slug      text,
+  description  text,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );

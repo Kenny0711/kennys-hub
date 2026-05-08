@@ -8,6 +8,7 @@ export interface Solution {
   time_complexity: string;
   space_complexity: string;
   notes: string;
+  submitted_at?: string;
 }
 
 export interface LeetcodeRecord {

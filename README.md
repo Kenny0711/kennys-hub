@@ -6,6 +6,16 @@
 
 ---
 
+## 2026-05-08 最新更新
+
+- Dashboard 重構成更完整的深色工程師風格：Navbar 搜尋框、GitHub 快捷鍵、動態問候語、GitHub 頭像。
+- 統計總覽升級：趨勢 Badge、難度百分比、熟練度圓形進度環、250 題 Milestone 進度條。
+- Activity 熱力圖改成只計算「真正有程式碼的提交」，避免歷史匯入的空 code 題目把本週目標灌爆。
+- Webhook 會在新解法寫入 `submitted_at`，之後本週 / 本月統計可以用實際提交時間計算。
+- 目標區改成 Google / SWE Interview Ready，提醒目前刷題方向。
+
+---
+
 ## 架構
 
 ```
@@ -26,9 +36,13 @@ Next.js Dashboard（統計 / 題庫 / 詳情）
 ## 功能
 
 ### Dashboard
-- 總題數、Easy / Medium / Hard 分佈
-- 365 天刷題熱力圖
+- 頂部 Navbar：全域搜尋框、快捷新增、GitHub 原始碼入口
+- Hero 區：依照台北時間顯示早安 / 午安 / 晚安，右側顯示 GitHub 頭像
+- 統計總覽：總題數、熟練比例、Easy / Medium / Hard 分佈與趨勢 Badge
+- 250 題 Milestone：顯示目前完成百分比與距離目標還差幾題
+- Activity 熱力圖：只計算有實際程式碼的提交，不把批量匯入空記錄算進刷題量
 - Top Tags 圓餅圖
+- Google 目標提醒區
 
 ### 題庫列表
 - 搜尋、難度篩選、熟練度篩選、Tag 篩選
@@ -84,6 +98,7 @@ create table public.leetcode_records (
   tags         text[] not null default '{}',
   proficiency  text not null default '理解' check (proficiency in ('生疏', '理解', '熟練')),
   solutions    jsonb not null default '[]'::jsonb,
+  lc_slug      text,
   description  text,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
@@ -103,6 +118,11 @@ create trigger trg_leetcode_records_updated_at
 > 若資料表已建立但缺少 `description` 欄位，額外執行：
 > ```sql
 > ALTER TABLE public.leetcode_records ADD COLUMN IF NOT EXISTS description text;
+> ```
+>
+> 若資料表缺少 `lc_slug` 欄位，額外執行：
+> ```sql
+> ALTER TABLE public.leetcode_records ADD COLUMN IF NOT EXISTS lc_slug text;
 > ```
 
 ### 4. 啟動
@@ -129,6 +149,18 @@ npm run dev
 | `NEXT_PUBLIC_USE_MOCK` | `false` |
 
 4. Deploy，完成後將 Extension 的 Webhook URL 改為 Vercel 網址
+
+目前正式 Webhook URL：
+
+```txt
+https://vibe-leetcode.vercel.app/api/webhook
+```
+
+只要 `main` branch push 到 GitHub，Vercel 會自動重新部署雲端網站。部署完成後打開：
+
+```txt
+https://vibe-leetcode.vercel.app/
+```
 
 ---
 
@@ -238,6 +270,7 @@ vibe_leetcode/
 | 問題 | 去哪裡看 |
 |---|---|
 | Dashboard 顯示不對 | 瀏覽器 Console（localhost:3000） |
+| 一直看到 `/api/webhook` | 那是 API 端點，不是 Dashboard；首頁請看 `/` |
 | LeetCode Accepted 沒同步 | LeetCode 題目頁 Console，搜尋 `LC Tracker` |
 | Webhook 寫入失敗 | Console 裡的 `[LC Tracker] Sync failed`，通常是 401 或 500 |
 | Extension 完全沒反應 | `chrome://extensions/` 重新整理 extension，再重新整理 LeetCode 頁面 |

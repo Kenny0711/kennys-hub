@@ -87,12 +87,24 @@ export default function ProficiencyButton({ proficiency }) {
 
 ```
 Dashboard 首頁
+├── Navbar（`src/app/layout.tsx`）
+│     左側：Logo / Dashboard / 題庫
+│     右側：搜尋框、Plus 快捷按鈕、GitHub 原始碼入口
+│
+├── Hero 區（`src/app/page.tsx`）
+│     台北時間日期
+│     早安 / 午安 / 晚安，Kenny
+│     GitHub 頭像（Next Image，需在 next.config.ts 設定 github.com remotePatterns）
+│
 ├── StatsCards（統計卡片）
-│     總題數 / Easy / Medium / Hard 數量
-│     Server Component（直接讀 Supabase）
+│     總題數、熟練圓形進度、Easy / Medium / Hard 數量
+│     趨勢 Badge 顏色要跟卡片主題一致
+│     難度分布下方有 250 題 Next Milestone 進度條
 │
 ├── ActivityHeatmap（熱力圖）
-│     365 天的刷題頻率
+│     26 週刷題頻率
+│     只計算 solutions 裡有 code 的提交，不把歷史匯入空 code 算進活動量
+│     優先使用 solution.submitted_at，舊資料 fallback 到 record.created_at
 │     Client Component（用 CSS Grid 畫）
 │
 └── TagPieChart（Tags 圓餅圖）
@@ -192,3 +204,40 @@ router.refresh();         // 重新整理當前頁面的資料
 背景色是 `#0f0f0f`（非常深的黑色），定義在 `src/app/globals.css`。
 
 UI 元件用大量的 `white/5`、`white/8` 等半透明白色製造層次感，避免純色太死板。
+
+---
+
+## 這次 Dashboard 重構的 Code Review 重點
+
+### 1. 統計數字不能只看 `records.length`
+
+`records.length` 代表資料庫裡有幾題，但不一定代表本週真的寫了幾題。  
+批量匯入歷史解題時，很多題會建立一筆 record，但 `solutions[0].code` 是空字串。
+
+所以 Activity 類統計要先過濾：
+
+```typescript
+record.solutions.some((solution) => solution.code.trim().length > 0)
+```
+
+這樣 `本週目標` 不會從 6/14 變成 97/14。
+
+### 2. 時間統計要用「提交時間」
+
+新的 webhook 會在 solution 裡寫入：
+
+```typescript
+submitted_at: new Date().toISOString()
+```
+
+未來如果同一題重刷，Dashboard 能用每次解法的 `submitted_at` 算本週 / 本月，而不是只看題目第一次建立的 `created_at`。
+
+### 3. UI 顏色要有一致的語意
+
+StatsCards 裡的趨勢 Badge 不再全部使用綠色，而是：
+- 總題數：sky
+- Easy：emerald
+- Medium：amber
+- Hard：rose
+
+這樣使用者掃一眼就知道數據屬於哪個區塊。
