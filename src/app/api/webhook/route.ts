@@ -82,7 +82,6 @@ export async function POST(req: NextRequest) {
       difficulty: body.difficulty,
       tags: body.tags ?? [],
     };
-    if (body.description) updatePayload.description = body.description;
     const { error } = await supabase
       .from('leetcode_records')
       .update(updatePayload)
@@ -101,7 +100,6 @@ export async function POST(req: NextRequest) {
       tags: body.tags,
       proficiency: '理解',
       solutions: [solution],
-      ...(body.description ? { description: body.description } : {}),
     })
     .select('id')
     .single();
