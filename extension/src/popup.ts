@@ -86,10 +86,15 @@ function startTagsPolling() {
         tagsBtn.textContent = '🏷️ 補全所有題目 Tags';
         if (tagsTimer) { clearInterval(tagsTimer); tagsTimer = null; }
       } else if (prog.total === -1) {
-        setTagsUI('正在取得題目清單（需數秒）...', 0, '#94a3b8');
-      } else {
-        const pct = prog.total > 0 ? Math.round((prog.current / prog.total) * 100) : 0;
-        setTagsUI(`寫入 Tags ${prog.current}/${prog.total}（${pct}%）`, pct, '#94a3b8');
+        setTagsUI('正在取得題目清單...', 0, '#94a3b8');
+      } else if (prog.total > 0 && prog.current <= prog.total) {
+        // content script 階段：逐題呼叫 GraphQL 取 tags
+        const pct = Math.round((prog.current / prog.total) * 100);
+        if (prog.current < prog.total) {
+          setTagsUI(`取得 Tags ${prog.current}/${prog.total}（${pct}%）`, pct, '#94a3b8');
+        } else {
+          setTagsUI(`寫入 Supabase 中...`, 99, '#94a3b8');
+        }
       }
     });
   }, 500);

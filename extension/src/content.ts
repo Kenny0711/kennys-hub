@@ -487,73 +487,13 @@ async function fetchSolvedProblems(): Promise<FetchSolvedResult> {
 
 // ── Tags 補全：逐題呼叫 GraphQL 取得 topicTags ────────────────────────────────
 
-// 用 GraphQL 一次取得所有已 AC 題目（含 tags），分頁直到取完
-async function fetchSolvedWithTagsViaGraphQL(): Promise<ProblemData[]> {
-  const LIMIT = 100;
-  let skip = 0;
-  const result: ProblemData[] = [];
-
-  while (true) {
-    let res: Response;
-    try {
-      res = await fetch('https://leetcode.com/graphql', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `
-            query($skip:Int!,$limit:Int!){
-              questionList(categorySlug:"",filters:{},skip:$skip,limit:$limit){
-                totalNum
-                data{
-                  questionFrontendId title titleSlug difficulty
-                  topicTags{name}
-                  status
-                }
-              }
-            }
-          `,
-          variables: { skip, limit: LIMIT },
-        }),
-      });
-    } catch {
-      break;
-    }
-    if (!res.ok) break;
-
-    const json = await res.json();
-    const list = json?.data?.questionList;
-    if (!list) break;
-
-    for (const q of list.data ?? []) {
-      if (q.status === 'ac') {
-        result.push({
-          problem_id: parseInt(q.questionFrontendId, 10),
-          title: q.title,
-          lc_slug: q.titleSlug,
-          difficulty: q.difficulty as ProblemData['difficulty'],
-          tags: (q.topicTags ?? []).map((t: { name: string }) => t.name),
-          code: '',
-          language: 'python',
-        });
-      }
-    }
-
-    if (skip + LIMIT >= list.totalNum) break;
-    skip += LIMIT;
-    await new Promise((r) => setTimeout(r, 200));
-  }
-
-  return result;
-}
-
 async function enrichWithTags(): Promise<void> {
-  // 先標記「取得題單中」
+  // 立即標記「取得題單中」，讓 popup 顯示正確狀態
   await chrome.storage.local.set({ tagsProgress: { current: 0, total: -1, done: false } });
 
-  const problems = await fetchSolvedWithTagsViaGraphQL();
-
-  if (!problems.length) {
+  // 用已驗證可用的 /api/problems/all/ 取得 AC 題目清單
+  const { problems, error } = await fetchSolvedProblems();
+  if (error || !problems.length) {
     await chrome.storage.local.set({ tagsProgress: { current: 0, total: 0, done: true } });
     return;
   }
@@ -561,8 +501,23 @@ async function enrichWithTags(): Promise<void> {
   const total = problems.length;
   await chrome.storage.local.set({ tagsProgress: { current: 0, total, done: false } });
 
-  // 傳給 background 批量 POST（已含 tags）
-  chrome.runtime.sendMessage({ type: 'BATCH_TAGS', problems });
+  const enriched: ProblemData[] = [];
+  for (let i = 0; i < total; i++) {
+    const p = problems[i];
+    const meta = await fetchQuestionMeta(p.lc_slug);
+    enriched.push({
+      ...p,
+      tags: meta?.topicTags?.map((t) => t.name) ?? [],
+      title: meta?.title ?? p.title,
+      difficulty: ((meta?.difficulty ?? p.difficulty) as ProblemData['difficulty']),
+    });
+    // 進度更新：逐題取 tags 的進度
+    await chrome.storage.local.set({ tagsProgress: { current: i + 1, total, done: false } });
+    await new Promise((r) => setTimeout(r, 180));
+  }
+
+  // 傳給 background 批量 POST
+  chrome.runtime.sendMessage({ type: 'BATCH_TAGS', problems: enriched });
 }
 
 chrome.runtime.onMessage.addListener(
