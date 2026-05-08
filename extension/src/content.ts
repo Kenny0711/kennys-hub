@@ -488,36 +488,38 @@ async function fetchSolvedProblems(): Promise<FetchSolvedResult> {
 // ── Tags 補全：逐題呼叫 GraphQL 取得 topicTags ────────────────────────────────
 
 async function enrichWithTags(): Promise<void> {
-  // 立即標記「取得題單中」，讓 popup 顯示正確狀態
-  await chrome.storage.local.set({ tagsProgress: { current: 0, total: -1, done: false } });
+  try {
+    await chrome.storage.local.set({ tagsProgress: { current: 0, total: -1, done: false } });
 
-  // 用已驗證可用的 /api/problems/all/ 取得 AC 題目清單
-  const { problems, error } = await fetchSolvedProblems();
-  if (error || !problems.length) {
+    const { problems, error } = await fetchSolvedProblems();
+    if (error || !problems.length) {
+      await chrome.storage.local.set({ tagsProgress: { current: 0, total: 0, done: true } });
+      return;
+    }
+
+    const total = problems.length;
+    await chrome.storage.local.set({ tagsProgress: { current: 0, total, done: false } });
+
+    const enriched: ProblemData[] = [];
+    for (let i = 0; i < total; i++) {
+      const p = problems[i];
+      const meta = await fetchQuestionMeta(p.lc_slug);
+      enriched.push({
+        ...p,
+        tags: meta?.topicTags?.map((t) => t.name) ?? [],
+        title: meta?.title ?? p.title,
+        difficulty: ((meta?.difficulty ?? p.difficulty) as ProblemData['difficulty']),
+      });
+      await chrome.storage.local.set({ tagsProgress: { current: i + 1, total, done: false } });
+      await new Promise((r) => setTimeout(r, 180));
+    }
+
+    chrome.runtime.sendMessage({ type: 'BATCH_TAGS', problems: enriched });
+  } catch (e) {
+    // 任何錯誤都要標記 done，避免 popup 永遠卡住
     await chrome.storage.local.set({ tagsProgress: { current: 0, total: 0, done: true } });
-    return;
+    console.error('[LC Tracker] enrichWithTags error:', e);
   }
-
-  const total = problems.length;
-  await chrome.storage.local.set({ tagsProgress: { current: 0, total, done: false } });
-
-  const enriched: ProblemData[] = [];
-  for (let i = 0; i < total; i++) {
-    const p = problems[i];
-    const meta = await fetchQuestionMeta(p.lc_slug);
-    enriched.push({
-      ...p,
-      tags: meta?.topicTags?.map((t) => t.name) ?? [],
-      title: meta?.title ?? p.title,
-      difficulty: ((meta?.difficulty ?? p.difficulty) as ProblemData['difficulty']),
-    });
-    // 進度更新：逐題取 tags 的進度
-    await chrome.storage.local.set({ tagsProgress: { current: i + 1, total, done: false } });
-    await new Promise((r) => setTimeout(r, 180));
-  }
-
-  // 傳給 background 批量 POST
-  chrome.runtime.sendMessage({ type: 'BATCH_TAGS', problems: enriched });
 }
 
 chrome.runtime.onMessage.addListener(

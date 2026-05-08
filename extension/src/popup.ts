@@ -100,18 +100,34 @@ function startTagsPolling() {
   }, 500);
 }
 
+function resetTagsState() {
+  chrome.storage.local.remove('tagsProgress');
+  tagsProgressEl.style.display = 'none';
+  tagsBtn.disabled = false;
+  tagsBtn.textContent = '🏷️ 補全所有題目 Tags';
+  if (tagsTimer) { clearInterval(tagsTimer); tagsTimer = null; }
+}
+
 // 啟動時恢復 tags 進度
 chrome.storage.local.get('tagsProgress', (store) => {
   const prog = store.tagsProgress as ImportProgress | undefined;
   if (!prog) return;
-  const pct = prog.total > 0 ? Math.round((prog.current / prog.total) * 100) : 0;
   if (prog.done) {
-    setTagsUI(`✓ 上次 Tags 補全完成，共 ${prog.total} 題`, 100, '#22c55e');
+    if (prog.total > 0) {
+      setTagsUI(`✓ 上次 Tags 補全完成，共 ${prog.total} 題`, 100, '#22c55e');
+    }
+    // total=0 表示出錯，不顯示
   } else {
-    setTagsUI(`取得 Tags 中 ${prog.current}/${prog.total}（${pct}%）`, pct, '#94a3b8');
-    tagsBtn.disabled = true;
-    tagsBtn.textContent = '補全中...';
-    startTagsPolling();
+    // 未完成：顯示重置按鈕讓使用者可以手動解卡
+    tagsProgressEl.style.display = 'block';
+    importMsg.style.color = '#94a3b8';
+    tagsMsg.textContent = '上次補全未完成 — ';
+    const resetLink = document.createElement('span');
+    resetLink.textContent = '點此重置';
+    resetLink.style.cssText = 'color:#60a5fa;cursor:pointer;text-decoration:underline;';
+    resetLink.addEventListener('click', resetTagsState);
+    tagsMsg.appendChild(resetLink);
+    tagsBar.style.width = '0%';
   }
 });
 
