@@ -30,7 +30,7 @@ export default async function HomePage() {
 
             <h1 className="text-3xl font-bold tracking-tight md:text-5xl">嗨，我是 Kenny</h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-400">
-              國立陽明交通大學 多媒體工程所碩士生，專注於深度學習、強化學習與工程系統開發。
+              國立陽明交通大學 多媒體工程所碩士生。
             </p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -66,13 +66,18 @@ export default async function HomePage() {
           </div>
 
           <div className="shrink-0">
-            <Image
-              src="https://github.com/Kenny0711.png"
-              alt="Kenny GitHub avatar"
-              width={104}
-              height={104}
-              className="h-24 w-24 rounded-full border border-blue-300/20 bg-zinc-900 object-cover shadow-[0_0_34px_rgba(59,130,246,0.18)] md:h-28 md:w-28"
-            />
+            <div className="relative inline-block">
+              <Image
+                src="https://github.com/Kenny0711.png"
+                alt="Kenny GitHub avatar"
+                width={104}
+                height={104}
+                className="h-24 w-24 rounded-full border border-blue-300/20 bg-zinc-900 object-cover shadow-[0_0_34px_rgba(59,130,246,0.18)] md:h-28 md:w-28"
+              />
+              <div className="absolute bottom-0 right-0 z-10 translate-x-[10%] translate-y-[10%] rounded-full border border-blue-500/80 bg-zinc-900 px-2 py-0.5 font-mono text-[10px] font-bold text-cyan-400 shadow-[0_0_8px_rgba(59,130,246,0.6)] sm:text-xs">
+                Lv.23
+              </div>
+            </div>
           </div>
         </div>
       </div>
