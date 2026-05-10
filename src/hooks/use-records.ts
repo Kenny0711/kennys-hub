@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { LeetcodeRecord } from '@/lib/types';
 import { MOCK_RECORDS } from '@/lib/mock-data';
 
@@ -13,14 +12,15 @@ export function useRecords() {
 
   useEffect(() => {
     if (USE_MOCK) return;
-    const supabase = createClient();
-    supabase
-      .from('leetcode_records')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setError(error.message);
-        else setRecords((data as LeetcodeRecord[]) ?? []);
+    fetch('/api/records')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) setError(data.error);
+        else setRecords(data as LeetcodeRecord[]);
+        setLoading(false);
+      })
+      .catch((e) => {
+        setError(e.message);
         setLoading(false);
       });
   }, []);

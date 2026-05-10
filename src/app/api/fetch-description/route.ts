@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export async function POST(req: NextRequest) {
   let body: { slug: string; recordId: string };
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save to Supabase
-    const supabase = await createClient();
+    const supabase = getSupabaseAdmin();
     const { error } = await supabase
       .from('leetcode_records')
       .update({ description })

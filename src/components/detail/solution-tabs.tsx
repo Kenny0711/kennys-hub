@@ -7,7 +7,6 @@ import rehypeHighlight from 'rehype-highlight';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Solution } from '@/lib/types';
-import { createClient } from '@/lib/supabase/client';
 import {
   Clock, Database, CalendarPlus, CalendarCheck, Layers,
   Pencil, X, Check, Loader2, Copy, CheckCheck, Trash2,
@@ -205,8 +204,11 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
       if (cur >= newLen) setActiveTab(String(newLen - 1));
     }
     if (USE_MOCK) return;
-    const supabase = createClient();
-    await supabase.from('leetcode_records').update({ solutions: newSolutions }).eq('id', recordId);
+    await fetch(`/api/records/${recordId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ solutions: newSolutions }),
+    });
   };
 
   const fmt = (d: string) => new Date(d).toLocaleDateString('zh-TW');
@@ -233,8 +235,11 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
     setDraft(null);
     if (USE_MOCK) return;
     setSaving(true);
-    const supabase = createClient();
-    await supabase.from('leetcode_records').update({ solutions: newSolutions }).eq('id', recordId);
+    await fetch(`/api/records/${recordId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ solutions: newSolutions }),
+    });
     setSaving(false);
   };
 

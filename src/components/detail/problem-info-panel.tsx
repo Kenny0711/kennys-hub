@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { LeetcodeRecord, Proficiency } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/client';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -91,8 +90,11 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
     setProficiency(next);
     if (USE_MOCK) return;
     setSaving(true);
-    const supabase = createClient();
-    await supabase.from('leetcode_records').update({ proficiency: next }).eq('id', record.id);
+    await fetch(`/api/records/${record.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ proficiency: next }),
+    });
     setSaving(false);
   };
 
@@ -100,8 +102,7 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setDeleting(true);
     if (!USE_MOCK) {
-      const supabase = createClient();
-      await supabase.from('leetcode_records').delete().eq('id', record.id);
+      await fetch(`/api/records/${record.id}`, { method: 'DELETE' });
     }
     router.push('/problems');
     router.refresh();

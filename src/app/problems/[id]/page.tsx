@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { MOCK_RECORDS } from '@/lib/mock-data';
-import { createClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import ProblemInfoPanel from '@/components/detail/problem-info-panel';
 import SolutionTabs from '@/components/detail/solution-tabs';
 
@@ -19,7 +19,7 @@ export default async function ProblemDetailPage({
   if (USE_MOCK) {
     record = MOCK_RECORDS.find((r) => r.id === id) ?? null;
   } else {
-    const supabase = await createClient();
+    const supabase = getSupabaseAdmin();
     const { data } = await supabase
       .from('leetcode_records')
       .select('*')
