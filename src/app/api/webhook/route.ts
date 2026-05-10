@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { WebhookPayload } from '@/lib/types';
 
 function stripCodeFence(code: string): string {
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  const supabase = getSupabaseAdmin();
 
   const code = stripCodeFence(body.code ?? '');
   const language = normalizeLanguage(body.language, code);
