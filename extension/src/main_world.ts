@@ -1,4 +1,4 @@
-type MonacoEditorModel = {
+﻿type MonacoEditorModel = {
   getValue?: () => string;
 };
 
@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-console.info('[LC Tracker] main world loaded', window.location.href);
+console.info('[Kenny 的研發日誌] main world loaded', window.location.href);
 
 // Runs in MAIN world, where LeetCode exposes window.monaco.
 document.addEventListener('__lc_get_code__', () => {
@@ -70,12 +70,12 @@ function asSubmissionResult(value: unknown): SubmissionResult | null {
 function dispatchSubmissionResult(value: unknown) {
   const result = asSubmissionResult(value);
   if (!result) return;
-  console.info('[LC Tracker] submission check intercepted', result);
+  console.info('[Kenny 的研發日誌] submission check intercepted', result);
   document.dispatchEvent(new CustomEvent('__lc_submission_result__', { detail: JSON.stringify(result) }));
 }
 
 function dispatchSubmissionStarted(value?: unknown) {
-  console.info('[LC Tracker] submit request intercepted', value ?? '');
+  console.info('[Kenny 的研發日誌] submit request intercepted', value ?? '');
   document.dispatchEvent(
     new CustomEvent('__lc_submission_started__', {
       detail: typeof value === 'undefined' ? '' : JSON.stringify(value),

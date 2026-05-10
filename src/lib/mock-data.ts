@@ -1,4 +1,110 @@
-import { LeetcodeRecord } from './types';
+import { LeetcodeRecord, Project } from './types';
+
+export const LEGACY_MOCK_PROJECTS: Project[] = [
+  {
+    id: 'project-maskgit',
+    title: 'DLP: MaskGiT',
+    project_url: 'https://github.com/Kenny0711',
+    description:
+      'A visual research build that studies masked token generation, iterative decoding, and image synthesis workflows for deep learning practice.',
+    image_url: '/projects/maskgit.svg',
+    tags: ['PyTorch', 'Transformer', 'DLP'],
+    is_featured: true,
+  },
+  {
+    id: 'project-continual-rl',
+    title: 'Unforgetting: Continual RL',
+    project_url: 'https://github.com/Kenny0711',
+    description:
+      '強化學習交通控制研究，聚焦 continual learning、policy retention，以及多場景交通號誌策略的穩定遷移。',
+    image_url: '/projects/continual-rl.svg',
+    tags: ['RL', 'PyTorch', 'SUMO'],
+    is_featured: true,
+  },
+  {
+    id: 'project-leetcode-tracker',
+    title: 'LeetCode Learning Tracker',
+    project_url: 'https://github.com/Kenny0711/vibe-leetcode',
+    description:
+      '本專案開發紀錄：Chrome Extension、Supabase、Next.js dashboard 與刷題複習流程整合。',
+    image_url: '/projects/dev-hub.svg',
+    tags: ['Next.js', 'Supabase', 'TypeScript'],
+    is_featured: true,
+  },
+];
+
+export const MOCK_PROJECTS: Project[] = [
+  {
+    id: 'dlp-backpropagation',
+    title: 'Backpropagation from Scratch',
+    description:
+      'Goal: Build and train a fully connected neural network from scratch using only Python and NumPy. This project focuses on understanding the mechanics behind forward propagation, manual backpropagation, activation functions, SGD, and momentum-based optimization by validating the model on XOR and linear classification tasks.',
+    project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%201',
+    image_url: '/projects/backpropagation.svg',
+    tags: ['NumPy', 'Backpropagation', 'MLP'],
+    is_featured: false,
+  },
+  {
+    id: 'dlp-semantic-segmentation',
+    title: 'Binary Semantic Segmentation',
+    description:
+      'Goal: Train image segmentation models that can separate pet foregrounds from backgrounds on the Oxford-IIIT Pet dataset. The implementation compares UNet and ResNet34-UNet, builds the full PyTorch training and evaluation pipeline, and uses Dice score plus inference outputs to measure segmentation quality.',
+    project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%202',
+    image_url: '/projects/segmentation.svg',
+    tags: ['PyTorch', 'UNet', 'Segmentation'],
+    is_featured: true,
+  },
+  {
+    id: 'dlp-maskgit-inpainting',
+    title: 'MaskGIT Image Inpainting',
+    description:
+      'Goal: Use a pretrained VQGAN tokenizer with a Masked Bidirectional Transformer to reconstruct masked image regions through iterative token prediction. The work explores mask scheduling, transformer-based visual token modeling, image inpainting inference, and FID-based evaluation of generative quality.',
+    project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%203',
+    image_url: '/projects/maskgit.svg',
+    tags: ['PyTorch', 'VQGAN', 'Transformer'],
+    is_featured: true,
+  },
+  {
+    id: 'dlp-conditional-vae-video',
+    title: 'Conditional VAE Video Prediction',
+    description:
+      'Goal: Implement stochastic video generation with a learned prior to predict future dance frames from conditional signals. This project studies Conditional VAE training, the reparameterization trick, KL annealing, teacher forcing schedules, reconstruction loss, and PSNR evaluation over long video sequences.',
+    project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%204',
+    image_url: '/projects/video-vae.svg',
+    tags: ['PyTorch', 'CVAE', 'Video Prediction'],
+    is_featured: false,
+  },
+  {
+    id: 'dlp-dqn-control',
+    title: 'Deep Q-Network Control',
+    description:
+      'Goal: Implement Deep Q-Network agents and variants for discrete control tasks. The project emphasizes reinforcement learning fundamentals including experience replay, target networks, value estimation, exploration, evaluation rollouts, and recorded videos that make policy behavior easier to inspect.',
+    project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%205',
+    image_url: '/projects/dqn-control.svg',
+    tags: ['PyTorch', 'DQN', 'Reinforcement Learning'],
+    is_featured: false,
+  },
+  {
+    id: 'dlp-conditional-ddpm',
+    title: 'Conditional DDPM Image Generation',
+    description:
+      'Goal: Build a conditional denoising diffusion model that generates iCLEVR images from multi-label object conditions. The implementation combines a conditional UNet, cosine noise scheduling, classifier-free guidance, AdamW training, inference scale sweeps, and evaluator-based accuracy checks.',
+    project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%206',
+    image_url: '/projects/ddpm-generation.svg',
+    tags: ['PyTorch', 'Diffusion', 'Generative AI'],
+    is_featured: true,
+  },
+  {
+    id: 'dlp-sumo-lcpo',
+    title: 'SUMO Traffic Simulation with LCPO',
+    description:
+      'Goal: Apply reinforcement learning to traffic signal control using SUMO and a Taipei road network. The project connects simulation engineering with RL policy design by building road topology from real data, constructing SUMO scenarios, and evaluating adaptive signal-control agents in traffic environments.',
+    project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/final',
+    image_url: '/projects/sumo-lcpo.svg',
+    tags: ['SUMO', 'RL', 'Traffic Simulation'],
+    is_featured: true,
+  },
+];
 
 export const MOCK_RECORDS: LeetcodeRecord[] = [
   {

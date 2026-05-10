@@ -1,4 +1,4 @@
-# LeetCode Learning Tracker
+﻿# Kenny's Dev Hub
 
 個人 LeetCode 刷題追蹤系統。Chrome Extension 自動擷取解題記錄 → 寫入 Supabase → Next.js Dashboard 展示題庫、解法、複習進度。
 
@@ -271,7 +271,7 @@ vibe_leetcode/
 |---|---|
 | Dashboard 顯示不對 | 瀏覽器 Console（localhost:3000） |
 | 一直看到 `/api/webhook` | 那是 API 端點，不是 Dashboard；首頁請看 `/` |
-| LeetCode Accepted 沒同步 | LeetCode 題目頁 Console，搜尋 `LC Tracker` |
-| Webhook 寫入失敗 | Console 裡的 `[LC Tracker] Sync failed`，通常是 401 或 500 |
+| LeetCode Accepted 沒同步 | LeetCode 題目頁 Console，搜尋 `Kenny 的研發日誌` |
+| Webhook 寫入失敗 | Console 裡的 `[Kenny 的研發日誌] Sync failed`，通常是 401 或 500 |
 | Extension 完全沒反應 | `chrome://extensions/` 重新整理 extension，再重新整理 LeetCode 頁面 |
 | Vercel 沒顯示資料 | Vercel → Environments 確認四個環境變數都有填，Redeploy 後再試 |

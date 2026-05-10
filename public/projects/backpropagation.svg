@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Backpropagation cover">
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#050505"/><stop offset=".55" stop-color="#111827"/><stop offset="1" stop-color="#0f766e"/></linearGradient></defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <g fill="none" stroke-linecap="round" stroke-width="8">
+    <path d="M220 190h220M220 337h220M220 484h220M760 190h220M760 337h220M760 484h220" stroke="#67e8f9" opacity=".45"/>
+    <path d="M440 190l320 147M440 337h320M440 484l320-147M440 190l320 294M440 484l320-294" stroke="#5eead4" opacity=".3"/>
+  </g>
+  <g fill="#020617" stroke="#99f6e4" stroke-width="6">
+    <circle cx="220" cy="190" r="38"/><circle cx="220" cy="337" r="38"/><circle cx="220" cy="484" r="38"/>
+    <circle cx="440" cy="190" r="38"/><circle cx="440" cy="337" r="38"/><circle cx="440" cy="484" r="38"/>
+    <circle cx="760" cy="190" r="38"/><circle cx="760" cy="337" r="38"/><circle cx="760" cy="484" r="38"/>
+    <circle cx="980" cy="190" r="38"/><circle cx="980" cy="337" r="38"/><circle cx="980" cy="484" r="38"/>
+  </g>
+  <text x="86" y="606" fill="#ccfbf1" font-family="Cascadia Code, Consolas, monospace" font-size="54" font-weight="700">Backpropagation</text>
+</svg>

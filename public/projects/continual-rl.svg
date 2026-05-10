@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Continual RL cover">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#03110d"/>
+      <stop offset=".56" stop-color="#052e2b"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <path d="M162 556C310 396 422 378 546 442s208 64 338-70c70-72 120-126 178-145" fill="none" stroke="#22d3ee" stroke-width="18" stroke-linecap="round" opacity=".75"/>
+  <path d="M180 460h246V214h170v246h426" fill="none" stroke="#34d399" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity=".52"/>
+  <g fill="#020617" stroke="#5eead4" stroke-width="6">
+    <circle cx="180" cy="460" r="34"/>
+    <circle cx="426" cy="214" r="34"/>
+    <circle cx="596" cy="460" r="34"/>
+    <circle cx="1022" cy="460" r="34"/>
+  </g>
+  <g fill="#bbf7d0" font-family="Cascadia Code, Consolas, monospace">
+    <text x="90" y="116" font-size="28" opacity=".68">policy retention</text>
+    <text x="730" y="165" font-size="28" opacity=".68">traffic control</text>
+    <text x="92" y="614" font-size="58" font-weight="700">Continual RL</text>
+  </g>
+</svg>

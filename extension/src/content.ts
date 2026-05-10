@@ -1,4 +1,4 @@
-interface ProblemData {
+﻿interface ProblemData {
   problem_id: number;
   title: string;
   difficulty: string;
@@ -42,7 +42,7 @@ const FAILURE_STATUSES = [
 ];
 const JUDGING_STATUSES = ['Pending', 'Judging', 'Running', 'Submitting'];
 
-console.info('[LC Tracker] content script loaded', window.location.href);
+console.info('[Kenny 的研發日誌] content script loaded', window.location.href);
 
 let waitingForAccepted = false;
 let syncing = false;
@@ -246,7 +246,7 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
     const syncKey = `${data.problem_id}:${data.language}:${data.code}`;
     if (source === 'auto' && syncKey === lastSyncedKey) return;
 
-    console.info(`[LC Tracker] ${source} sync sending:`, data.problem_id, data.title);
+    console.info(`[Kenny 的研發日誌] ${source} sync sending:`, data.problem_id, data.title);
     const res = await sendWebhookSync(data);
 
     if (!res.ok) {
@@ -254,9 +254,9 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
     }
 
     lastSyncedKey = syncKey;
-    console.info(`[LC Tracker] ${source} sync completed:`, data.problem_id, data.title);
+    console.info(`[Kenny 的研發日誌] ${source} sync completed:`, data.problem_id, data.title);
   } catch (error) {
-    console.error('[LC Tracker] Sync failed:', error);
+    console.error('[Kenny 的研發日誌] Sync failed:', error);
   } finally {
     syncing = false;
   }
@@ -299,11 +299,11 @@ function parseSubmissionDetail(event: Event): SubmissionResult | null {
 
 function startSubmissionWindow(): void {
   waitingForAccepted = true;
-  console.info('[LC Tracker] Submission detected; waiting for Accepted result.');
+  console.info('[Kenny 的研發日誌] Submission detected; waiting for Accepted result.');
 }
 
 function stopWaitingForAccepted(reason?: string): void {
-  if (reason) console.info(`[LC Tracker] Stop waiting for submission: ${reason}`);
+  if (reason) console.info(`[Kenny 的研發日誌] Stop waiting for submission: ${reason}`);
   waitingForAccepted = false;
 }
 
@@ -313,7 +313,7 @@ function handleSubmissionResult(event: Event): void {
 
   const status = normalizeSubmissionStatus(detail);
   if (!status) return;
-  console.info(`[LC Tracker] Submission status: ${status}`);
+  console.info(`[Kenny 的研發日誌] Submission status: ${status}`);
 
   if (status === 'Accepted') {
     if (Date.now() < acceptedSyncCooldownUntil) return;
@@ -522,7 +522,7 @@ async function enrichWithTags(): Promise<void> {
   } catch (e) {
     // 任何錯誤都要標記 done，避免 popup 永遠卡住
     await chrome.storage.local.set({ tagsProgress: { current: 0, total: 0, done: true } });
-    console.error('[LC Tracker] enrichWithTags error:', e);
+    console.error('[Kenny 的研發日誌] enrichWithTags error:', e);
   }
 }
 

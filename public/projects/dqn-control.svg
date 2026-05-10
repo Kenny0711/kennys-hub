@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Deep Q-Network Pong control cover">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#020617"/>
+      <stop offset=".5" stop-color="#111827"/>
+      <stop offset="1" stop-color="#064e3b"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto">
+      <path d="M2 2l8 4-8 4z" fill="#67e8f9"/>
+    </marker>
+    <style>
+      .trajectory { stroke-dasharray: 16 14; animation: dash 2.4s linear infinite; }
+      .ball { animation: ballPulse 1.9s ease-in-out infinite; transform-origin: 575px 322px; }
+      .agent { animation: agentGlow 2.2s ease-in-out infinite; }
+      .scan { animation: scan 3s ease-in-out infinite; }
+      @keyframes dash { to { stroke-dashoffset: -60; } }
+      @keyframes ballPulse { 0%,100% { transform: scale(.94); opacity: .84; } 50% { transform: scale(1.08); opacity: 1; } }
+      @keyframes agentGlow { 0%,100% { opacity: .78; } 50% { opacity: 1; } }
+      @keyframes scan { 0%,100% { opacity: .16; } 50% { opacity: .44; } }
+    </style>
+  </defs>
+
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <g opacity=".12" stroke="#ccfbf1">
+    <path d="M0 112h1200M0 224h1200M0 336h1200M0 448h1200M0 560h1200"/>
+    <path d="M120 0v675M240 0v675M360 0v675M480 0v675M600 0v675M720 0v675M840 0v675M960 0v675M1080 0v675"/>
+  </g>
+
+  <rect x="136" y="126" width="928" height="410" rx="34" fill="#020617" stroke="#334155" stroke-width="4"/>
+  <rect x="176" y="166" width="848" height="330" rx="18" fill="#030712" stroke="#94a3b8" stroke-opacity=".18"/>
+
+  <path d="M600 166v330" stroke="#e5e7eb" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 18" opacity=".42"/>
+  <path class="scan" d="M176 244h848M176 332h848M176 420h848" stroke="#14b8a6" stroke-width="2"/>
+
+  <rect x="226" y="272" width="24" height="112" rx="8" fill="#e5e7eb" opacity=".72"/>
+  <rect class="agent" x="950" y="238" width="28" height="156" rx="9" fill="#22d3ee" filter="url(#glow)"/>
+
+  <g filter="url(#glow)">
+    <rect class="ball" x="561" y="308" width="28" height="28" rx="7" fill="#f8fafc"/>
+  </g>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <path class="trajectory" d="M575 322l158-82 226 76" stroke="#67e8f9" stroke-width="7" marker-end="url(#arrow)"/>
+    <path class="trajectory" d="M575 322l148 92 236-86" stroke="#34d399" stroke-width="5" opacity=".72" marker-end="url(#arrow)"/>
+  </g>
+
+  <g transform="translate(814 144)">
+    <rect width="190" height="58" rx="16" fill="#052e2b" fill-opacity=".8" stroke="#22d3ee" stroke-opacity=".38"/>
+    <text x="28" y="37" fill="#ccfbf1" font-family="Cascadia Code, Consolas, monospace" font-size="22" font-weight="700">max Q(s,a)</text>
+  </g>
+
+  <g fill="#94a3b8" font-family="Cascadia Code, Consolas, monospace" font-size="22" font-weight="700">
+    <text x="212" y="466">environment</text>
+    <text x="894" y="434" fill="#99f6e4">agent</text>
+  </g>
+
+  <text x="104" y="606" fill="#dcfce7" font-family="Cascadia Code, Consolas, monospace" font-size="54" font-weight="700">Deep Q-Network Control</text>
+</svg>

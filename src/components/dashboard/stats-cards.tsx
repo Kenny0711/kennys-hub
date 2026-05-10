@@ -130,8 +130,8 @@ export default function StatsCards({ records }: Props) {
   const targetProgress = Math.min(Math.round((total / targetTotal) * 100), 100);
 
   return (
-    <div className="flex gap-4">
-      <div className="flex w-[220px] shrink-0 flex-col gap-3.5">
+    <div className="flex flex-col gap-4 xl:flex-row">
+      <div className="flex w-full shrink-0 flex-col gap-3.5 xl:w-[220px]">
         <p className="px-0.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
           總覽
         </p>
@@ -148,13 +148,13 @@ export default function StatsCards({ records }: Props) {
         <MasteryCard mastered={mastered} total={total} />
       </div>
 
-      <div className="mx-1 w-px self-stretch bg-white/6" />
+      <div className="hidden self-stretch bg-white/6 xl:mx-1 xl:block xl:w-px" />
 
       <div className="flex min-w-0 flex-1 flex-col gap-3.5">
         <p className="px-0.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
           難度分布
         </p>
-        <div className="grid grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
           <Card
             label="Easy"
             value={easy}

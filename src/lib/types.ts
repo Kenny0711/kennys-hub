@@ -25,6 +25,18 @@ export interface LeetcodeRecord {
   updated_at: string;
 }
 
+export interface Project {
+  id: string;
+  title: string;
+  description: string;
+  project_url: string;
+  image_url: string;
+  tags: string[];
+  is_featured: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface WebhookPayload {
   problem_id: number;
   title: string;

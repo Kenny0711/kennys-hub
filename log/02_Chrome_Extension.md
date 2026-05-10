@@ -1,4 +1,4 @@
-# 02 — Chrome Extension 怎麼運作？
+﻿# 02 — Chrome Extension 怎麼運作？
 
 ## Extension 是什麼？
 
@@ -20,7 +20,7 @@ Chrome Extension 是安裝在你瀏覽器裡的小程式。它可以：
 
 ```json
 {
-  "name": "LC Tracker",
+  "name": "Kenny 的研發日誌",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["https://leetcode.com/*"],
   "content_scripts": [{
@@ -162,12 +162,12 @@ popup.ts 每 400ms 讀一次進度，更新進度條顯示
 ## 常見問題
 
 ### Extension 完全沒反應？
-1. 確認 `chrome://extensions/` 裡 LC Tracker 有開啟
+1. 確認 `chrome://extensions/` 裡 Kenny 的研發日誌 有開啟
 2. 確認有重新 build（`node extension/build.js`）
 3. 確認有按「重新整理」Extension
 4. 重新整理 LeetCode 頁面
-5. 打開 Console（F12），看有沒有 `[LC Tracker]` 開頭的 log
+5. 打開 Console（F12），看有沒有 `[Kenny 的研發日誌]` 開頭的 log
 
-### Console 有 `[LC Tracker] content script loaded` 但沒同步？
+### Console 有 `[Kenny 的研發日誌] content script loaded` 但沒同步？
 - 確認 Webhook URL 填的是正確的（Vercel 網址或 localhost）
 - 確認 Secret 和 `WEBHOOK_SECRET` 環境變數一致
