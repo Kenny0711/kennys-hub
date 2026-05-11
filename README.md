@@ -1,198 +1,142 @@
 # Kenny's Hub
 
-Kenny's Hub 是一個個人研發門戶，整合作品集、LeetCode 訓練紀錄、研究專案與工程筆記。
+Kenny's Hub 是 Kenny 的個人研發門戶，用來整理作品集、LeetCode 訓練紀錄、研究專案與工程學習軌跡。
 
-目前的線上版本仍是：
+目前線上版本：
 
 ```txt
 https://vibe-leetcode.vercel.app
 ```
 
-> 注意：GitHub repo / 本機資料夾已改名為 `kennys-hub`。Vercel 網址是否改名，要另外到 Vercel 專案設定處理。
+> Repo / 本機資料夾已改名為 `kennys-hub`。Vercel 網址目前仍沿用舊專案網址，之後可再到 Vercel 後台改 domain。
 
 ---
 
-## 這個專案在做什麼
+## 這個網站在幹嘛
 
-你可以把它想成「自己的技術履歷網站 + 刷題紀錄系統 + 小型作品集 CMS」。
+這個網站想解決一件事：
 
-首頁包含：
+> 把 Kenny 的學習、刷題、研究、作品集放在同一個地方，未來面試、複習、code review 時可以快速回顧。
 
-- Hero 自我介紹與擅長語言。
-- 技術歷程時間軸。
+它不是單純的作品集，也不是單純的 LeetCode dashboard，而是一個個人研發紀錄中心。
+
+---
+
+## 主要功能
+
+### 1. 個人首頁
+
+首頁 `/` 會呈現：
+
+- 自我介紹：「嗨，我是 Kenny」。
+- 擅長語言：C++、C、C#、PyTorch、Next.js。
+- GitHub 頭像。
+- 技術歷程時間軸：
+  - 元智大學 YZU
+  - 兆勤科技 Zyxel
+  - 陽明交通大學 NYCU
 - 精選作品集。
 
-後台包含：
+### 2. 作品集
 
-- `/login`：輸入管理密碼。
-- `/admin/projects`：管理作品、切換 Featured 星號。
+作品集會展示 Kenny 的研究與工程專案。
 
-LeetCode 系統包含：
+目前包含：
 
-- `/dashboard`：刷題統計。
-- `/problems`：題庫列表。
-- `/problems/[id]`：題目詳情與解法筆記。
-- `/api/webhook`：Chrome Extension 寫入解題資料。
+- Deep Learning 課程專案。
+- LeetCode Learning Tracker。
+- 強化學習、Diffusion、VAE、DQN、SUMO 等專案。
 
----
-
-## 架構圖
+頁面：
 
 ```txt
-使用者瀏覽器
-  -> Next.js App Router
-  -> Server Components 讀資料
-  -> Supabase PostgreSQL
-
-管理者瀏覽器
-  -> /login
-  -> admin_auth_token HttpOnly Cookie
-  -> /admin/projects
-  -> Server Actions
-  -> SUPABASE_SERVICE_ROLE_KEY
-  -> Supabase projects table
-
-LeetCode 題目頁
-  -> Chrome Extension
-  -> /api/webhook
-  -> WEBHOOK_SECRET 驗證
-  -> Supabase leetcode_records table
+/projects
 ```
 
-重點：
+首頁只顯示被標記為 Featured 的前三個作品。
 
-- 前端不能拿 `SUPABASE_SERVICE_ROLE_KEY`。
-- 後台寫入都走 Server Actions。
-- Server Actions 會先驗證 admin cookie。
-- `projects` 表可以開 RLS，因為寫入由 server 端 service role key 處理。
+### 3. 作品管理後台
 
----
+管理者可以登入後台，編輯作品集內容。
 
-## 環境變數
-
-建立 `.env.local`：
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-
-WEBHOOK_SECRET=dev-secret
-NEXT_PUBLIC_USE_MOCK=false
-ADMIN_PASSWORD=change-this-password
-```
-
-| 變數 | 用途 |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 專案 URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 前端可用的 Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server Actions 寫資料庫用，不能外洩 |
-| `WEBHOOK_SECRET` | Extension 打 `/api/webhook` 的驗證密碼 |
-| `NEXT_PUBLIC_USE_MOCK` | 是否使用 mock data |
-| `ADMIN_PASSWORD` | `/login` 後台登入密碼 |
-
----
-
-## 本機啟動
-
-```bash
-npm install
-npm run dev
-```
-
-打開：
+頁面：
 
 ```txt
-http://localhost:3000
+/login
+/admin/projects
 ```
 
-檢查：
+可以做的事：
 
-```bash
-npm run lint
-npm run build
-```
+- 編輯作品名稱。
+- 編輯作品描述。
+- 編輯作品連結。
+- 切換 Featured 星號，決定首頁顯示哪三個作品。
+- 第一次使用時，把 mock projects 同步到 Supabase。
 
----
+### 4. LeetCode Dashboard
 
-## Supabase
+LeetCode dashboard 用來追蹤刷題進度。
 
-到 Supabase SQL Editor 執行：
+頁面：
 
 ```txt
-supabase/schema.sql
+/dashboard
+/problems
+/problems/[id]
 ```
 
-主要資料表：
+功能包含：
 
-- `leetcode_records`：刷題紀錄。
-- `projects`：作品集資料。
+- 題目總數統計。
+- 難度分布。
+- 熟練度追蹤。
+- Activity heatmap。
+- 題庫列表。
+- 題目詳情與解法筆記。
 
-第一次沒有作品資料時，可以到 `/admin/projects` 使用「同步目前作品到 Supabase」。
+### 5. Chrome Extension
+
+Chrome Extension 可以在 LeetCode 題目頁擷取解題資料，送到網站的 webhook。
+
+用途：
+
+- Accepted 後自動同步。
+- 手動擷取目前題目。
+- 批量匯入歷史解題。
+- 補全題目 tags。
 
 ---
 
-## 常用路由
+## 常用入口
 
-| 路由 | 用途 |
+| 路由 | 說明 |
 |---|---|
 | `/` | 個人門戶首頁 |
 | `/projects` | 全作品頁 |
-| `/dashboard` | LeetCode Dashboard |
+| `/dashboard` | LeetCode 數據追蹤 |
 | `/problems` | 題庫列表 |
-| `/login` | 管理登入 |
+| `/problems/[id]` | 題目詳情 |
+| `/login` | 後台登入 |
 | `/admin/projects` | 作品管理 |
-| `/api/webhook` | Extension 寫入解題紀錄 |
+| `/api/webhook` | Chrome Extension 寫入解題紀錄 |
 
 ---
 
-## 專案結構
+## 文件分類
+
+如果你只是想知道網站在做什麼，讀這份 README 就好。
+
+如果你想知道架構、資料流、本機使用方式、部署方式，請讀：
 
 ```txt
-kennys-hub/
-├── extension/               Chrome Extension
-├── log/                     學習紀錄與 code review 筆記
-├── public/projects/         作品集 SVG 封面
-├── src/
-│   ├── actions/             Server Actions
-│   ├── app/                 Next.js routes
-│   ├── components/          UI components
-│   └── lib/                 Supabase、auth、types、data helpers
-└── supabase/                SQL schema / seed
+docs/Architecture.md
 ```
 
----
-
-## Code Review 建議
-
-如果你未來要回來看這個專案，建議先讀：
-
-1. `log/README.md`
-2. `log/08_Code_Review_小白指南.md`
-3. `log/09_DevHub_作品集與後台.md`
-
-Review 時問自己：
-
-- 這段 code 是 UI、server 邏輯，還是資料庫設定？
-- 有沒有把 secret key 放到前端？
-- 寫入資料前有沒有驗證權限？
-- 改資料庫時，TypeScript type 有沒有一起更新？
-- 改 UI 後手機版會不會壞？
-
----
-
-## GitHub Repo Rename
-
-本機資料夾已改成：
+如果你想做 code review 或回顧學習過程，請讀：
 
 ```txt
-D:\vibe coding\kennys-hub
+docs/log/README.md
+docs/log/08_Code_Review_小白指南.md
+docs/log/09_DevHub_作品集與後台.md
 ```
-
-建議 GitHub repo slug 使用：
-
-```txt
-kennys-hub
-```
-
-因為 GitHub repository URL 不適合使用空白或 apostrophe。網站顯示名稱仍可寫成 `Kenny's Hub`。
