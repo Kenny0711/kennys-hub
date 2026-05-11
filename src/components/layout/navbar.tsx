@@ -37,10 +37,10 @@ export default function Navbar() {
             <Braces className="h-4 w-4 text-blue-200" />
           </span>
           <span className="hidden truncate bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent sm:inline">
-            Kenny&apos;s Dev Hub
+            Kenny&apos;s Hub
           </span>
           <span className="truncate bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent sm:hidden">
-            Dev Hub
+            Hub
           </span>
         </Link>
 

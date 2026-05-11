@@ -48,7 +48,7 @@ create trigger trg_leetcode_records_updated_at
   before update on public.leetcode_records
   for each row execute function public.set_updated_at();
 
--- Kenny's Dev Hub portfolio projects.
+-- Kenny's Hub portfolio projects.
 create table if not exists public.projects (
   id           uuid primary key default gen_random_uuid(),
   title        text not null,

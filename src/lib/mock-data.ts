@@ -16,7 +16,7 @@ export const LEGACY_MOCK_PROJECTS: Project[] = [
     title: 'Unforgetting: Continual RL',
     project_url: 'https://github.com/Kenny0711',
     description:
-      '強化學習交通控制研究，聚焦 continual learning、policy retention，以及多場景交通號誌策略的穩定遷移。',
+      'A reinforcement learning research project exploring continual learning, policy retention, and traffic-control style simulation workflows.',
     image_url: '/projects/continual-rl.svg',
     tags: ['RL', 'PyTorch', 'SUMO'],
     is_featured: true,
@@ -24,9 +24,9 @@ export const LEGACY_MOCK_PROJECTS: Project[] = [
   {
     id: 'project-leetcode-tracker',
     title: 'LeetCode Learning Tracker',
-    project_url: 'https://github.com/Kenny0711/vibe-leetcode',
+    project_url: 'https://github.com/Kenny0711/kennys-hub',
     description:
-      '本專案開發紀錄：Chrome Extension、Supabase、Next.js dashboard 與刷題複習流程整合。',
+      'A Next.js, Supabase, and Chrome Extension system for collecting LeetCode submissions and turning them into a searchable learning dashboard.',
     image_url: '/projects/dev-hub.svg',
     tags: ['Next.js', 'Supabase', 'TypeScript'],
     is_featured: true,
@@ -38,7 +38,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-backpropagation',
     title: 'Backpropagation from Scratch',
     description:
-      'Goal: Build and train a fully connected neural network from scratch using only Python and NumPy. This project focuses on understanding the mechanics behind forward propagation, manual backpropagation, activation functions, SGD, and momentum-based optimization by validating the model on XOR and linear classification tasks.',
+      'Goal: Build and train a fully connected neural network from scratch using only Python and NumPy. This project focuses on understanding forward propagation, manual backpropagation, activation functions, SGD, and momentum-based optimization.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%201',
     image_url: '/projects/backpropagation.svg',
     tags: ['NumPy', 'Backpropagation', 'MLP'],
@@ -48,57 +48,57 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-semantic-segmentation',
     title: 'Binary Semantic Segmentation',
     description:
-      'Goal: Train image segmentation models that can separate pet foregrounds from backgrounds on the Oxford-IIIT Pet dataset. The implementation compares UNet and ResNet34-UNet, builds the full PyTorch training and evaluation pipeline, and uses Dice score plus inference outputs to measure segmentation quality.',
+      'Goal: Train image segmentation models that separate pet foregrounds from backgrounds on the Oxford-IIIT Pet dataset using UNet and ResNet34-UNet.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%202',
     image_url: '/projects/segmentation.svg',
     tags: ['PyTorch', 'UNet', 'Segmentation'],
-    is_featured: true,
+    is_featured: false,
   },
   {
     id: 'dlp-maskgit-inpainting',
     title: 'MaskGIT Image Inpainting',
     description:
-      'Goal: Use a pretrained VQGAN tokenizer with a Masked Bidirectional Transformer to reconstruct masked image regions through iterative token prediction. The work explores mask scheduling, transformer-based visual token modeling, image inpainting inference, and FID-based evaluation of generative quality.',
+      'Goal: Use a pretrained VQGAN tokenizer with a Masked Bidirectional Transformer to reconstruct masked image regions through iterative token prediction.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%203',
     image_url: '/projects/maskgit.svg',
     tags: ['PyTorch', 'VQGAN', 'Transformer'],
-    is_featured: true,
+    is_featured: false,
   },
   {
     id: 'dlp-conditional-vae-video',
     title: 'Conditional VAE Video Prediction',
     description:
-      'Goal: Implement stochastic video generation with a learned prior to predict future dance frames from conditional signals. This project studies Conditional VAE training, the reparameterization trick, KL annealing, teacher forcing schedules, reconstruction loss, and PSNR evaluation over long video sequences.',
+      'Goal: Implement stochastic video generation with a learned prior to predict future dance frames from conditional signals.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%204',
     image_url: '/projects/video-vae.svg',
     tags: ['PyTorch', 'CVAE', 'Video Prediction'],
-    is_featured: false,
+    is_featured: true,
   },
   {
     id: 'dlp-dqn-control',
     title: 'Deep Q-Network Control',
     description:
-      'Goal: Implement Deep Q-Network agents and variants for discrete control tasks. The project emphasizes reinforcement learning fundamentals including experience replay, target networks, value estimation, exploration, evaluation rollouts, and recorded videos that make policy behavior easier to inspect.',
+      'Goal: Implement Deep Q-Network agents and variants for discrete control tasks, including experience replay, target networks, exploration, and evaluation rollouts.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%205',
     image_url: '/projects/dqn-control.svg',
     tags: ['PyTorch', 'DQN', 'Reinforcement Learning'],
-    is_featured: false,
+    is_featured: true,
   },
   {
     id: 'dlp-conditional-ddpm',
     title: 'Conditional DDPM Image Generation',
     description:
-      'Goal: Build a conditional denoising diffusion model that generates iCLEVR images from multi-label object conditions. The implementation combines a conditional UNet, cosine noise scheduling, classifier-free guidance, AdamW training, inference scale sweeps, and evaluator-based accuracy checks.',
+      'Goal: Build a conditional denoising diffusion model that generates iCLEVR images from multi-label object conditions.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%206',
     image_url: '/projects/ddpm-generation.svg',
     tags: ['PyTorch', 'Diffusion', 'Generative AI'],
-    is_featured: true,
+    is_featured: false,
   },
   {
     id: 'dlp-sumo-lcpo',
     title: 'SUMO Traffic Simulation with LCPO',
     description:
-      'Goal: Apply reinforcement learning to traffic signal control using SUMO and a Taipei road network. The project connects simulation engineering with RL policy design by building road topology from real data, constructing SUMO scenarios, and evaluating adaptive signal-control agents in traffic environments.',
+      'Goal: Apply reinforcement learning to traffic signal control using SUMO and a Taipei road network, connecting simulation engineering with RL policy design.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/final',
     image_url: '/projects/sumo-lcpo.svg',
     tags: ['SUMO', 'RL', 'Traffic Simulation'],
@@ -126,7 +126,7 @@ export const MOCK_RECORDS: LeetcodeRecord[] = [
         language: 'python',
         time_complexity: 'O(n)',
         space_complexity: 'O(n)',
-        notes: '一次遍歷，用 hash map 記錄已看過的值。key = 數字，value = index。',
+        notes: '用 hash map 記錄數字的位置，一次掃描就能找到 target - current。',
       },
     ],
     created_at: '2026-01-15T10:00:00Z',
@@ -151,7 +151,7 @@ export const MOCK_RECORDS: LeetcodeRecord[] = [
         language: 'python',
         time_complexity: 'O(n)',
         space_complexity: 'O(1)',
-        notes: "Kadane's：每步決定「要不要帶上之前的 subarray」。\n\n`cur = max(n, cur + n)` 代表：從這裡重新開始 vs 繼續延伸。",
+        notes: 'cur 表示以目前位置結尾的最佳子陣列，best 記錄全局答案。',
       },
     ],
     created_at: '2026-01-20T14:00:00Z',
@@ -185,9 +185,9 @@ export const MOCK_RECORDS: LeetcodeRecord[] = [
                 count += 1
     return count`,
         language: 'python',
-        time_complexity: 'O(m×n)',
-        space_complexity: 'O(m×n)',
-        notes: 'DFS flood fill，遇到陸地就沉掉（改成 "0"），避免重複計算。',
+        time_complexity: 'O(m*n)',
+        space_complexity: 'O(m*n)',
+        notes: '遇到陸地就用 DFS 把整座島沉掉，避免重複計算。',
       },
     ],
     created_at: '2026-02-05T11:00:00Z',
@@ -200,23 +200,7 @@ export const MOCK_RECORDS: LeetcodeRecord[] = [
     difficulty: 'Medium',
     tags: ['DP', 'BFS'],
     proficiency: '理解',
-    solutions: [
-      {
-        method: 'Bottom-up DP',
-        code: `def coinChange(self, coins: List[int], amount: int) -> int:
-    dp = [float('inf')] * (amount + 1)
-    dp[0] = 0
-    for i in range(1, amount + 1):
-        for c in coins:
-            if i - c >= 0:
-                dp[i] = min(dp[i], dp[i - c] + 1)
-    return dp[amount] if dp[amount] != float('inf') else -1`,
-        language: 'python',
-        time_complexity: 'O(amount × n)',
-        space_complexity: 'O(amount)',
-        notes: '`dp[i]` = 湊出金額 i 最少需要幾枚硬幣。每個金額從所有硬幣面額遞推。',
-      },
-    ],
+    solutions: [],
     created_at: '2026-02-10T16:00:00Z',
     updated_at: '2026-02-10T16:00:00Z',
   },
@@ -238,25 +222,7 @@ export const MOCK_RECORDS: LeetcodeRecord[] = [
     difficulty: 'Medium',
     tags: ['Hash Table', 'Sliding Window', 'String'],
     proficiency: '熟練',
-    solutions: [
-      {
-        method: 'Sliding Window',
-        code: `def lengthOfLongestSubstring(self, s: str) -> int:
-    char_set = set()
-    left = res = 0
-    for right in range(len(s)):
-        while s[right] in char_set:
-            char_set.remove(s[left])
-            left += 1
-        char_set.add(s[right])
-        res = max(res, right - left + 1)
-    return res`,
-        language: 'python',
-        time_complexity: 'O(n)',
-        space_complexity: 'O(n)',
-        notes: 'Sliding window + set。右指針擴張，遇到重複就縮左指針直到不重複。',
-      },
-    ],
+    solutions: [],
     created_at: '2026-03-10T09:00:00Z',
     updated_at: '2026-03-10T09:00:00Z',
   },
@@ -267,22 +233,7 @@ export const MOCK_RECORDS: LeetcodeRecord[] = [
     difficulty: 'Easy',
     tags: ['Array', 'DP'],
     proficiency: '熟練',
-    solutions: [
-      {
-        method: 'One Pass',
-        code: `def maxProfit(self, prices: List[int]) -> int:
-    min_price = float('inf')
-    max_profit = 0
-    for p in prices:
-        min_price = min(min_price, p)
-        max_profit = max(max_profit, p - min_price)
-    return max_profit`,
-        language: 'python',
-        time_complexity: 'O(n)',
-        space_complexity: 'O(1)',
-        notes: '一次遍歷，記錄最低買入價，同時更新最大利潤。',
-      },
-    ],
+    solutions: [],
     created_at: '2026-03-15T14:00:00Z',
     updated_at: '2026-03-15T14:00:00Z',
   },
@@ -304,31 +255,7 @@ export const MOCK_RECORDS: LeetcodeRecord[] = [
     difficulty: 'Medium',
     tags: ['Graph', 'BFS', 'DFS', 'Topological Sort'],
     proficiency: '理解',
-    solutions: [
-      {
-        method: 'Topological Sort (BFS)',
-        code: `def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
-    in_degree = [0] * numCourses
-    graph = defaultdict(list)
-    for a, b in prerequisites:
-        graph[b].append(a)
-        in_degree[a] += 1
-    queue = deque([i for i in range(numCourses) if in_degree[i] == 0])
-    count = 0
-    while queue:
-        node = queue.popleft()
-        count += 1
-        for nei in graph[node]:
-            in_degree[nei] -= 1
-            if in_degree[nei] == 0:
-                queue.append(nei)
-    return count == numCourses`,
-        language: 'python',
-        time_complexity: 'O(V+E)',
-        space_complexity: 'O(V+E)',
-        notes: 'Kahn\'s Algorithm：用 in-degree 判斷是否有環。如果可以修完所有課程，代表圖中無環。',
-      },
-    ],
+    solutions: [],
     created_at: '2026-04-10T16:00:00Z',
     updated_at: '2026-04-10T16:00:00Z',
   },

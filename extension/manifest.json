@@ -1,6 +1,6 @@
 ﻿{
   "manifest_version": 3,
-  "name": "Kenny's Dev Hub",
+  "name": "Kenny's Hub",
   "version": "1.0.0",
   "description": "一鍵擷取 LeetCode 解題資料，傳送到個人 Dashboard",
   "permissions": ["storage", "activeTab", "scripting"],
@@ -12,7 +12,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Kenny's Dev Hub"
+    "default_title": "Kenny's Hub"
   },
   "background": {
     "service_worker": "dist/background.js"

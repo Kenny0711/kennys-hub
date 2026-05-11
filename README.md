@@ -1,277 +1,198 @@
-﻿# Kenny's Dev Hub
+# Kenny's Hub
 
-個人 LeetCode 刷題追蹤系統。Chrome Extension 自動擷取解題記錄 → 寫入 Supabase → Next.js Dashboard 展示題庫、解法、複習進度。
+Kenny's Hub 是一個個人研發門戶，整合作品集、LeetCode 訓練紀錄、研究專案與工程筆記。
 
-**線上版本：** https://vibe-leetcode.vercel.app
+目前的線上版本仍是：
 
----
-
-## 2026-05-08 最新更新
-
-- Dashboard 重構成更完整的深色工程師風格：Navbar 搜尋框、GitHub 快捷鍵、動態問候語、GitHub 頭像。
-- 統計總覽升級：趨勢 Badge、難度百分比、熟練度圓形進度環、250 題 Milestone 進度條。
-- Activity 熱力圖改成只計算「真正有程式碼的提交」，避免歷史匯入的空 code 題目把本週目標灌爆。
-- Webhook 會在新解法寫入 `submitted_at`，之後本週 / 本月統計可以用實際提交時間計算。
-- 目標區改成 Google / SWE Interview Ready，提醒目前刷題方向。
-
----
-
-## 架構
-
-```
-LeetCode 頁面
-  │  Chrome Extension 擷取（手動 or 自動偵測 Accepted）
-  ▼
-Next.js API（Vercel / localhost）
-  │  驗證 secret → 清洗資料 → Upsert
-  ▼
-Supabase（PostgreSQL）
-  │  Supabase Client 讀取
-  ▼
-Next.js Dashboard（統計 / 題庫 / 詳情）
+```txt
+https://vibe-leetcode.vercel.app
 ```
 
+> 注意：GitHub repo / 本機資料夾已改名為 `kennys-hub`。Vercel 網址是否改名，要另外到 Vercel 專案設定處理。
+
 ---
 
-## 功能
+## 這個專案在做什麼
 
-### Dashboard
-- 頂部 Navbar：全域搜尋框、快捷新增、GitHub 原始碼入口
-- Hero 區：依照台北時間顯示早安 / 午安 / 晚安，右側顯示 GitHub 頭像
-- 統計總覽：總題數、熟練比例、Easy / Medium / Hard 分佈與趨勢 Badge
-- 250 題 Milestone：顯示目前完成百分比與距離目標還差幾題
-- Activity 熱力圖：只計算有實際程式碼的提交，不把批量匯入空記錄算進刷題量
-- Top Tags 圓餅圖
-- Google 目標提醒區
+你可以把它想成「自己的技術履歷網站 + 刷題紀錄系統 + 小型作品集 CMS」。
 
-### 題庫列表
-- 搜尋、難度篩選、熟練度篩選、Tag 篩選
-- 每題顯示難度、熟練度、Tags
+首頁包含：
 
-### 題目詳情
-- 多解法 Tab（解法名稱可自訂）
-- 程式碼語法高亮 + 一鍵複製
-- Time / Space 複雜度標籤（空白時顯示 `O(?)` 提示）
-- Markdown 筆記（支援預覽）
-- 可刪除單一解法（兩步確認）
-- 題目描述折疊面板（點「載入描述」從 LeetCode 抓取）
-- 熟練度循環切換（生疏 → 理解 → 熟練）並寫回 Supabase
-- 複習提醒（根據熟練度顯示距離上次練習天數）
-- 刪除題目（兩步確認）
+- Hero 自我介紹與擅長語言。
+- 技術歷程時間軸。
+- 精選作品集。
 
-### Chrome Extension
-- **手動擷取**：在 LeetCode 題目頁點擊按鈕，擷取當前程式碼並送出
-- **自動同步**：偵測 LeetCode Submit → Accepted 後自動送出（背景執行不中斷）
-- **批量匯入歷史解題**：一鍵匯入所有 AC 題目，跳過已存在的題目
-- **批量補全 Tags**：為所有題目補全官方 Tags
-- 支援 Webhook URL 與 Secret 設定，關閉 Popup 也不中斷匯入
+後台包含：
+
+- `/login`：輸入管理密碼。
+- `/admin/projects`：管理作品、切換 Featured 星號。
+
+LeetCode 系統包含：
+
+- `/dashboard`：刷題統計。
+- `/problems`：題庫列表。
+- `/problems/[id]`：題目詳情與解法筆記。
+- `/api/webhook`：Chrome Extension 寫入解題資料。
+
+---
+
+## 架構圖
+
+```txt
+使用者瀏覽器
+  -> Next.js App Router
+  -> Server Components 讀資料
+  -> Supabase PostgreSQL
+
+管理者瀏覽器
+  -> /login
+  -> admin_auth_token HttpOnly Cookie
+  -> /admin/projects
+  -> Server Actions
+  -> SUPABASE_SERVICE_ROLE_KEY
+  -> Supabase projects table
+
+LeetCode 題目頁
+  -> Chrome Extension
+  -> /api/webhook
+  -> WEBHOOK_SECRET 驗證
+  -> Supabase leetcode_records table
+```
+
+重點：
+
+- 前端不能拿 `SUPABASE_SERVICE_ROLE_KEY`。
+- 後台寫入都走 Server Actions。
+- Server Actions 會先驗證 admin cookie。
+- `projects` 表可以開 RLS，因為寫入由 server 端 service role key 處理。
+
+---
+
+## 環境變數
+
+建立 `.env.local`：
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+WEBHOOK_SECRET=dev-secret
+NEXT_PUBLIC_USE_MOCK=false
+ADMIN_PASSWORD=change-this-password
+```
+
+| 變數 | 用途 |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 專案 URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 前端可用的 Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server Actions 寫資料庫用，不能外洩 |
+| `WEBHOOK_SECRET` | Extension 打 `/api/webhook` 的驗證密碼 |
+| `NEXT_PUBLIC_USE_MOCK` | 是否使用 mock data |
+| `ADMIN_PASSWORD` | `/login` 後台登入密碼 |
 
 ---
 
 ## 本機啟動
 
-### 1. 安裝套件
-
 ```bash
 npm install
-```
-
-### 2. 建立 `.env.local`
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-WEBHOOK_SECRET=dev-secret
-NEXT_PUBLIC_USE_MOCK=false
-```
-
-### 3. 建立 Supabase 資料表
-
-在 Supabase SQL Editor 執行 `supabase/schema.sql`，或直接貼上以下 SQL：
-
-```sql
-create table public.leetcode_records (
-  id           uuid primary key default gen_random_uuid(),
-  problem_id   integer not null,
-  title        text not null,
-  difficulty   text not null check (difficulty in ('Easy', 'Medium', 'Hard')),
-  tags         text[] not null default '{}',
-  proficiency  text not null default '理解' check (proficiency in ('生疏', '理解', '熟練')),
-  solutions    jsonb not null default '[]'::jsonb,
-  lc_slug      text,
-  description  text,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
-);
-
-alter table public.leetcode_records add constraint uq_problem_id unique (problem_id);
-alter table public.leetcode_records disable row level security;
-
-create or replace function public.set_updated_at()
-returns trigger language plpgsql as $$ begin new.updated_at = now(); return new; end; $$;
-
-create trigger trg_leetcode_records_updated_at
-  before update on public.leetcode_records
-  for each row execute function public.set_updated_at();
-```
-
-> 若資料表已建立但缺少 `description` 欄位，額外執行：
-> ```sql
-> ALTER TABLE public.leetcode_records ADD COLUMN IF NOT EXISTS description text;
-> ```
->
-> 若資料表缺少 `lc_slug` 欄位，額外執行：
-> ```sql
-> ALTER TABLE public.leetcode_records ADD COLUMN IF NOT EXISTS lc_slug text;
-> ```
-
-### 4. 啟動
-
-```bash
 npm run dev
 ```
 
-打開 http://localhost:3000
+打開：
+
+```txt
+http://localhost:3000
+```
+
+檢查：
+
+```bash
+npm run lint
+npm run build
+```
 
 ---
 
-## 部署到 Vercel
+## Supabase
 
-1. 推送程式碼到 GitHub
-2. 前往 [vercel.com](https://vercel.com)，Import 你的 repo
-3. 在 **Environments** 填入以下四個環境變數：
+到 Supabase SQL Editor 執行：
 
-| 變數名稱 | 說明 |
+```txt
+supabase/schema.sql
+```
+
+主要資料表：
+
+- `leetcode_records`：刷題紀錄。
+- `projects`：作品集資料。
+
+第一次沒有作品資料時，可以到 `/admin/projects` 使用「同步目前作品到 Supabase」。
+
+---
+
+## 常用路由
+
+| 路由 | 用途 |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 專案 URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Anon Key |
-| `WEBHOOK_SECRET` | 與 Extension 的 Secret 一致 |
-| `NEXT_PUBLIC_USE_MOCK` | `false` |
-
-4. Deploy，完成後將 Extension 的 Webhook URL 改為 Vercel 網址
-
-目前正式 Webhook URL：
-
-```txt
-https://vibe-leetcode.vercel.app/api/webhook
-```
-
-只要 `main` branch push 到 GitHub，Vercel 會自動重新部署雲端網站。部署完成後打開：
-
-```txt
-https://vibe-leetcode.vercel.app/
-```
-
----
-
-## Chrome Extension 安裝
-
-### Build
-
-```bash
-cd extension
-node build.js
-```
-
-或從專案根目錄：
-
-```bash
-npm run ext:build
-```
-
-### 載入
-
-1. 打開 `chrome://extensions/`
-2. 開啟右上角「開發人員模式」
-3. 點「載入未封裝項目」→ 選 `extension/` 資料夾
-
-### 設定
-
-Extension Popup 填入：
-
-```
-Webhook URL: https://vibe-leetcode.vercel.app/api/webhook
-             （本機開發用 http://localhost:3000/api/webhook）
-Secret:      dev-secret（與 WEBHOOK_SECRET 一致）
-```
-
----
-
-## 使用流程
-
-### 自動同步（推薦）
-在 LeetCode 題目頁提交程式碼 → 判定 Accepted → Extension 自動擷取並送出 → Dashboard 更新
-
-### 手動擷取
-在 LeetCode 題目頁，打開 Extension Popup → 點「擷取並送出」
-
-### 批量匯入歷史解題
-1. 前往任意 LeetCode 頁面
-2. 打開 Extension Popup → 點「📥 匯入 LeetCode 歷史解題」
-3. 等待進度條完成（可關閉 Popup，背景繼續執行）
-
-### 補全 Tags
-1. 前往任意 LeetCode 頁面
-2. 打開 Extension Popup → 點「🏷️ 補全所有題目 Tags」
+| `/` | 個人門戶首頁 |
+| `/projects` | 全作品頁 |
+| `/dashboard` | LeetCode Dashboard |
+| `/problems` | 題庫列表 |
+| `/login` | 管理登入 |
+| `/admin/projects` | 作品管理 |
+| `/api/webhook` | Extension 寫入解題紀錄 |
 
 ---
 
 ## 專案結構
 
-```
-vibe_leetcode/
-├── extension/                  Chrome 擴充功能
-│   ├── manifest.json
-│   ├── popup.html
-│   ├── build.js
-│   └── src/
-│       ├── main_world.ts       LeetCode submit/check 攔截
-│       ├── content.ts          擷取題目資料、批量匯入、補全 Tags
-│       ├── background.ts       代送 Webhook、批量匯入執行
-│       └── popup.ts            Popup UI 邏輯
-│
+```txt
+kennys-hub/
+├── extension/               Chrome Extension
+├── log/                     學習紀錄與 code review 筆記
+├── public/projects/         作品集 SVG 封面
 ├── src/
-│   ├── app/
-│   │   ├── page.tsx                     Dashboard 首頁
-│   │   ├── problems/
-│   │   │   ├── page.tsx                 題庫列表
-│   │   │   └── [id]/page.tsx            題目詳情
-│   │   └── api/
-│   │       ├── webhook/route.ts         接收 Extension 資料並寫入 Supabase
-│   │       └── fetch-description/route.ts  從 LeetCode 抓取題目描述
-│   ├── components/
-│   │   ├── dashboard/                   統計卡片、熱力圖、Tag 圓餅圖
-│   │   ├── problems/                    題庫列表、篩選列
-│   │   └── detail/                      題目資訊面板、解法 Tabs
-│   └── lib/
-│       ├── supabase/                    Supabase Client（client / server）
-│       ├── types.ts                     共用型別
-│       └── utils.ts
-│
-└── supabase/
-    └── schema.sql              建表 SQL
+│   ├── actions/             Server Actions
+│   ├── app/                 Next.js routes
+│   ├── components/          UI components
+│   └── lib/                 Supabase、auth、types、data helpers
+└── supabase/                SQL schema / seed
 ```
 
 ---
 
-## 常用指令
+## Code Review 建議
 
-| 指令 | 說明 |
-|---|---|
-| `npm run dev` | 啟動本機開發伺服器 |
-| `npm run build` | 檢查 Next.js build |
-| `npm run lint` | 檢查程式碼 |
-| `node extension/build.js` | Build Chrome Extension |
+如果你未來要回來看這個專案，建議先讀：
+
+1. `log/README.md`
+2. `log/08_Code_Review_小白指南.md`
+3. `log/09_DevHub_作品集與後台.md`
+
+Review 時問自己：
+
+- 這段 code 是 UI、server 邏輯，還是資料庫設定？
+- 有沒有把 secret key 放到前端？
+- 寫入資料前有沒有驗證權限？
+- 改資料庫時，TypeScript type 有沒有一起更新？
+- 改 UI 後手機版會不會壞？
 
 ---
 
-## 除錯
+## GitHub Repo Rename
 
-| 問題 | 去哪裡看 |
-|---|---|
-| Dashboard 顯示不對 | 瀏覽器 Console（localhost:3000） |
-| 一直看到 `/api/webhook` | 那是 API 端點，不是 Dashboard；首頁請看 `/` |
-| LeetCode Accepted 沒同步 | LeetCode 題目頁 Console，搜尋 `Kenny 的研發日誌` |
-| Webhook 寫入失敗 | Console 裡的 `[Kenny 的研發日誌] Sync failed`，通常是 401 或 500 |
-| Extension 完全沒反應 | `chrome://extensions/` 重新整理 extension，再重新整理 LeetCode 頁面 |
-| Vercel 沒顯示資料 | Vercel → Environments 確認四個環境變數都有填，Redeploy 後再試 |
+本機資料夾已改成：
+
+```txt
+D:\vibe coding\kennys-hub
+```
+
+建議 GitHub repo slug 使用：
+
+```txt
+kennys-hub
+```
+
+因為 GitHub repository URL 不適合使用空白或 apostrophe。網站顯示名稱仍可寫成 `Kenny's Hub`。
