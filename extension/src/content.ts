@@ -48,6 +48,8 @@ let waitingForAccepted = false;
 let syncing = false;
 let lastSyncedKey = '';
 let acceptedSyncCooldownUntil = 0;
+let pendingSubmittedCode = '';
+let pendingSubmittedAt = 0;
 
 function getMonacoCode(): Promise<string> {
   return new Promise((resolve) => {
@@ -97,6 +99,72 @@ function normalizeCode(code: string): string {
     .replace(/\u200b/g, '')
     .replace(/\r\n/g, '\n')
     .trim();
+}
+
+function scoreCodeCandidate(code: string): number {
+  const normalized = normalizeCode(code);
+  if (!normalized) return -1;
+
+  let score = normalized.length;
+  if (/\bclass\s+Solution\b|^\s*def\s+\w+\s*\(|\bfunction\s+\w+\s*\(/m.test(normalized)) score += 10_000;
+  if (/\b(return|for|while|if|else|switch|new|nullptr|null|None|push|pop|append)\b|->/.test(normalized)) {
+    score += 2_000;
+  }
+  if (/^\w{1,3}$/.test(normalized)) score -= 20_000;
+
+  return score;
+}
+
+function isLikelyCompleteCode(code: string): boolean {
+  const normalized = normalizeCode(code);
+  if (normalized.length < 40) return false;
+  if (/^\w{1,3}$/.test(normalized)) return false;
+
+  const hasEntryPoint = /\bclass\s+Solution\b|^\s*def\s+\w+\s*\(|\bfunction\s+\w+\s*\(/m.test(normalized);
+  const hasLogic = /\b(return|for|while|if|else|switch|new|nullptr|null|None|push|pop|append)\b|->/.test(normalized);
+
+  return (hasEntryPoint && hasLogic) || (normalized.length >= 120 && hasLogic);
+}
+
+function pickBestCodeCandidate(candidates: string[]): string {
+  return candidates
+    .map((code) => ({ code: normalizeCode(code), score: scoreCodeCandidate(code) }))
+    .sort((a, b) => b.score - a.score)[0]?.code ?? '';
+}
+
+async function readCurrentCode(): Promise<string> {
+  const monacoCode = await getMonacoCode();
+  const codeLines = document.querySelectorAll<HTMLElement>('.view-line');
+  const renderedCode = codeLines.length > 0
+    ? Array.from(codeLines).map((el) => el.innerText).join('\n')
+    : '';
+
+  return pickBestCodeCandidate([monacoCode, renderedCode, getCodeFallback()]);
+}
+
+function chooseSubmissionCode(currentCode: string): string {
+  const snapshotAge = Date.now() - pendingSubmittedAt;
+  if (pendingSubmittedCode && snapshotAge < SUBMISSION_TIMEOUT_MS) {
+    const currentScore = scoreCodeCandidate(currentCode);
+    const pendingScore = scoreCodeCandidate(pendingSubmittedCode);
+    if (pendingScore >= currentScore || !isLikelyCompleteCode(currentCode)) {
+      return pendingSubmittedCode;
+    }
+  }
+
+  return currentCode;
+}
+
+async function captureSubmissionSnapshot(): Promise<void> {
+  const code = await readCurrentCode();
+  if (scoreCodeCandidate(code) >= scoreCodeCandidate(pendingSubmittedCode)) {
+    pendingSubmittedCode = code;
+    pendingSubmittedAt = Date.now();
+  }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 function normalizeLanguage(raw: string): string {
@@ -188,15 +256,7 @@ async function extractProblemData(): Promise<ProblemData> {
       .filter((t): t is string => Boolean(t) && t.length > 0 && t.length < 50)
   ));
 
-  // Try Monaco API via injected script first, then DOM fallback
-  let code = await getMonacoCode();
-  if (!code) {
-    const codeLines = document.querySelectorAll<HTMLElement>('.view-line');
-    code = codeLines.length > 0
-      ? Array.from(codeLines).map((el) => el.innerText).join('\n').trim()
-      : getCodeFallback();
-  }
-  code = normalizeCode(code);
+  const code = chooseSubmissionCode(await readCurrentCode());
 
   const langSelectors = [
     '[id*="headlessui-listbox-button"] span',
@@ -242,7 +302,16 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
 
   syncing = true;
   try {
-    const data = await extractProblemData();
+    let data = await extractProblemData();
+    for (let attempt = 0; attempt < 4 && !isLikelyCompleteCode(data.code); attempt++) {
+      await delay(500);
+      data = await extractProblemData();
+    }
+
+    if (!isLikelyCompleteCode(data.code)) {
+      throw new Error('Captured code looks incomplete; sync skipped to avoid saving a partial solution.');
+    }
+
     const syncKey = `${data.problem_id}:${data.language}:${data.code}`;
     if (source === 'auto' && syncKey === lastSyncedKey) return;
 
@@ -420,6 +489,7 @@ document.addEventListener(
   (event) => {
     const target = event.target;
     if (target instanceof HTMLElement && isSubmitButton(target)) {
+      void captureSubmissionSnapshot();
       waitForAcceptedSubmission();
     }
   },
@@ -431,6 +501,7 @@ document.addEventListener(
   (event) => {
     const target = event.target;
     if (target instanceof HTMLElement && isSubmitButton(target)) {
+      void captureSubmissionSnapshot();
       waitForAcceptedSubmission();
     }
   },
@@ -438,6 +509,7 @@ document.addEventListener(
 );
 
 document.addEventListener('__lc_submission_started__', () => {
+  void captureSubmissionSnapshot();
   startSubmissionWindow();
 });
 

@@ -1,11 +1,17 @@
-﻿type MonacoEditorModel = {
+type MonacoModelLike = {
   getValue?: () => string;
+};
+
+type MonacoEditorLike = MonacoModelLike & {
+  hasTextFocus?: () => boolean;
+  getDomNode?: () => HTMLElement | null;
+  getModel?: () => MonacoModelLike | null;
 };
 
 type MonacoLike = {
   editor?: {
-    getEditors?: () => MonacoEditorModel[];
-    getModels?: () => MonacoEditorModel[];
+    getEditors?: () => MonacoEditorLike[];
+    getModels?: () => MonacoModelLike[];
   };
 };
 
@@ -26,13 +32,53 @@ declare global {
 
 console.info('[Kenny 的研發日誌] main world loaded', window.location.href);
 
+function scoreCodeSnapshot(code: string): number {
+  const normalized = code.replace(/\r\n/g, '\n').trim();
+  if (!normalized) return -1;
+
+  let score = normalized.length;
+  if (/\bclass\s+Solution\b|^\s*def\s+\w+\s*\(|\bfunction\s+\w+\s*\(/m.test(normalized)) score += 10_000;
+  if (/\b(return|for|while|if|else|switch|new|nullptr|null|None|push|pop|append)\b|->/.test(normalized)) {
+    score += 2_000;
+  }
+  if (/^\w{1,3}$/.test(normalized)) score -= 20_000;
+
+  return score;
+}
+
+function isVisibleEditor(editor: MonacoEditorLike): boolean {
+  const domNode = editor.getDomNode?.();
+  if (!domNode) return false;
+
+  const rect = domNode.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
+function pickBestCode(editors: MonacoEditorLike[], models: MonacoModelLike[]): string {
+  const candidates: Array<{ code: string; score: number }> = [];
+
+  for (const editor of editors) {
+    const code = editor.getValue?.() ?? editor.getModel?.()?.getValue?.() ?? '';
+    const focusBonus = editor.hasTextFocus?.() ? 5_000 : 0;
+    const visibleBonus = isVisibleEditor(editor) ? 1_000 : 0;
+    candidates.push({ code, score: scoreCodeSnapshot(code) + focusBonus + visibleBonus });
+  }
+
+  for (const model of models) {
+    const code = model.getValue?.() ?? '';
+    candidates.push({ code, score: scoreCodeSnapshot(code) });
+  }
+
+  return candidates.sort((a, b) => b.score - a.score)[0]?.code ?? '';
+}
+
 // Runs in MAIN world, where LeetCode exposes window.monaco.
 document.addEventListener('__lc_get_code__', () => {
   try {
     const m = window.monaco;
     const editors = m?.editor?.getEditors?.() ?? [];
     const models = m?.editor?.getModels?.() ?? [];
-    const code = editors[0]?.getValue?.() ?? models[0]?.getValue?.() ?? '';
+    const code = pickBestCode(editors, models);
     document.dispatchEvent(new CustomEvent('__lc_code_result__', { detail: code }));
   } catch {
     document.dispatchEvent(new CustomEvent('__lc_code_result__', { detail: '' }));

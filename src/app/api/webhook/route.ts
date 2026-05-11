@@ -26,6 +26,17 @@ function normalizeLanguage(language: string | undefined, code: string): string {
   return raw || 'code';
 }
 
+function isLikelyCompleteCode(code: string): boolean {
+  const normalized = stripCodeFence(code);
+  if (normalized.length < 40) return false;
+  if (/^\w{1,3}$/.test(normalized)) return false;
+
+  const hasEntryPoint = /\bclass\s+Solution\b|^\s*def\s+\w+\s*\(|\bfunction\s+\w+\s*\(/m.test(normalized);
+  const hasLogic = /\b(return|for|while|if|else|switch|new|nullptr|null|None|push|pop|append)\b|->/.test(normalized);
+
+  return (hasEntryPoint && hasLogic) || (normalized.length >= 120 && hasLogic);
+}
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('x-webhook-secret');
   if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
@@ -40,9 +51,16 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = getSupabaseAdmin();
-
   const code = stripCodeFence(body.code ?? '');
   const language = normalizeLanguage(body.language, code);
+  const isMetadataOnlySync = Boolean(body.skip_if_exists || body.tags_only);
+
+  if (!isMetadataOnlySync && !isLikelyCompleteCode(code)) {
+    return NextResponse.json(
+      { error: 'Code capture looks incomplete. Please refresh LeetCode and submit again after the editor finishes syncing.' },
+      { status: 422 }
+    );
+  }
 
   const solution = {
     method: '',
@@ -61,12 +79,10 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   if (existing) {
-    // 歷史匯入模式：已存在就直接跳過，不新增 solution
     if (body.skip_if_exists) {
       return NextResponse.json({ status: 'skipped', id: existing.id });
     }
 
-    // Tags 補全模式：只更新 tags，不動 solutions
     if (body.tags_only) {
       const { error } = await supabase
         .from('leetcode_records')
