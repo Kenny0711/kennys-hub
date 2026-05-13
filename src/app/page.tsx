@@ -28,7 +28,9 @@ export default async function HomePage() {
               Kenny&apos;s Dev Hub
             </div>
 
-            <h1 className="text-3xl font-bold tracking-tight md:text-5xl">嗨，我是 Kenny</h1>
+            <h1 className="bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent md:text-4xl">
+              Kenny Yang
+            </h1>
             <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-400">
               國立陽明交通大學 多媒體工程所碩士生。
             </p>
