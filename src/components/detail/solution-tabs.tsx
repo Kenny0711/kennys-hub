@@ -169,12 +169,12 @@ function EditForm({
         <select
           value={draft.status ?? 'unknown'}
           onChange={(e) => onChange('status', e.target.value)}
-          className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-foreground focus:outline-none focus:ring-1 focus:ring-sky-500/40 focus:border-sky-500/30 transition-colors"
+          className="w-full px-3 py-2 text-sm rounded-lg bg-zinc-950 border border-white/10 text-zinc-100 focus:outline-none focus:ring-1 focus:ring-sky-500/40 focus:border-sky-500/30 transition-colors"
         >
-          <option value="accepted">Accepted</option>
-          <option value="runtime_error">Runtime Error</option>
-          <option value="manual_sync">手動同步</option>
-          <option value="unknown">Unknown</option>
+          <option className="bg-zinc-950 text-zinc-100" value="accepted">Accepted</option>
+          <option className="bg-zinc-950 text-zinc-100" value="runtime_error">Runtime Error</option>
+          <option className="bg-zinc-950 text-zinc-100" value="manual_sync">手動同步</option>
+          <option className="bg-zinc-950 text-zinc-100" value="unknown">Unknown</option>
         </select>
       </div>
 
