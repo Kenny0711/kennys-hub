@@ -9,6 +9,9 @@ export interface Solution {
   space_complexity: string;
   notes: string;
   submitted_at?: string;
+  status?: 'accepted' | 'runtime_error' | 'manual_sync' | 'unknown' | string;
+  submission_status?: string;
+  sync_source?: 'auto' | 'manual' | string;
 }
 
 export interface LeetcodeRecord {
@@ -44,6 +47,8 @@ export interface WebhookPayload {
   tags: string[];
   code: string;
   language: string;
+  submission_status?: string;
+  sync_source?: 'auto' | 'manual' | string;
   lc_slug?: string;
   description?: string;
   /** 匯入模式：若 problem_id 已存在則跳過，不新增 solution */

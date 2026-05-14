@@ -6,6 +6,8 @@ interface ProblemData {
   code: string;
   language: string;
   lc_slug: string;
+  submission_status?: string;
+  sync_source?: 'auto' | 'manual';
 }
 
 interface TrackerSettings {

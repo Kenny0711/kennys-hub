@@ -37,6 +37,14 @@ function isLikelyCompleteCode(code: string): boolean {
   return (hasEntryPoint && hasLogic) || (normalized.length >= 120 && hasLogic);
 }
 
+function normalizeSolutionStatus(status: string | undefined, syncSource: string | undefined): string {
+  const raw = (status ?? '').toLowerCase();
+  if (raw.includes('accepted')) return 'accepted';
+  if (raw.includes('runtime error')) return 'runtime_error';
+  if (syncSource === 'manual') return 'manual_sync';
+  return 'unknown';
+}
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('x-webhook-secret');
   if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
@@ -54,6 +62,8 @@ export async function POST(req: NextRequest) {
   const code = stripCodeFence(body.code ?? '');
   const language = normalizeLanguage(body.language, code);
   const isMetadataOnlySync = Boolean(body.skip_if_exists || body.tags_only);
+  const syncSource = body.sync_source ?? 'auto';
+  const solutionStatus = normalizeSolutionStatus(body.submission_status, syncSource);
 
   if (!isMetadataOnlySync && !isLikelyCompleteCode(code)) {
     return NextResponse.json(
@@ -70,6 +80,9 @@ export async function POST(req: NextRequest) {
     space_complexity: '',
     notes: '',
     submitted_at: new Date().toISOString(),
+    status: solutionStatus,
+    submission_status: body.submission_status ?? (syncSource === 'manual' ? 'Manual Sync' : undefined),
+    sync_source: syncSource,
   };
 
   const { data: existing } = await supabase

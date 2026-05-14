@@ -10,6 +10,7 @@ import { Solution } from '@/lib/types';
 import {
   Clock, Database, CalendarPlus, CalendarCheck, Layers,
   Pencil, X, Check, Loader2, Copy, CheckCheck, Trash2,
+  CheckCircle2, AlertTriangle, Hand,
 } from 'lucide-react';
 // import CodeVisualizer from '@/components/detail/code-visualizer'; // 視覺化功能（暫時停用，填入 ANTHROPIC_API_KEY 後可重新啟用）
 
@@ -62,6 +63,45 @@ function highlightCode(code: string, language: string): string {
 function displayMethod(method: string | undefined, index: number): string {
   if (!method || method === 'Initial Capture') return `解法 ${index + 1}`;
   return method;
+}
+
+function getSolutionStatus(solution: Solution) {
+  const raw = `${solution.status ?? ''} ${solution.submission_status ?? ''}`.toLowerCase();
+  const syncSource = (solution.sync_source ?? '').toLowerCase();
+
+  if (raw.includes('accepted')) {
+    return {
+      label: 'Accepted',
+      title: 'LeetCode accepted submission',
+      icon: CheckCircle2,
+      className: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300',
+    };
+  }
+
+  if (raw.includes('runtime_error') || raw.includes('runtime error')) {
+    return {
+      label: 'Runtime Error',
+      title: 'LeetCode runtime error submission',
+      icon: AlertTriangle,
+      className: 'border-rose-500/25 bg-rose-500/10 text-rose-300',
+    };
+  }
+
+  if (raw.includes('manual') || syncSource === 'manual') {
+    return {
+      label: '手動同步',
+      title: 'Manually captured from the extension popup',
+      icon: Hand,
+      className: 'border-amber-500/25 bg-amber-500/10 text-amber-300',
+    };
+  }
+
+  return {
+    label: 'Unknown',
+    title: 'Legacy solution without submission status',
+    icon: AlertTriangle,
+    className: 'border-zinc-600/40 bg-zinc-800/50 text-zinc-400',
+  };
 }
 
 interface Props {
@@ -120,6 +160,22 @@ function EditForm({
           placeholder="e.g. Two Pointers, BFS..."
           className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-sky-500/40 focus:border-sky-500/30 transition-colors"
         />
+      </div>
+
+      <div>
+        <label className="block text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">
+          Submission Status
+        </label>
+        <select
+          value={draft.status ?? 'unknown'}
+          onChange={(e) => onChange('status', e.target.value)}
+          className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-foreground focus:outline-none focus:ring-1 focus:ring-sky-500/40 focus:border-sky-500/30 transition-colors"
+        >
+          <option value="accepted">Accepted</option>
+          <option value="runtime_error">Runtime Error</option>
+          <option value="manual_sync">手動同步</option>
+          <option value="unknown">Unknown</option>
+        </select>
       </div>
 
       {/* Time + Space */}
@@ -280,6 +336,19 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                 <>
                   {/* Complexity badges + edit button */}
                   <div className="flex flex-wrap items-center gap-2">
+                    {(() => {
+                      const status = getSolutionStatus(s);
+                      const StatusIcon = status.icon;
+                      return (
+                        <span
+                          title={status.title}
+                          className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-semibold ${status.className}`}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {status.label}
+                        </span>
+                      );
+                    })()}
                     <button
                       onClick={() => startEdit(i)}
                       disabled={editingIndex !== null}

@@ -7,6 +7,8 @@
   language: string;
   lc_slug: string;
   description?: string;
+  submission_status?: string;
+  sync_source?: 'auto' | 'manual';
 }
 
 interface LeetCodeQuestionMeta {
@@ -50,6 +52,7 @@ let lastSyncedKey = '';
 let acceptedSyncCooldownUntil = 0;
 let pendingSubmittedCode = '';
 let pendingSubmittedAt = 0;
+let lastSubmissionStatus = '';
 
 function getMonacoCode(): Promise<string> {
   return new Promise((resolve) => {
@@ -180,6 +183,19 @@ function normalizeLanguage(raw: string): string {
   return map[raw.toLowerCase()] ?? raw.toLowerCase();
 }
 
+function inferVisibleSubmissionStatus(): string {
+  const pageText = getVisiblePageText();
+  if (pageText.includes('Accepted')) return 'Accepted';
+  return FAILURE_STATUSES.find((status) => pageText.includes(status)) ?? '';
+}
+
+function resolveSubmissionStatus(): string {
+  const visibleStatus = inferVisibleSubmissionStatus();
+  if (visibleStatus) return visibleStatus;
+  if (lastSubmissionStatus && !JUDGING_STATUSES.includes(lastSubmissionStatus)) return lastSubmissionStatus;
+  return lastSubmissionStatus;
+}
+
 function inferLanguageFromCode(code: string, fallback: string): string {
   if (
     /\bclass\s+Solution\b/.test(code) &&
@@ -277,7 +293,8 @@ async function extractProblemData(): Promise<ProblemData> {
   const language = inferLanguageFromCode(code, normalizeLanguage(rawLang || 'python3'));
 
   const description = meta?.content ?? undefined;
-  return { problem_id, title, difficulty, tags, code, language, lc_slug: titleSlug, description };
+  const submission_status = resolveSubmissionStatus() || undefined;
+  return { problem_id, title, difficulty, tags, code, language, lc_slug: titleSlug, description, submission_status };
 }
 
 function sendWebhookSync(data: ProblemData): Promise<WebhookSyncResponse> {
@@ -312,7 +329,10 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
       throw new Error('Captured code looks incomplete; sync skipped to avoid saving a partial solution.');
     }
 
-    const syncKey = `${data.problem_id}:${data.language}:${data.code}`;
+    data.sync_source = source;
+    data.submission_status = source === 'auto' ? 'Accepted' : (data.submission_status || 'Manual Sync');
+
+    const syncKey = `${data.problem_id}:${data.language}:${data.code}:${data.submission_status}:${data.sync_source}`;
     if (source === 'auto' && syncKey === lastSyncedKey) return;
 
     console.info(`[Kenny 的研發日誌] ${source} sync sending:`, data.problem_id, data.title);
@@ -382,6 +402,7 @@ function handleSubmissionResult(event: Event): void {
 
   const status = normalizeSubmissionStatus(detail);
   if (!status) return;
+  lastSubmissionStatus = status;
   console.info(`[Kenny 的研發日誌] Submission status: ${status}`);
 
   if (status === 'Accepted') {
@@ -510,6 +531,7 @@ document.addEventListener(
 
 document.addEventListener('__lc_submission_started__', () => {
   void captureSubmissionSnapshot();
+  lastSubmissionStatus = 'Submitting';
   startSubmissionWindow();
 });
 
@@ -601,7 +623,13 @@ async function enrichWithTags(): Promise<void> {
 chrome.runtime.onMessage.addListener(
   (message, _sender, sendResponse: (data: ProblemData | FetchSolvedResult | { status: string }) => void) => {
     if (message.type === 'EXTRACT') {
-      extractProblemData().then(sendResponse);
+      extractProblemData().then((data) => {
+        sendResponse({
+          ...data,
+          sync_source: 'manual',
+          submission_status: data.submission_status || resolveSubmissionStatus() || 'Manual Sync',
+        });
+      });
     }
     if (message.type === 'FETCH_SOLVED_PROBLEMS') {
       fetchSolvedProblems().then(sendResponse);
