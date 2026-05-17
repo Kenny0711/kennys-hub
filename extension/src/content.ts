@@ -351,6 +351,13 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
   }
 }
 
+async function syncAcceptedSubmission(): Promise<void> {
+  if (Date.now() < acceptedSyncCooldownUntil) return;
+  acceptedSyncCooldownUntil = Date.now() + 5000;
+  stopWaitingForAccepted('accepted');
+  await syncToWebhook('auto');
+}
+
 function getVisiblePageText(): string {
   return document.body?.innerText ?? '';
 }
@@ -387,7 +394,9 @@ function parseSubmissionDetail(event: Event): SubmissionResult | null {
 }
 
 function startSubmissionWindow(): void {
+  if (waitingForAccepted) return;
   waitingForAccepted = true;
+  void captureSubmissionSnapshot();
   console.info('[Kenny 的研發日誌] Submission detected; waiting for Accepted result.');
 }
 
@@ -406,10 +415,7 @@ function handleSubmissionResult(event: Event): void {
   console.info(`[Kenny 的研發日誌] Submission status: ${status}`);
 
   if (status === 'Accepted') {
-    if (Date.now() < acceptedSyncCooldownUntil) return;
-    acceptedSyncCooldownUntil = Date.now() + 5000;
-    stopWaitingForAccepted('accepted');
-    void syncToWebhook('auto');
+    void syncAcceptedSubmission();
     return;
   }
 
@@ -473,7 +479,7 @@ function waitForAcceptedSubmission(): void {
   const observer = new MutationObserver(() => {
     if (isFreshAcceptedResult()) {
       cleanup();
-      void syncToWebhook('auto');
+      void syncAcceptedSubmission();
       return;
     }
 
@@ -490,7 +496,7 @@ function waitForAcceptedSubmission(): void {
 
     if (isFreshAcceptedResult()) {
       cleanup();
-      void syncToWebhook('auto');
+      void syncAcceptedSubmission();
     } else if (hasTerminalFailureResult()) {
       cleanup();
     }

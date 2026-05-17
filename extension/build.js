@@ -1,41 +1,31 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const esbuild = require('esbuild');
+const fs = require('fs/promises');
 const path = require('path');
 
 const dir = __dirname;
 
+async function buildFile(input, output) {
+  const source = await fs.readFile(path.join(dir, input), 'utf8');
+  const result = await esbuild.transform(source, {
+    loader: 'ts',
+    target: ['chrome110'],
+    format: 'iife',
+  });
+
+  const outfile = path.join(dir, output);
+  await fs.mkdir(path.dirname(outfile), { recursive: true });
+  await fs.writeFile(outfile, result.code);
+}
+
 async function build() {
   await Promise.all([
-    esbuild.build({
-      entryPoints: [path.join(dir, 'src/popup.ts')],
-      bundle: true,
-      outfile: path.join(dir, 'dist/popup.js'),
-      target: ['chrome110'],
-      platform: 'browser',
-    }),
-    esbuild.build({
-      entryPoints: [path.join(dir, 'src/background.ts')],
-      bundle: true,
-      outfile: path.join(dir, 'dist/background.js'),
-      target: ['chrome110'],
-      platform: 'browser',
-    }),
-    esbuild.build({
-      entryPoints: [path.join(dir, 'src/content.ts')],
-      bundle: true,
-      outfile: path.join(dir, 'dist/content.js'),
-      target: ['chrome110'],
-      platform: 'browser',
-    }),
-    esbuild.build({
-      entryPoints: [path.join(dir, 'src/main_world.ts')],
-      bundle: true,
-      outfile: path.join(dir, 'dist/main_world.js'),
-      target: ['chrome110'],
-      platform: 'browser',
-    }),
+    buildFile('src/popup.ts', 'dist/popup.js'),
+    buildFile('src/background.ts', 'dist/background.js'),
+    buildFile('src/content.ts', 'dist/content.js'),
+    buildFile('src/main_world.ts', 'dist/main_world.js'),
   ]);
-  console.log('✓ Extension built to dist/');
+  console.log('Extension built to dist/');
 }
 
 build().catch((e) => {

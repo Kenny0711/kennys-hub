@@ -1,12 +1,13 @@
 'use client';
 import 'highlight.js/styles/github-dark.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import hljs from 'highlight.js/lib/common';
 import Markdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Solution } from '@/lib/types';
+import { createClient } from '@/lib/supabase/client';
 import {
   Clock, Database, CalendarPlus, CalendarCheck, Layers,
   Pencil, X, Check, Loader2, Copy, CheckCheck, Trash2,
@@ -233,14 +234,61 @@ function EditForm({
   );
 }
 
-export default function SolutionTabs({ solutions: initialSolutions, createdAt, updatedAt, recordId, problemTitle }: Props) {
-  const [solutions, setSolutions] = useState<Solution[]>(initialSolutions);
+export default function SolutionTabs({ solutions: initialSolutions, createdAt, updatedAt, recordId }: Props) {
+  const [syncedSolutions, setSyncedSolutions] = useState<Solution[] | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState<Solution | null>(null);
   const [saving, setSaving] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('0');
   const [confirmDeleteIdx, setConfirmDeleteIdx] = useState<number | null>(null);
+  const solutions = syncedSolutions ?? initialSolutions ?? [];
+
+  useEffect(() => {
+    if (USE_MOCK) return;
+
+    const supabase = createClient();
+    const applySolutions = (nextSolutions: Solution[]) => {
+      setSyncedSolutions(nextSolutions);
+      setActiveTab((current) => {
+        if (nextSolutions.length === 0) return '0';
+        const currentIndex = Number.parseInt(current, 10);
+        if (Number.isNaN(currentIndex)) return String(nextSolutions.length - 1);
+        return String(Math.min(currentIndex, nextSolutions.length - 1));
+      });
+    };
+    const refreshSolutions = async () => {
+      const { data } = await supabase
+        .from('leetcode_records')
+        .select('solutions')
+        .eq('id', recordId)
+        .maybeSingle();
+      if (data) applySolutions((data as { solutions?: Solution[] }).solutions ?? []);
+    };
+
+    const channel = supabase
+      .channel(`leetcode-record-${recordId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'leetcode_records',
+          filter: `id=eq.${recordId}`,
+        },
+        (payload) => {
+          const nextSolutions = ((payload.new as { solutions?: Solution[] }).solutions ?? []);
+          applySolutions(nextSolutions);
+        }
+      )
+      .subscribe();
+    const intervalId = window.setInterval(refreshSolutions, 5000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      void supabase.removeChannel(channel);
+    };
+  }, [recordId]);
 
   const copyCode = (code: string, idx: number) => {
     navigator.clipboard.writeText(code).then(() => {
@@ -251,7 +299,7 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
 
   const deleteSolution = async (i: number) => {
     const newSolutions = solutions.filter((_, idx) => idx !== i);
-    setSolutions(newSolutions);
+    setSyncedSolutions(newSolutions);
     setConfirmDeleteIdx(null);
     // Keep active tab in bounds
     const newLen = newSolutions.length;
@@ -286,7 +334,7 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
   const saveEdit = async () => {
     if (editingIndex === null || !draft) return;
     const newSolutions = solutions.map((s, i) => (i === editingIndex ? draft : s));
-    setSolutions(newSolutions);
+    setSyncedSolutions(newSolutions);
     setEditingIndex(null);
     setDraft(null);
     if (USE_MOCK) return;

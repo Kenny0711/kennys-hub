@@ -51,6 +51,7 @@ export default async function ProblemDetailPage({
         <div className="space-y-8">
           <ProblemInfoPanel record={record} now={now} />
           <SolutionTabs
+            key={record.id}
             solutions={record.solutions}
             createdAt={record.created_at}
             updatedAt={record.updated_at}

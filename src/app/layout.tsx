@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/navbar';
 
 export const metadata: Metadata = {
   title: "Kenny's Hub",
-  description: 'Kenny 的個人研發門戶：作品集、LeetCode 訓練、研究與工程紀錄整合入口。',
+  description: 'Kenny 的個人研發中心，整合 LeetCode 追蹤、作品集與學習紀錄。',
 };
 
 export default function RootLayout({

@@ -1,84 +1,64 @@
 # Kenny's Hub
 
-Kenny's Hub 是 Kenny 的個人研發門戶，用來整理作品集、LeetCode 訓練紀錄、研究專案與工程學習軌跡。
+Kenny's Hub is my personal developer hub. It combines a portfolio homepage, project gallery, admin tools, and a LeetCode learning tracker in one Next.js app.
 
-目前線上版本：
+Live site:
 
 ```txt
 https://vibe-leetcode.vercel.app
 ```
 
-> Repo / 本機資料夾已改名為 `kennys-hub`。Vercel 網址目前仍沿用舊專案網址，之後可再到 Vercel 後台改 domain。
+Repository:
+
+```txt
+https://github.com/Kenny0711/kennys-hub
+```
 
 ---
 
-## 這個網站在幹嘛
+## What This Site Does
 
-這個網站想解決一件事：
+### Home
 
-> 把 Kenny 的學習、刷題、研究、作品集放在同一個地方，未來面試、複習、code review 時可以快速回顧。
+The homepage introduces Kenny Yang and provides quick contact/actions:
 
-它不是單純的作品集，也不是單純的 LeetCode dashboard，而是一個個人研發紀錄中心。
+- GitHub avatar and profile signal
+- Email contact: `kenny103089@gmail.com`
+- GitHub profile: `https://github.com/Kenny0711`
+- Resume preview modal powered by a local PDF asset
+- Dashboard entry point
+- Featured project gallery
+- Journey timeline
 
----
+Resume asset:
 
-## 主要功能
+```txt
+public/resume/YangChangHao-resume.pdf
+```
 
-### 1. 個人首頁
+### Projects
 
-首頁 `/` 會呈現：
+The projects area showcases portfolio work such as learning tools, LeetCode tracking, and research-related projects.
 
-- 自我介紹：「嗨，我是 Kenny」。
-- 擅長語言：C++、C、C#、PyTorch、Next.js。
-- GitHub 頭像。
-- 技術歷程時間軸：
-  - 元智大學 YZU
-  - 兆勤科技 Zyxel
-  - 陽明交通大學 NYCU
-- 精選作品集。
-
-### 2. 作品集
-
-作品集會展示 Kenny 的研究與工程專案。
-
-目前包含：
-
-- Deep Learning 課程專案。
-- LeetCode Learning Tracker。
-- 強化學習、Diffusion、VAE、DQN、SUMO 等專案。
-
-頁面：
+Routes:
 
 ```txt
 /projects
-```
-
-首頁只顯示被標記為 Featured 的前三個作品。
-
-### 3. 作品管理後台
-
-管理者可以登入後台，編輯作品集內容。
-
-頁面：
-
-```txt
-/login
 /admin/projects
+/login
 ```
 
-可以做的事：
+Admin features:
 
-- 編輯作品名稱。
-- 編輯作品描述。
-- 編輯作品連結。
-- 切換 Featured 星號，決定首頁顯示哪三個作品。
-- 第一次使用時，把 mock projects 同步到 Supabase。
+- Edit project title, description, URL, image, tags, and featured status
+- Sync seed/mock projects into Supabase
+- Protect writes through admin authentication and server actions
 
-### 4. LeetCode Dashboard
+### LeetCode Tracker
 
-LeetCode dashboard 用來追蹤刷題進度。
+The LeetCode tracker records accepted solutions and turns them into a searchable learning dashboard.
 
-頁面：
+Routes:
 
 ```txt
 /dashboard
@@ -86,57 +66,117 @@ LeetCode dashboard 用來追蹤刷題進度。
 /problems/[id]
 ```
 
-功能包含：
+Features:
 
-- 題目總數統計。
-- 難度分布。
-- 熟練度追蹤。
-- Activity heatmap。
-- 題庫列表。
-- 題目詳情與解法筆記。
+- Problem list and detail pages
+- Multiple solutions per problem
+- Code display with syntax highlighting
+- Proficiency tracking
+- Activity heatmap
+- Realtime or fallback refresh for solution updates
 
-### 5. Chrome Extension
+### Chrome Extension
 
-Chrome Extension 可以在 LeetCode 題目頁擷取解題資料，送到網站的 webhook。
+The Chrome Extension captures LeetCode submissions and sends them to the app webhook.
 
-用途：
+Recent behavior:
 
-- Accepted 後自動同步。
-- 手動擷取目前題目。
-- 批量匯入歷史解題。
-- 補全題目 tags。
+- Captures the submitted code snapshot when the Submit button is pressed
+- Syncs automatically after an Accepted result
+- Avoids saving incomplete code snippets
+- Supports manual capture, solved-problem import, and tag enrichment
+
+Webhook:
+
+```txt
+/api/webhook
+```
 
 ---
 
-## 常用入口
+## Tech Stack
 
-| 路由 | 說明 |
+| Area | Stack |
 |---|---|
-| `/` | 個人門戶首頁 |
-| `/projects` | 全作品頁 |
-| `/dashboard` | LeetCode 數據追蹤 |
-| `/problems` | 題庫列表 |
-| `/problems/[id]` | 題目詳情 |
-| `/login` | 後台登入 |
-| `/admin/projects` | 作品管理 |
-| `/api/webhook` | Chrome Extension 寫入解題紀錄 |
+| App framework | Next.js 16 App Router |
+| UI | React 19, Tailwind CSS |
+| Database | Supabase PostgreSQL |
+| Auth | Admin cookie + server-side validation |
+| Mutations | Server Actions |
+| Extension | Chrome Extension Manifest V3 |
+| Deployment | Vercel |
 
 ---
 
-## 文件分類
+## Local Development
 
-如果你只是想知道網站在做什麼，讀這份 README 就好。
+Install dependencies:
 
-如果你想知道架構、資料流、本機使用方式、部署方式，請讀：
+```bash
+npm install
+```
+
+Run the app:
+
+```bash
+npm run dev
+```
+
+Build the Chrome Extension output:
+
+```bash
+npm run ext:build
+```
+
+Validate before pushing:
+
+```bash
+npm run lint
+npm run build
+```
+
+---
+
+## Environment Variables
+
+Create `.env.local` from `.env.local.example`, then fill in the required values.
+
+Common variables:
+
+```txt
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+WEBHOOK_SECRET=
+ADMIN_PASSWORD=
+```
+
+---
+
+## Documentation
+
+Architecture overview:
 
 ```txt
 docs/Architecture.md
 ```
 
-如果你想做 code review 或回顧學習過程，請讀：
+Development logs:
 
 ```txt
 docs/log/README.md
-docs/log/08_Code_Review_小白指南.md
 docs/log/09_DevHub_作品集與後台.md
+docs/log/10_首頁聯絡履歷與LeetCode同步.md
 ```
+
+---
+
+## Latest Update
+
+2026-05-17:
+
+- Added homepage contact links for Gmail and GitHub
+- Added resume PDF preview modal
+- Improved LeetCode accepted-submission auto sync
+- Added realtime/fallback refresh for solution tabs
+- Updated README and development logs

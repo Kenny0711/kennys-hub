@@ -1,29 +1,48 @@
-# log 目錄導讀
+# Development Log Index
 
-這個資料夾用來放學習紀錄、code review 筆記、問題排查紀錄。
+This folder records project decisions, fixes, and implementation notes for Kenny's Hub.
 
-如果你之後想複習這個專案，不要一開始就直接看所有程式碼。先從這幾份開始：
+## Current Logs
 
-1. `08_Code_Review_小白指南.md`
-   - 教你怎麼分辨 UI code、server code、database/config code。
-   - 適合 review 前先讀。
+1. `00_架構總覽.md`
+   - Original system overview for the LeetCode tracker.
 
-2. `09_DevHub_作品集與後台.md`
-   - 說明 Kenny's Hub 這次從 LeetCode Tracker 升級成個人研發門戶的重構。
-   - 包含作品集、後台、Server Actions、Service Role Key。
+2. `01_技術清單.md`
+   - Main libraries, services, and project structure.
 
-3. `07_問題記錄.md`
-   - 遇到錯誤時可以回來查。
+3. `02_Chrome_Extension.md`
+   - Chrome Extension capture flow and background/content script notes.
 
-舊的 `00` 到 `07` 是歷史紀錄，部分內容可能因早期編碼問題顯示不完整，但仍保留作為開發脈絡。
+4. `03_Supabase_資料庫.md`
+   - Supabase schema and data model notes.
 
----
+5. `04_API_與後端.md`
+   - API routes and webhook behavior.
 
-## 每次 code review 可以問的問題
+6. `05_前端_Dashboard.md`
+   - Dashboard and problem detail frontend notes.
 
-- 這次改動是修 bug、加功能、改架構，還是美化 UI？
-- 哪些檔案是入口？
-- 哪些檔案會寫入資料庫？
-- 有沒有新增環境變數？
-- README 是否同步更新？
-- 有沒有跑 `npm run lint` 和 `npm run build`？
+7. `06_雲端部署.md`
+   - Deployment and environment setup.
+
+8. `07_問題記錄.md`
+   - Debugging history and recurring issues.
+
+9. `08_Code_Review_小白指南.md`
+   - Beginner-friendly code review checklist.
+
+10. `09_DevHub_作品集與後台.md`
+    - DevHub portfolio/admin expansion notes.
+
+11. `10_首頁聯絡履歷與LeetCode同步.md`
+    - Homepage contact/resume update and LeetCode solution sync improvements.
+
+## Review Checklist
+
+Before pushing meaningful changes:
+
+- README reflects user-facing features.
+- Relevant log entry exists in this folder.
+- `npm run lint` passes.
+- `npm run build` passes.
+- Chrome Extension changes run through `npm run ext:build` when extension files changed.
