@@ -1,7 +1,7 @@
 'use client';
 
 import { LeetcodeRecord } from '@/lib/types';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarCheck, CalendarDays, CalendarRange, Target } from 'lucide-react';
 
 interface Props {
@@ -11,6 +11,9 @@ interface Props {
 const WEEKS = 26;
 const DAYS = 7;
 const WEEKLY_GOAL = 14;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
+const TAIPEI_TIME_ZONE = 'Asia/Taipei';
 const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
 
 function getColorClass(count: number): string {
@@ -21,15 +24,52 @@ function getColorClass(count: number): string {
 }
 
 function getTaipeiDateKey(date: Date): string {
-  return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+  return date.toLocaleDateString('en-CA', { timeZone: TAIPEI_TIME_ZONE });
 }
 
-function getTaipeiWeekStartKey(date: Date): string {
-  const taipeiDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
-  const daysSinceMonday = (taipeiDate.getDay() + 6) % 7;
-  taipeiDate.setHours(0, 0, 0, 0);
-  taipeiDate.setDate(taipeiDate.getDate() - daysSinceMonday);
-  return getTaipeiDateKey(taipeiDate);
+function getTaipeiWallTimeMs(date: Date): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: TAIPEI_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, part.value])
+  );
+
+  return Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second)
+  );
+}
+
+function getTaipeiWeeklyGoalResetMs(date: Date): number {
+  const wallTimeMs = getTaipeiWallTimeMs(date);
+  const wallDate = new Date(wallTimeMs);
+  const daysSinceSunday = wallDate.getUTCDay();
+  let resetMs = Date.UTC(
+    wallDate.getUTCFullYear(),
+    wallDate.getUTCMonth(),
+    wallDate.getUTCDate() - daysSinceSunday,
+    23,
+    59,
+    0
+  );
+
+  if (wallTimeMs < resetMs) resetMs -= 7 * DAY_MS;
+  return resetMs;
 }
 
 function hasSubmittedCode(record: LeetcodeRecord): boolean {
@@ -45,8 +85,14 @@ function getSubmissionDates(records: LeetcodeRecord[]): Date[] {
 }
 
 export default function ActivityHeatmap({ records }: Props) {
+  const [now, setNow] = useState(() => new Date());
   const submittedRecords = useMemo(() => records.filter(hasSubmittedCode), [records]);
   const submissionDates = useMemo(() => getSubmissionDates(records), [records]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(new Date()), MINUTE_MS);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const activityMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -57,9 +103,9 @@ export default function ActivityHeatmap({ records }: Props) {
     return map;
   }, [submissionDates]);
 
-  const today = new Date();
+  const today = now;
   const todayKey = getTaipeiDateKey(today);
-  const weekStartKey = getTaipeiWeekStartKey(today);
+  const weeklyGoalResetMs = getTaipeiWeeklyGoalResetMs(today);
   const monthKey = todayKey.slice(0, 7);
 
   const startDate = new Date(today);
@@ -77,8 +123,8 @@ export default function ActivityHeatmap({ records }: Props) {
   const activeDays = Object.values(activityMap).filter((count) => count > 0).length;
   const todayCount = activityMap[todayKey] ?? 0;
   const weekCount = submissionDates.filter((date) => {
-    const key = getTaipeiDateKey(date);
-    return key >= weekStartKey && key <= todayKey;
+    const submittedAt = getTaipeiWallTimeMs(date);
+    return submittedAt >= weeklyGoalResetMs && submittedAt <= getTaipeiWallTimeMs(today);
   }).length;
   const monthCount = submissionDates.filter((date) =>
     getTaipeiDateKey(date).startsWith(monthKey)
