@@ -43,6 +43,19 @@ function stripCodeFence(code: string): string {
     .trim();
 }
 
+function formatMarkdownNotes(notes: string): string {
+  return notes
+    .replace(/\\n/g, '\n')
+    .replace(/\s*(Step\s+\d+\s*:)/gi, '\n\n$1')
+    .replace(/\s*(Time Complexity\s*:)/gi, '\n\n$1')
+    .replace(/\s*(Space Complexity\s*:)/gi, '\n\n$1')
+    .replace(/\s*(Key Idea\s*:)/gi, '\n\n$1')
+    .replace(/\s*(Approach\s*:)/gi, '\n\n$1')
+    .replace(/\$([^$\n]+)\$/g, '`$1`')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function normalizeDisplayLanguage(language: string | undefined, code: string): string {
   const raw = (language ?? '').toLowerCase();
   if (raw === 'cpp' || raw === 'c++') return 'cpp';
@@ -225,8 +238,8 @@ function EditForm({
       {draft.notes && (
         <div className="rounded-lg border border-white/6 bg-white/[0.02] p-4">
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 font-semibold">預覽</p>
-          <div className="text-sm text-foreground/80 leading-relaxed [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
-            <Markdown rehypePlugins={[rehypeHighlight]}>{draft.notes}</Markdown>
+          <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap [&_p]:my-2 [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
+            <Markdown rehypePlugins={[rehypeHighlight]}>{formatMarkdownNotes(draft.notes)}</Markdown>
           </div>
         </div>
       )}
@@ -508,8 +521,8 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3 font-semibold">
                         筆記
                       </p>
-                      <div className="text-sm text-foreground/80 leading-relaxed space-y-2 [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
-                        <Markdown rehypePlugins={[rehypeHighlight]}>{s.notes}</Markdown>
+                      <div className="text-sm text-foreground/80 leading-relaxed space-y-2 whitespace-pre-wrap [&_p]:my-2 [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
+                        <Markdown rehypePlugins={[rehypeHighlight]}>{formatMarkdownNotes(s.notes)}</Markdown>
                       </div>
                     </div>
                   ) : (
