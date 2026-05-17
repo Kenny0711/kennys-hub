@@ -10,7 +10,7 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-const skillTags = ['C++', 'C', 'C#', 'PyTorch', 'Next.js'];
+const skillTags = ['C++', 'C', 'C#', 'Python', 'Next.js'];
 const GithubIcon = createLucideIcon('github', [
   [
     'path',
