@@ -1,5 +1,5 @@
 import { MOCK_RECORDS } from '@/lib/mock-data';
-import { createClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { LeetcodeRecord } from '@/lib/types';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
@@ -7,7 +7,7 @@ const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 export async function getDashboardRecords(): Promise<LeetcodeRecord[]> {
   if (USE_MOCK) return MOCK_RECORDS;
 
-  const supabase = await createClient();
+  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from('leetcode_records')
     .select('*')
