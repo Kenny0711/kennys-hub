@@ -1,4 +1,7 @@
-import { ArrowUpRight, Target } from 'lucide-react';
+'use client';
+
+import { Target } from 'lucide-react';
+import { useState } from 'react';
 
 const GOOGLE_LETTERS = [
   { letter: 'G', color: 'text-blue-400', line: 'bg-blue-400' },
@@ -10,14 +13,27 @@ const GOOGLE_LETTERS = [
 ];
 
 export default function GoalBanner() {
+  const [isRevealed, setIsRevealed] = useState(false);
+
   return (
-    <section className="relative overflow-hidden rounded-xl border border-white/10 bg-[#111]">
-      <div className="absolute inset-0 opacity-70">
+    <section
+      role="button"
+      tabIndex={0}
+      aria-pressed={isRevealed}
+      aria-label={isRevealed ? 'Hide target company goal' : 'Reveal target company goal'}
+      onClick={() => setIsRevealed((value) => !value)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          setIsRevealed((value) => !value);
+        }
+      }}
+      className="relative cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#080808] outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-sky-300/40"
+    >
+      <div className="absolute inset-0 opacity-60">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-blue-400 via-yellow-300 to-red-400" />
-        <div className="absolute -right-20 -top-24 h-56 w-56 rounded-full bg-blue-500/12 blur-3xl" />
-        <div className="absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-emerald-500/10 blur-3xl" />
         <div
-          className="absolute inset-0 opacity-[0.08]"
+          className="absolute inset-0 opacity-[0.055]"
           style={{
             backgroundImage:
               'linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px)',
@@ -27,14 +43,14 @@ export default function GoalBanner() {
       </div>
 
       <div className="relative p-7 md:p-8">
-        <div className="flex flex-col justify-between gap-8">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               <Target className="h-3.5 w-3.5 text-sky-300" />
               North Star
             </div>
 
-            <div>
+            <div className={isRevealed ? 'opacity-100' : 'pointer-events-none select-none opacity-20 blur-md'}>
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white/35">
                 Target Company
               </p>
@@ -57,16 +73,6 @@ export default function GoalBanner() {
               </p>
             </div>
           </div>
-
-          <a
-            href="https://careers.google.com/students/"
-            target="_blank"
-            rel="noreferrer"
-            className="group inline-flex w-fit items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-white/20 hover:bg-white/[0.08]"
-          >
-            Google Careers
-            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </a>
         </div>
       </div>
     </section>

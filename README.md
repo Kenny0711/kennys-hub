@@ -73,6 +73,8 @@ Features:
 - Code display with syntax highlighting
 - Proficiency tracking
 - Activity heatmap
+- Weekly, daily, and monthly counts focus on accepted problems instead of duplicate solution attempts
+- Bottom target-company section is hidden by default and reveals only when clicked
 - Realtime or fallback refresh for solution updates
 
 ### Chrome Extension
@@ -151,6 +153,11 @@ WEBHOOK_SECRET=
 ADMIN_PASSWORD=
 ```
 
+Notes:
+
+- Public read pages such as `/`, `/dashboard`, `/projects`, `/problems`, and `/problems/[id]` use the Supabase anon key.
+- `SUPABASE_SERVICE_ROLE_KEY` is still required for trusted server-side writes such as webhook sync, record edits, deletes, description updates, and admin project mutations.
+
 ---
 
 ## Documentation
@@ -172,6 +179,14 @@ docs/log/10_首頁聯絡履歷與LeetCode同步.md
 ---
 
 ## Latest Update
+
+2026-05-18:
+
+- Moved the Google target-company banner to the bottom of the Dashboard
+- Hid the target-company banner by default; clicking the dark section reveals or hides it
+- Updated Dashboard reads to use the regular Supabase server client instead of requiring `SUPABASE_SERVICE_ROLE_KEY`
+- Kept service-role access only for trusted write paths
+- Documented the Dashboard target and Supabase client split in `docs/log`
 
 2026-05-17:
 

@@ -24,7 +24,7 @@ export default async function DashboardPage() {
             LeetCode 數據追蹤
           </h2>
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-            集中查看解題總覽、難度分布、練習熱力圖、待複習題目與目標公司進度。
+            集中查看解題總覽、難度分布、練習熱力圖、待複習題目與能力目標進度。
           </p>
         </div>
       </div>
@@ -45,8 +45,6 @@ export default async function DashboardPage() {
 
         <NeedsReview records={records} />
 
-        <GoalBanner />
-
         <Link
           href="/problems"
           className="group flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.02] px-6 py-5 transition-colors hover:bg-white/[0.05]"
@@ -59,6 +57,8 @@ export default async function DashboardPage() {
           </div>
           <ArrowRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-foreground" />
         </Link>
+
+        <GoalBanner />
       </div>
     </div>
   );

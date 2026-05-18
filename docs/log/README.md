@@ -37,6 +37,9 @@ This folder records project decisions, fixes, and implementation notes for Kenny
 11. `10_首頁聯絡履歷與LeetCode同步.md`
     - Homepage contact/resume update and LeetCode solution sync improvements.
 
+12. `11_Dashboard_Google_Target_And_Read_Client.md`
+    - Dashboard Google target reveal behavior and Supabase read/write client split.
+
 ## Review Checklist
 
 Before pushing meaningful changes:

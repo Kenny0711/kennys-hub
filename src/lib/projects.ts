@@ -1,5 +1,5 @@
 import { MOCK_PROJECTS } from '@/lib/mock-data';
-import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { createClient } from '@/lib/supabase/server';
 import { Project } from '@/lib/types';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
@@ -8,7 +8,7 @@ export async function getFeaturedProjects(): Promise<Project[]> {
   if (USE_MOCK) return getFeaturedMockProjects();
 
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('projects')
       .select('id,title,description,project_url,image_url,tags,is_featured,created_at,updated_at')
@@ -35,7 +35,7 @@ export async function getAllProjects(): Promise<Project[]> {
   if (USE_MOCK) return getAllMockProjects();
 
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('projects')
       .select('id,title,description,project_url,image_url,tags,is_featured,created_at,updated_at')
