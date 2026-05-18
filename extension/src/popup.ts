@@ -4,6 +4,7 @@ const captureBtn = document.getElementById('capture-btn') as HTMLButtonElement;
 const statusEl = document.getElementById('status') as HTMLDivElement;
 const resultEl = document.getElementById('result') as HTMLDivElement;
 const DEFAULT_WEBHOOK_URL = 'https://vibe-leetcode.vercel.app/api/webhook';
+const DEFAULT_WEBHOOK_SECRET = 'dev-secret';
 
 // ── 歷史匯入 UI ───────────────────────────────────────────────────────────────
 const importBtn = document.getElementById('import-btn') as HTMLButtonElement;
@@ -215,7 +216,12 @@ chrome.storage.local.get(['webhookUrl', 'webhookSecret'], ({ webhookUrl, webhook
     webhookInput.value = DEFAULT_WEBHOOK_URL;
     chrome.storage.local.set({ webhookUrl: DEFAULT_WEBHOOK_URL });
   }
-  if (webhookSecret) secretInput.value = webhookSecret as string;
+  if (webhookSecret) {
+    secretInput.value = webhookSecret as string;
+  } else {
+    secretInput.value = DEFAULT_WEBHOOK_SECRET;
+    chrome.storage.local.set({ webhookSecret: DEFAULT_WEBHOOK_SECRET });
+  }
 });
 
 webhookInput.addEventListener('change', () => {
@@ -245,7 +251,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
 
 captureBtn.addEventListener('click', () => {
   const webhookUrl = webhookInput.value.trim();
-  const secret = secretInput.value.trim();
+  const secret = secretInput.value.trim() || DEFAULT_WEBHOOK_SECRET;
 
   if (!webhookUrl) {
     resultEl.textContent = '請先填入 Webhook URL';
@@ -264,8 +270,10 @@ captureBtn.addEventListener('click', () => {
     try {
       const data = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT' });
 
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (secret) headers['x-webhook-secret'] = secret;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'x-webhook-secret': secret,
+      };
 
       const res = await fetch(webhookUrl, {
         method: 'POST',
