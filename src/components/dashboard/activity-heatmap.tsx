@@ -1,6 +1,7 @@
 'use client';
 
 import { LeetcodeRecord } from '@/lib/types';
+import { isAcceptedSolution } from '@/lib/solution-status';
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarCheck, CalendarDays, CalendarRange, Target } from 'lucide-react';
 
@@ -72,22 +73,26 @@ function getTaipeiWeeklyGoalResetMs(date: Date): number {
   return resetMs;
 }
 
-function hasSubmittedCode(record: LeetcodeRecord): boolean {
-  return record.solutions.some((solution) => solution.code.trim().length > 0);
+function hasAcceptedSubmission(record: LeetcodeRecord): boolean {
+  return record.solutions.some((solution) => solution.code.trim().length > 0 && isAcceptedSolution(solution));
 }
 
-function getSubmissionDates(records: LeetcodeRecord[]): Date[] {
-  return records.flatMap((record) =>
-    record.solutions
-      .filter((solution) => solution.code.trim().length > 0)
-      .map((solution) => new Date(solution.submitted_at ?? record.created_at))
-  );
+function getAcceptedProblemDates(records: LeetcodeRecord[]): Array<{ problemId: number; date: Date }> {
+  return records.flatMap((record) => {
+    const acceptedDates = record.solutions
+      .filter((solution) => solution.code.trim().length > 0 && isAcceptedSolution(solution))
+      .map((solution) => new Date(solution.submitted_at ?? record.created_at));
+
+    if (acceptedDates.length === 0) return [];
+    acceptedDates.sort((a, b) => a.getTime() - b.getTime());
+    return [{ problemId: record.problem_id, date: acceptedDates[0] }];
+  });
 }
 
 export default function ActivityHeatmap({ records }: Props) {
   const [now, setNow] = useState(() => new Date());
-  const submittedRecords = useMemo(() => records.filter(hasSubmittedCode), [records]);
-  const submissionDates = useMemo(() => getSubmissionDates(records), [records]);
+  const acceptedRecords = useMemo(() => records.filter(hasAcceptedSubmission), [records]);
+  const acceptedProblemDates = useMemo(() => getAcceptedProblemDates(records), [records]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setNow(new Date()), MINUTE_MS);
@@ -95,13 +100,16 @@ export default function ActivityHeatmap({ records }: Props) {
   }, []);
 
   const activityMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    submissionDates.forEach((date) => {
+    const map: Record<string, Set<number>> = {};
+    acceptedProblemDates.forEach(({ problemId, date }) => {
       const day = getTaipeiDateKey(date);
-      map[day] = (map[day] ?? 0) + 1;
+      map[day] ??= new Set<number>();
+      map[day].add(problemId);
     });
-    return map;
-  }, [submissionDates]);
+    return Object.fromEntries(
+      Object.entries(map).map(([day, problemIds]) => [day, problemIds.size])
+    ) as Record<string, number>;
+  }, [acceptedProblemDates]);
 
   const today = now;
   const todayKey = getTaipeiDateKey(today);
@@ -119,16 +127,16 @@ export default function ActivityHeatmap({ records }: Props) {
     cells.push({ date: key, count: activityMap[key] ?? 0 });
   }
 
-  const totalSolved = submittedRecords.length;
+  const totalSolved = acceptedRecords.length;
   const activeDays = Object.values(activityMap).filter((count) => count > 0).length;
   const todayCount = activityMap[todayKey] ?? 0;
-  const weekCount = submissionDates.filter((date) => {
+  const weekCount = new Set(acceptedProblemDates.filter(({ date }) => {
     const submittedAt = getTaipeiWallTimeMs(date);
     return submittedAt >= weeklyGoalResetMs && submittedAt <= getTaipeiWallTimeMs(today);
-  }).length;
-  const monthCount = submissionDates.filter((date) =>
+  }).map(({ problemId }) => problemId)).size;
+  const monthCount = new Set(acceptedProblemDates.filter(({ date }) =>
     getTaipeiDateKey(date).startsWith(monthKey)
-  ).length;
+  ).map(({ problemId }) => problemId)).size;
 
   const streak = useMemo(() => {
     let current = 0;

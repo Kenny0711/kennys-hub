@@ -44,6 +44,10 @@ const FAILURE_STATUSES = [
 ];
 const JUDGING_STATUSES = ['Pending', 'Judging', 'Running', 'Submitting'];
 
+function isAcceptedStatus(status: string | undefined): boolean {
+  return /\bAccepted\b/i.test(status ?? '');
+}
+
 console.info('[Kenny 的研發日誌] content script loaded', window.location.href);
 
 let waitingForAccepted = false;
@@ -330,7 +334,11 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
     }
 
     data.sync_source = source;
-    data.submission_status = source === 'auto' ? 'Accepted' : (data.submission_status || 'Manual Sync');
+    data.submission_status = source === 'auto' ? 'Accepted' : data.submission_status;
+
+    if (!isAcceptedStatus(data.submission_status)) {
+      throw new Error(`Submission is not Accepted; sync skipped. Current status: ${data.submission_status || 'unknown'}`);
+    }
 
     const syncKey = `${data.problem_id}:${data.language}:${data.code}:${data.submission_status}:${data.sync_source}`;
     if (source === 'auto' && syncKey === lastSyncedKey) return;
@@ -378,6 +386,16 @@ function hasJudgingState(): boolean {
 
 function normalizeSubmissionStatus(detail: SubmissionResult): string {
   return (detail.status_msg || detail.status || detail.state || '').trim();
+}
+
+function mutationContainsStatus(mutations: MutationRecord[], status: string): boolean {
+  return mutations.some((mutation) => {
+    const addedText = Array.from(mutation.addedNodes)
+      .map((node) => node.textContent ?? '')
+      .join(' ');
+    const targetText = mutation.target.textContent ?? '';
+    return addedText.includes(status) || targetText.includes(status);
+  });
 }
 
 function parseSubmissionDetail(event: Event): SubmissionResult | null {
@@ -473,11 +491,11 @@ function waitForAcceptedSubmission(): void {
 
   const isFreshAcceptedResult = () => {
     if (hasJudgingState()) sawSubmissionActivity = true;
-    return hasAcceptedResult() && (sawSubmissionActivity || Date.now() - startedAt > 2500);
+    return hasAcceptedResult() && sawSubmissionActivity;
   };
 
-  const observer = new MutationObserver(() => {
-    if (isFreshAcceptedResult()) {
+  const observer = new MutationObserver((mutations) => {
+    if (mutationContainsStatus(mutations, 'Accepted') && isFreshAcceptedResult()) {
       cleanup();
       void syncAcceptedSubmission();
       return;
@@ -494,7 +512,7 @@ function waitForAcceptedSubmission(): void {
       return;
     }
 
-    if (isFreshAcceptedResult()) {
+    if (sawSubmissionActivity && isFreshAcceptedResult()) {
       cleanup();
       void syncAcceptedSubmission();
     } else if (hasTerminalFailureResult()) {
@@ -633,7 +651,7 @@ chrome.runtime.onMessage.addListener(
         sendResponse({
           ...data,
           sync_source: 'manual',
-          submission_status: data.submission_status || resolveSubmissionStatus() || 'Manual Sync',
+          submission_status: data.submission_status || resolveSubmissionStatus() || undefined,
         });
       });
     }

@@ -269,6 +269,13 @@ captureBtn.addEventListener('click', () => {
 
     try {
       const data = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT' });
+      const submissionStatus = String(data.submission_status ?? '');
+
+      if (!/\bAccepted\b/i.test(submissionStatus)) {
+        resultEl.textContent = `未偵測到 Accepted，已略過同步（目前狀態：${submissionStatus || 'unknown'}）`;
+        resultEl.style.color = '#f59e0b';
+        return;
+      }
 
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',

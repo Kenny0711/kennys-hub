@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { WebhookPayload } from '@/lib/types';
+import { isAcceptedSolution } from '@/lib/solution-status';
 
 function stripCodeFence(code: string): string {
   return code
@@ -65,6 +66,16 @@ export async function POST(req: NextRequest) {
   const syncSource = body.sync_source ?? 'auto';
   const solutionStatus = normalizeSolutionStatus(body.submission_status, syncSource);
 
+  if (!isMetadataOnlySync && solutionStatus !== 'accepted') {
+    return NextResponse.json(
+      {
+        error: 'Submission is not Accepted; sync skipped.',
+        submission_status: body.submission_status ?? 'unknown',
+      },
+      { status: 422 }
+    );
+  }
+
   if (!isMetadataOnlySync && !isLikelyCompleteCode(code)) {
     return NextResponse.json(
       { error: 'Code capture looks incomplete. Please refresh LeetCode and submit again after the editor finishes syncing.' },
@@ -105,7 +116,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'tags_updated', id: existing.id });
     }
 
-    const solutions = [...(existing.solutions ?? []), solution];
+    const solutions = [...(existing.solutions ?? [])];
+    const duplicatedAcceptedSolution = solutions.some((existingSolution) => {
+      return (
+        isAcceptedSolution(existingSolution) &&
+        existingSolution.language === solution.language &&
+        stripCodeFence(existingSolution.code ?? '') === code
+      );
+    });
+
+    if (!duplicatedAcceptedSolution) {
+      solutions.push(solution);
+    }
+
     const updatePayload: Record<string, unknown> = {
       solutions,
       title: body.title,
