@@ -57,6 +57,8 @@ let acceptedSyncCooldownUntil = 0;
 let pendingSubmittedCode = '';
 let pendingSubmittedAt = 0;
 let lastSubmissionStatus = '';
+let lastSubmissionResultAt = 0;
+let activeSubmissionId = '';
 
 function getMonacoCode(): Promise<string> {
   return new Promise((resolve) => {
@@ -164,7 +166,7 @@ function chooseSubmissionCode(currentCode: string): string {
 
 async function captureSubmissionSnapshot(): Promise<void> {
   const code = await readCurrentCode();
-  if (scoreCodeCandidate(code) >= scoreCodeCandidate(pendingSubmittedCode)) {
+  if (scoreCodeCandidate(code) > -1) {
     pendingSubmittedCode = code;
     pendingSubmittedAt = Date.now();
   }
@@ -187,17 +189,12 @@ function normalizeLanguage(raw: string): string {
   return map[raw.toLowerCase()] ?? raw.toLowerCase();
 }
 
-function inferVisibleSubmissionStatus(): string {
-  const pageText = getVisiblePageText();
-  if (pageText.includes('Accepted')) return 'Accepted';
-  return FAILURE_STATUSES.find((status) => pageText.includes(status)) ?? '';
-}
-
 function resolveSubmissionStatus(): string {
-  const visibleStatus = inferVisibleSubmissionStatus();
-  if (visibleStatus) return visibleStatus;
-  if (lastSubmissionStatus && !JUDGING_STATUSES.includes(lastSubmissionStatus)) return lastSubmissionStatus;
-  return lastSubmissionStatus;
+  const isRecentResult = Date.now() - lastSubmissionResultAt < SUBMISSION_TIMEOUT_MS;
+  if (isRecentResult && lastSubmissionStatus && !JUDGING_STATUSES.includes(lastSubmissionStatus)) {
+    return lastSubmissionStatus;
+  }
+  return '';
 }
 
 function inferLanguageFromCode(code: string, fallback: string): string {
@@ -370,15 +367,6 @@ function getVisiblePageText(): string {
   return document.body?.innerText ?? '';
 }
 
-function hasAcceptedResult(): boolean {
-  return /\bAccepted\b/.test(getVisiblePageText());
-}
-
-function hasTerminalFailureResult(): boolean {
-  const pageText = getVisiblePageText();
-  return FAILURE_STATUSES.some((status) => pageText.includes(status));
-}
-
 function hasJudgingState(): boolean {
   const pageText = getVisiblePageText();
   return JUDGING_STATUSES.some((status) => pageText.includes(status));
@@ -393,9 +381,13 @@ function mutationContainsStatus(mutations: MutationRecord[], status: string): bo
     const addedText = Array.from(mutation.addedNodes)
       .map((node) => node.textContent ?? '')
       .join(' ');
-    const targetText = mutation.target.textContent ?? '';
-    return addedText.includes(status) || targetText.includes(status);
+    const changedText = mutation.type === 'characterData' ? mutation.target.textContent ?? '' : '';
+    return addedText.includes(status) || changedText.includes(status);
   });
+}
+
+function mutationContainsAnyStatus(mutations: MutationRecord[], statuses: string[]): string {
+  return statuses.find((status) => mutationContainsStatus(mutations, status)) ?? '';
 }
 
 function parseSubmissionDetail(event: Event): SubmissionResult | null {
@@ -427,9 +419,15 @@ function handleSubmissionResult(event: Event): void {
   const detail = parseSubmissionDetail(event);
   if (!detail) return;
 
+  const submissionId = detail.submission_id ? String(detail.submission_id) : '';
+  if (submissionId && activeSubmissionId && submissionId !== activeSubmissionId) {
+    return;
+  }
+
   const status = normalizeSubmissionStatus(detail);
   if (!status) return;
   lastSubmissionStatus = status;
+  lastSubmissionResultAt = Date.now();
   console.info(`[Kenny 的研發日誌] Submission status: ${status}`);
 
   if (status === 'Accepted') {
@@ -440,6 +438,15 @@ function handleSubmissionResult(event: Event): void {
   if (FAILURE_STATUSES.includes(status)) {
     stopWaitingForAccepted(status);
   }
+}
+
+function handleSubmissionStarted(event: Event): void {
+  const detail = parseSubmissionDetail(event);
+  activeSubmissionId = detail?.submission_id ? String(detail.submission_id) : '';
+  lastSubmissionStatus = 'Submitting';
+  lastSubmissionResultAt = Date.now();
+  void captureSubmissionSnapshot();
+  startSubmissionWindow();
 }
 
 function isSubmitButton(element: HTMLElement): boolean {
@@ -489,19 +496,22 @@ function waitForAcceptedSubmission(): void {
   const startedAt = Date.now();
   let sawSubmissionActivity = false;
 
-  const isFreshAcceptedResult = () => {
-    if (hasJudgingState()) sawSubmissionActivity = true;
-    return hasAcceptedResult() && sawSubmissionActivity;
-  };
-
   const observer = new MutationObserver((mutations) => {
-    if (mutationContainsStatus(mutations, 'Accepted') && isFreshAcceptedResult()) {
+    const judgingStatus = mutationContainsAnyStatus(mutations, JUDGING_STATUSES);
+    if (judgingStatus || hasJudgingState()) sawSubmissionActivity = true;
+
+    if (mutationContainsStatus(mutations, 'Accepted') && sawSubmissionActivity) {
       cleanup();
+      lastSubmissionStatus = 'Accepted';
+      lastSubmissionResultAt = Date.now();
       void syncAcceptedSubmission();
       return;
     }
 
-    if (hasTerminalFailureResult()) {
+    const failureStatus = mutationContainsAnyStatus(mutations, FAILURE_STATUSES);
+    if (failureStatus) {
+      lastSubmissionStatus = failureStatus;
+      lastSubmissionResultAt = Date.now();
       cleanup();
     }
   });
@@ -512,11 +522,9 @@ function waitForAcceptedSubmission(): void {
       return;
     }
 
-    if (sawSubmissionActivity && isFreshAcceptedResult()) {
+    if (lastSubmissionStatus === 'Accepted' && Date.now() - lastSubmissionResultAt < SUBMISSION_TIMEOUT_MS) {
       cleanup();
       void syncAcceptedSubmission();
-    } else if (hasTerminalFailureResult()) {
-      cleanup();
     }
   }, 1000);
 
@@ -553,11 +561,7 @@ document.addEventListener(
   true
 );
 
-document.addEventListener('__lc_submission_started__', () => {
-  void captureSubmissionSnapshot();
-  lastSubmissionStatus = 'Submitting';
-  startSubmissionWindow();
-});
+document.addEventListener('__lc_submission_started__', handleSubmissionStarted);
 
 document.addEventListener('__lc_submission_result__', handleSubmissionResult);
 
