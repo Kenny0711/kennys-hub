@@ -174,11 +174,20 @@ Development logs:
 docs/log/README.md
 docs/log/09_DevHub_作品集與後台.md
 docs/log/10_首頁聯絡履歷與LeetCode同步.md
+docs/log/12_Portfolio_Card_Layout_And_Copy.md
 ```
 
 ---
 
 ## Latest Update
+
+2026-05-21:
+
+- Updated portfolio cards so tech tags and the bottom-right arrow stay aligned at the bottom of each card
+- Rewrote project descriptions to remove `Goal:` and use completed-action wording such as `Implemented`, `Built`, `Trained`, and `Applied`
+- Synced the same portfolio description updates to Supabase so the deployed site reads the latest copy
+- Kept the featured homepage order as CVAE, Kenny's Dev Hub, and SUMO
+- Documented the portfolio card layout and data-copy flow in `docs/log/12_Portfolio_Card_Layout_And_Copy.md`
 
 2026-05-18:
 
