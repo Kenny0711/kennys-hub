@@ -24,7 +24,7 @@ const skillGroups = [
   },
   {
     title: 'Tools',
-    skillRows: [['Git', 'Claude Code', 'n8n']],
+    skillRows: [['Git', 'n8n']],
   },
 ];
 
