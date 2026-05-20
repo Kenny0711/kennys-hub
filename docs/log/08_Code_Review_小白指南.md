@@ -71,7 +71,7 @@ review 時問：
 
 ```txt
 supabase/schema.sql
-.env.local.example
+README.md
 middleware.ts
 ```
 

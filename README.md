@@ -141,7 +141,7 @@ npm run build
 
 ## Environment Variables
 
-Create `.env.local` from `.env.local.example`, then fill in the required values.
+Create `.env.local` locally, then fill in the required values. This file is intentionally not committed.
 
 Common variables:
 
