@@ -75,6 +75,16 @@ export const MOCK_PROJECTS: Project[] = [
     is_featured: true,
   },
   {
+    id: 'kennys-dev-hub',
+    title: "Kenny's Dev Hub",
+    description:
+      'Goal: Build a personal research and development portal that integrates portfolio projects, LeetCode tracking, solution notes, and admin workflows. The system combines Next.js, Supabase, Chrome Extension sync, secure server actions, and dashboard analytics into one maintainable learning hub.',
+    project_url: 'https://github.com/Kenny0711/kennys-hub',
+    image_url: '/projects/dev-hub.svg',
+    tags: ['Next.js', 'Supabase', 'Chrome Extension'],
+    is_featured: true,
+  },
+  {
     id: 'dlp-dqn-control',
     title: 'Deep Q-Network Control',
     description:
@@ -82,7 +92,7 @@ export const MOCK_PROJECTS: Project[] = [
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%205',
     image_url: '/projects/dqn-control.svg',
     tags: ['PyTorch', 'DQN', 'Reinforcement Learning'],
-    is_featured: true,
+    is_featured: false,
   },
   {
     id: 'dlp-conditional-ddpm',

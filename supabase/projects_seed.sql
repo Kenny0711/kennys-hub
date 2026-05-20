@@ -48,8 +48,18 @@ select
   'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%205',
   '/projects/dqn-control.svg',
   array['PyTorch', 'DQN', 'Reinforcement Learning'],
-  true
+  false
 where not exists (select 1 from public.projects where title = 'Deep Q-Network Control');
+
+insert into public.projects (title, description, project_url, image_url, tags, is_featured)
+select
+  'Kenny''s Dev Hub',
+  'Goal: Build a personal research and development portal that integrates portfolio projects, LeetCode tracking, solution notes, and admin workflows. The system combines Next.js, Supabase, Chrome Extension sync, secure server actions, and dashboard analytics into one maintainable learning hub.',
+  'https://github.com/Kenny0711/kennys-hub',
+  '/projects/dev-hub.svg',
+  array['Next.js', 'Supabase', 'Chrome Extension'],
+  true
+where not exists (select 1 from public.projects where title = 'Kenny''s Dev Hub');
 
 insert into public.projects (title, description, project_url, image_url, tags, is_featured)
 select
@@ -70,3 +80,16 @@ select
   array['SUMO', 'RL', 'Traffic Simulation'],
   true
 where not exists (select 1 from public.projects where title = 'SUMO Traffic Simulation with LCPO');
+
+update public.projects
+set is_featured = title in (
+  'Conditional VAE Video Prediction',
+  'Kenny''s Dev Hub',
+  'SUMO Traffic Simulation with LCPO'
+)
+where title in (
+  'Conditional VAE Video Prediction',
+  'Kenny''s Dev Hub',
+  'SUMO Traffic Simulation with LCPO',
+  'Deep Q-Network Control'
+);

@@ -3,16 +3,19 @@ const journeyPoints = [
     period: '2020.09 - 2024.06',
     title: '元智大學 (YZU)',
     description: '資訊工程學系 學士',
+    achievement: '→ 修習資訊工程學系，實習取代畢業專題',
   },
   {
     period: '2023.01 - 2024.01',
     title: '兆勤科技 (Zyxel)',
     description: '產品測試開發實習生',
+    achievement: '→ 測試 AP / AC / Nebula 整合場景，模擬網路條件並評估 AP Thoughput',
   },
   {
     period: '2025.09 - Present',
     title: '陽明交通大學 (NYCU)',
     description: '多媒體工程研究所 碩士生',
+    achievement: '→ 碩士研究方向：Social Media Analysis',
   },
 ];
 
@@ -39,6 +42,7 @@ export default function JourneyTimeline() {
                     {point.title}
                   </h3>
                   <p className="mt-1 text-sm leading-6 text-zinc-400">{point.description}</p>
+                  <p className="mt-1 text-xs leading-5 text-neutral-500">{point.achievement}</p>
                 </div>
               </div>
             ))}
@@ -61,6 +65,7 @@ export default function JourneyTimeline() {
                 {point.title}
               </h3>
               <p className="mt-1 text-sm leading-6 text-zinc-400">{point.description}</p>
+              <p className="mt-1 text-xs leading-5 text-neutral-500">{point.achievement}</p>
             </div>
           </div>
         ))}
