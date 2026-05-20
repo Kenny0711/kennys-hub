@@ -31,19 +31,21 @@ export default function ProjectCard({ project, showFeaturedBadge = false }: Proj
           {project.description}
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          {project.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-md border border-blue-400/15 bg-blue-400/8 px-2 py-1 text-xs font-medium text-blue-100/90"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        <div className="mt-auto pt-5">
+          <div className="flex flex-wrap gap-2">
+            {project.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-md border border-blue-400/15 bg-blue-400/8 px-2 py-1 text-xs font-medium text-blue-100/90"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
 
-        <div className="mt-auto flex justify-end pt-5">
-          <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-blue-300" />
+          <div className="flex justify-end pt-5">
+            <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-blue-300" />
+          </div>
         </div>
       </div>
     </article>

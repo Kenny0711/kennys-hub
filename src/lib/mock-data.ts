@@ -38,7 +38,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-backpropagation',
     title: 'Backpropagation from Scratch',
     description:
-      'Goal: Build and train a fully connected neural network from scratch using only Python and NumPy. This project focuses on understanding forward propagation, manual backpropagation, activation functions, SGD, and momentum-based optimization.',
+      'Built and trained a fully connected neural network from scratch using only Python and NumPy. This project focuses on understanding forward propagation, manual backpropagation, activation functions, SGD, and momentum-based optimization.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%201',
     image_url: '/projects/backpropagation.svg',
     tags: ['NumPy', 'Backpropagation', 'MLP'],
@@ -48,7 +48,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-semantic-segmentation',
     title: 'Binary Semantic Segmentation',
     description:
-      'Goal: Train image segmentation models that separate pet foregrounds from backgrounds on the Oxford-IIIT Pet dataset using UNet and ResNet34-UNet.',
+      'Trained image segmentation models that separate pet foregrounds from backgrounds on the Oxford-IIIT Pet dataset using UNet and ResNet34-UNet.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%202',
     image_url: '/projects/segmentation.svg',
     tags: ['PyTorch', 'UNet', 'Segmentation'],
@@ -58,7 +58,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-maskgit-inpainting',
     title: 'MaskGIT Image Inpainting',
     description:
-      'Goal: Use a pretrained VQGAN tokenizer with a Masked Bidirectional Transformer to reconstruct masked image regions through iterative token prediction.',
+      'Used a pretrained VQGAN tokenizer with a Masked Bidirectional Transformer to reconstruct masked image regions through iterative token prediction.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%203',
     image_url: '/projects/maskgit.svg',
     tags: ['PyTorch', 'VQGAN', 'Transformer'],
@@ -68,7 +68,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-conditional-vae-video',
     title: 'Conditional VAE Video Prediction',
     description:
-      'Goal: Implement stochastic video generation with a learned prior to predict future dance frames from conditional signals.',
+      'Implemented stochastic video generation with a learned prior to predict future dance frames from conditional signals.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%204',
     image_url: '/projects/video-vae.svg',
     tags: ['PyTorch', 'CVAE', 'Video Prediction'],
@@ -78,7 +78,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'kennys-dev-hub',
     title: "Kenny's Dev Hub",
     description:
-      'Goal: Build a personal research and development portal that integrates portfolio projects, LeetCode tracking, solution notes, and admin workflows. The system combines Next.js, Supabase, Chrome Extension sync, secure server actions, and dashboard analytics into one maintainable learning hub.',
+      'Built a personal research and development portal that integrates portfolio projects, LeetCode tracking, solution notes, and admin workflows. The system combines Next.js, Supabase, Chrome Extension sync, secure server actions, and dashboard analytics into one maintainable learning hub.',
     project_url: 'https://github.com/Kenny0711/kennys-hub',
     image_url: '/projects/dev-hub.svg',
     tags: ['Next.js', 'Supabase', 'Chrome Extension'],
@@ -88,7 +88,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-dqn-control',
     title: 'Deep Q-Network Control',
     description:
-      'Goal: Implement Deep Q-Network agents and variants for discrete control tasks, including experience replay, target networks, exploration, and evaluation rollouts.',
+      'Implemented Deep Q-Network agents and variants for discrete control tasks, including experience replay, target networks, exploration, and evaluation rollouts.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%205',
     image_url: '/projects/dqn-control.svg',
     tags: ['PyTorch', 'DQN', 'Reinforcement Learning'],
@@ -98,7 +98,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-conditional-ddpm',
     title: 'Conditional DDPM Image Generation',
     description:
-      'Goal: Build a conditional denoising diffusion model that generates iCLEVR images from multi-label object conditions.',
+      'Built a conditional denoising diffusion model that generates iCLEVR images from multi-label object conditions.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/lab%206',
     image_url: '/projects/ddpm-generation.svg',
     tags: ['PyTorch', 'Diffusion', 'Generative AI'],
@@ -108,7 +108,7 @@ export const MOCK_PROJECTS: Project[] = [
     id: 'dlp-sumo-lcpo',
     title: 'SUMO Traffic Simulation with LCPO',
     description:
-      'Goal: Apply reinforcement learning to traffic signal control using SUMO and a Taipei road network, connecting simulation engineering with RL policy design.',
+      'Applied reinforcement learning to traffic signal control using SUMO and a Taipei road network, connecting simulation engineering with RL policy design.',
     project_url: 'https://github.com/Kenny0711/Nycu-Deep-learning-2026/tree/main/final',
     image_url: '/projects/sumo-lcpo.svg',
     tags: ['SUMO', 'RL', 'Traffic Simulation'],
