@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { WebhookPayload } from '@/lib/types';
-import { isAcceptedSolution } from '@/lib/solution-status';
 
 function stripCodeFence(code: string): string {
   return code
@@ -116,27 +115,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: 'tags_updated', id: existing.id });
     }
 
-    const solutions = [...(existing.solutions ?? [])];
-    const duplicatedAcceptedSolutionIndex = solutions.findIndex((existingSolution) => {
-      return (
-        isAcceptedSolution(existingSolution) &&
-        existingSolution.language === solution.language &&
-        stripCodeFence(existingSolution.code ?? '') === code
-      );
-    });
-
-    if (duplicatedAcceptedSolutionIndex >= 0) {
-      const existingSolution = solutions[duplicatedAcceptedSolutionIndex];
-      solutions[duplicatedAcceptedSolutionIndex] = {
-        ...existingSolution,
-        submitted_at: solution.submitted_at,
-        status: solution.status,
-        submission_status: solution.submission_status,
-        sync_source: solution.sync_source,
-      };
-    } else {
-      solutions.push(solution);
-    }
+    const solutions = [...(existing.solutions ?? []), solution];
 
     const updatePayload: Record<string, unknown> = {
       solutions,
