@@ -337,7 +337,8 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
       throw new Error(`Submission is not Accepted; sync skipped. Current status: ${data.submission_status || 'unknown'}`);
     }
 
-    const syncKey = `${data.problem_id}:${data.language}:${data.code}:${data.submission_status}:${data.sync_source}`;
+    const submissionMarker = activeSubmissionId || String(pendingSubmittedAt);
+    const syncKey = `${data.problem_id}:${data.language}:${data.code}:${data.submission_status}:${data.sync_source}:${submissionMarker}`;
     if (source === 'auto' && syncKey === lastSyncedKey) return;
 
     console.info(`[Kenny 的研發日誌] ${source} sync sending:`, data.problem_id, data.title);
