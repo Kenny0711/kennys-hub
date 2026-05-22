@@ -6,6 +6,25 @@ const resultEl = document.getElementById('result') as HTMLDivElement;
 const DEFAULT_WEBHOOK_URL = 'https://vibe-leetcode.vercel.app/api/webhook';
 const DEFAULT_WEBHOOK_SECRET = 'dev-secret';
 
+async function ensureLeetCodeScripts(tabId: number): Promise<void> {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ['dist/main_world.js'],
+    world: 'MAIN',
+  });
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ['dist/content.js'],
+  });
+}
+
+async function getActiveLeetCodeTab(): Promise<chrome.tabs.Tab | null> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id || !tab.url?.includes('leetcode.com')) return null;
+  await ensureLeetCodeScripts(tab.id);
+  return tab;
+}
+
 // ── 歷史匯入 UI ───────────────────────────────────────────────────────────────
 const importBtn = document.getElementById('import-btn') as HTMLButtonElement;
 const importProgress = document.getElementById('import-progress') as HTMLDivElement;
@@ -140,8 +159,8 @@ tagsBtn.addEventListener('click', async () => {
     return;
   }
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id || !tab.url?.includes('leetcode.com')) {
+  const tab = await getActiveLeetCodeTab();
+  if (!tab?.id) {
     setTagsUI('請先前往 LeetCode 任意頁面後再點擊', 0, '#f59e0b');
     return;
   }
@@ -178,8 +197,8 @@ importBtn.addEventListener('click', async () => {
   }
 
   // 必須在 LeetCode 頁面才能取得已登入的 cookie
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id || !tab.url?.includes('leetcode.com')) {
+  const tab = await getActiveLeetCodeTab();
+  if (!tab?.id) {
     setImportUI('請先在瀏覽器開啟任意 LeetCode 頁面，再點擊此按鈕', 0, '#f59e0b');
     return;
   }
@@ -238,8 +257,9 @@ secretInput.addEventListener('input', () => {
 });
 
 // Detect if we're on a LeetCode problem page
-chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-  if (tab?.url?.includes('leetcode.com/problems/')) {
+chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {
+  if (tab?.id && tab.url?.includes('leetcode.com/problems/')) {
+    await ensureLeetCodeScripts(tab.id);
     statusEl.textContent = '✓ 已偵測到 LeetCode 題目頁面';
     statusEl.style.color = '#22c55e';
     captureBtn.disabled = false;
@@ -268,6 +288,7 @@ captureBtn.addEventListener('click', () => {
     if (!tab.id) return;
 
     try {
+      await ensureLeetCodeScripts(tab.id);
       const data = await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT' });
       const submissionStatus = String(data.submission_status ?? '');
 

@@ -50,6 +50,13 @@ function isAcceptedStatus(status: string | undefined): boolean {
 
 console.info('[Kenny 的研發日誌] content script loaded', window.location.href);
 
+const CONTENT_RUN_ID = `${Date.now()}-${Math.random()}`;
+(globalThis as Record<string, unknown>).__kennyHubContentRunId = CONTENT_RUN_ID;
+
+function isActiveContentRun(): boolean {
+  return (globalThis as Record<string, unknown>).__kennyHubContentRunId === CONTENT_RUN_ID;
+}
+
 let waitingForAccepted = false;
 let syncing = false;
 let lastSyncedKey = '';
@@ -59,6 +66,7 @@ let pendingSubmittedAt = 0;
 let lastSubmissionStatus = '';
 let lastSubmissionResultAt = 0;
 let activeSubmissionId = '';
+let pollingSubmissionId = '';
 
 function getMonacoCode(): Promise<string> {
   return new Promise((resolve) => {
@@ -316,6 +324,7 @@ function sendWebhookSync(data: ProblemData): Promise<WebhookSyncResponse> {
 }
 
 async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
+  if (!isActiveContentRun()) return;
   if (syncing) return;
 
   syncing = true;
@@ -358,6 +367,7 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
 }
 
 async function syncAcceptedSubmission(): Promise<void> {
+  if (!isActiveContentRun()) return;
   if (Date.now() < acceptedSyncCooldownUntil) return;
   acceptedSyncCooldownUntil = Date.now() + 5000;
   stopWaitingForAccepted('accepted');
@@ -375,6 +385,18 @@ function hasJudgingState(): boolean {
 
 function normalizeSubmissionStatus(detail: SubmissionResult): string {
   return (detail.status_msg || detail.status || detail.state || '').trim();
+}
+
+async function fetchSubmissionResult(submissionId: string): Promise<SubmissionResult | null> {
+  try {
+    const res = await fetch(`/submissions/detail/${submissionId}/check/`, {
+      credentials: 'include',
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as SubmissionResult;
+  } catch {
+    return null;
+  }
 }
 
 function mutationContainsStatus(mutations: MutationRecord[], status: string): boolean {
@@ -416,38 +438,70 @@ function stopWaitingForAccepted(reason?: string): void {
   waitingForAccepted = false;
 }
 
-function handleSubmissionResult(event: Event): void {
-  const detail = parseSubmissionDetail(event);
-  if (!detail) return;
-
+function processSubmissionResult(detail: SubmissionResult): boolean {
+  if (!isActiveContentRun()) return false;
   const submissionId = detail.submission_id ? String(detail.submission_id) : '';
   if (submissionId && activeSubmissionId && submissionId !== activeSubmissionId) {
-    return;
+    return false;
   }
 
   const status = normalizeSubmissionStatus(detail);
-  if (!status) return;
+  if (!status) return false;
   lastSubmissionStatus = status;
   lastSubmissionResultAt = Date.now();
   console.info(`[Kenny 的研發日誌] Submission status: ${status}`);
 
   if (status === 'Accepted') {
     void syncAcceptedSubmission();
-    return;
+    return true;
   }
 
   if (FAILURE_STATUSES.includes(status)) {
     stopWaitingForAccepted(status);
+    return true;
+  }
+
+  return false;
+}
+
+function handleSubmissionResult(event: Event): void {
+  const detail = parseSubmissionDetail(event);
+  if (!detail) return;
+  processSubmissionResult(detail);
+}
+
+async function pollSubmissionResult(submissionId: string): Promise<void> {
+  if (!isActiveContentRun()) return;
+  if (pollingSubmissionId === submissionId) return;
+  pollingSubmissionId = submissionId;
+
+  try {
+    const startedAt = Date.now();
+    while (
+      isActiveContentRun() &&
+      Date.now() - startedAt < SUBMISSION_TIMEOUT_MS &&
+      activeSubmissionId === submissionId
+    ) {
+      await delay(1000);
+      const detail = await fetchSubmissionResult(submissionId);
+      if (detail && processSubmissionResult({ ...detail, submission_id: submissionId })) {
+        return;
+      }
+    }
+  } finally {
+    if (pollingSubmissionId === submissionId) pollingSubmissionId = '';
   }
 }
 
 function handleSubmissionStarted(event: Event): void {
+  if (!isActiveContentRun()) return;
   const detail = parseSubmissionDetail(event);
   activeSubmissionId = detail?.submission_id ? String(detail.submission_id) : '';
   lastSubmissionStatus = 'Submitting';
   lastSubmissionResultAt = Date.now();
   void captureSubmissionSnapshot();
   startSubmissionWindow();
+  if (activeSubmissionId) void pollSubmissionResult(activeSubmissionId);
 }
 
 function isSubmitButton(element: HTMLElement): boolean {
@@ -541,6 +595,7 @@ function waitForAcceptedSubmission(): void {
 document.addEventListener(
   'click',
   (event) => {
+    if (!isActiveContentRun()) return;
     const target = event.target;
     if (target instanceof HTMLElement && isSubmitButton(target)) {
       void captureSubmissionSnapshot();
@@ -553,6 +608,7 @@ document.addEventListener(
 document.addEventListener(
   'pointerdown',
   (event) => {
+    if (!isActiveContentRun()) return;
     const target = event.target;
     if (target instanceof HTMLElement && isSubmitButton(target)) {
       void captureSubmissionSnapshot();
@@ -651,6 +707,7 @@ async function enrichWithTags(): Promise<void> {
 
 chrome.runtime.onMessage.addListener(
   (message, _sender, sendResponse: (data: ProblemData | FetchSolvedResult | { status: string }) => void) => {
+    if (!isActiveContentRun()) return false;
     if (message.type === 'EXTRACT') {
       extractProblemData().then((data) => {
         sendResponse({
