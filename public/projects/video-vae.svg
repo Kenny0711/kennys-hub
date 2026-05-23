@@ -20,6 +20,9 @@
     <marker id="arrow" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto">
       <path d="M2 2l8 4-8 4z" fill="#ddd6fe"/>
     </marker>
+    <clipPath id="pose-stage-clip">
+      <rect x="30" y="92" width="232" height="220" rx="24"/>
+    </clipPath>
     <style>
       .node { animation: pulse 2.6s ease-in-out infinite; }
       .node.delay-1 { animation-delay: .35s; }
@@ -43,24 +46,30 @@
 
   <g transform="translate(110 118)">
     <rect width="292" height="348" rx="30" fill="#020617" stroke="#a78bfa" stroke-opacity=".28"/>
-    <rect x="34" y="34" width="180" height="48" rx="16" fill="#312e81" fill-opacity=".72" stroke="#c4b5fd" stroke-opacity=".35"/>
-    <text x="58" y="65" fill="#ede9fe" font-family="Cascadia Code, Consolas, monospace" font-size="20" font-weight="700">Condition (Pose)</text>
+    <rect x="30" y="30" width="216" height="48" rx="16" fill="#312e81" fill-opacity=".78" stroke="#c4b5fd" stroke-opacity=".38"/>
+    <text x="56" y="61" fill="#ede9fe" font-family="Cascadia Code, Consolas, monospace" font-size="20" font-weight="700">Condition (Pose)</text>
 
-    <g transform="translate(74 104)" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
-      <g stroke="#67e8f9" stroke-width="7" opacity=".86">
-        <path d="M80 58l-34 72M80 58l46 68M80 58l0 82M80 140l-42 86M80 140l52 86M80 140l-4 72"/>
-        <path d="M46 130l-18 54M126 126l24 50"/>
-      </g>
-      <g fill="#e0f2fe">
-        <circle class="node" cx="80" cy="30" r="13"/>
-        <circle class="node delay-1" cx="80" cy="58" r="9"/>
-        <circle class="node delay-2" cx="46" cy="130" r="9"/>
-        <circle class="node" cx="126" cy="126" r="9"/>
-        <circle class="node delay-1" cx="80" cy="140" r="10"/>
-        <circle class="node delay-2" cx="38" cy="226" r="9"/>
-        <circle class="node" cx="132" cy="226" r="9"/>
-        <circle class="node delay-1" cx="28" cy="184" r="8"/>
-        <circle class="node delay-2" cx="150" cy="176" r="8"/>
+    <rect x="30" y="92" width="232" height="220" rx="24" fill="#050816" stroke="#c4b5fd" stroke-opacity=".22"/>
+    <g clip-path="url(#pose-stage-clip)">
+      <circle cx="146" cy="202" r="116" fill="#22d3ee" opacity=".06"/>
+      <g transform="translate(66 94)" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+        <g stroke="#67e8f9" stroke-width="7" opacity=".88">
+          <path d="M80 50l-36 50M80 50l36 50M80 50l0 74M80 124l-22 58M80 124l28 58"/>
+          <path d="M44 100l-16 44M116 100l16 44M58 182l-12 34M108 182l12 34"/>
+        </g>
+        <g fill="#e0f2fe">
+          <circle class="node" cx="80" cy="22" r="13"/>
+          <circle class="node delay-1" cx="80" cy="50" r="9"/>
+          <circle class="node delay-2" cx="44" cy="100" r="9"/>
+          <circle class="node" cx="116" cy="100" r="9"/>
+          <circle class="node delay-1" cx="80" cy="124" r="10"/>
+          <circle class="node delay-2" cx="28" cy="144" r="8"/>
+          <circle class="node" cx="132" cy="144" r="8"/>
+          <circle class="node delay-1" cx="58" cy="182" r="8"/>
+          <circle class="node delay-2" cx="108" cy="182" r="8"/>
+          <circle class="node" cx="46" cy="216" r="8"/>
+          <circle class="node delay-1" cx="120" cy="216" r="8"/>
+        </g>
       </g>
     </g>
   </g>
