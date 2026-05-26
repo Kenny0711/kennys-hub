@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getLeetcodeReadClient } from '@/lib/leetcode-read-client';
 
 export async function GET() {
-  const supabase = await createClient();
+  const supabase = await getLeetcodeReadClient();
   const { data, error } = await supabase
     .from('leetcode_records')
     .select('*')
