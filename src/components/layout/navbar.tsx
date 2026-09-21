@@ -6,7 +6,7 @@ import { Braces, Search } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/problems', label: '題目' },
+  { href: '/problems', label: 'problem' },
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
