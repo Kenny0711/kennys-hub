@@ -32,7 +32,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/40 p-1">
+        <div className="flex items-center gap-2">
           {NAV_ITEMS.map((item) => {
             const active = isActivePath(pathname, item.href);
             return (
@@ -40,10 +40,10 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`rounded-lg border px-3.5 py-1.5 text-sm font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.18)] transition-all ${
                   active
-                    ? 'bg-blue-400/12 text-blue-100 shadow-[0_0_16px_rgba(59,130,246,0.16)]'
-                    : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
+                    ? 'border-blue-300/35 bg-blue-400/12 text-blue-100 shadow-[0_0_18px_rgba(59,130,246,0.22)]'
+                    : 'border-white/10 bg-zinc-950/40 text-muted-foreground hover:border-blue-300/25 hover:bg-blue-400/8 hover:text-blue-50 hover:shadow-[0_0_16px_rgba(59,130,246,0.12)]'
                 }`}
               >
                 {item.label}
