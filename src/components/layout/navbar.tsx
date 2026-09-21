@@ -6,7 +6,7 @@ import { Braces, Search } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/problems', label: 'problem' },
+  { href: '/problems', label: 'Problem' },
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
@@ -32,7 +32,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/40 p-1">
           {NAV_ITEMS.map((item) => {
             const active = isActivePath(pathname, item.href);
             return (
@@ -40,14 +40,13 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`relative text-sm transition-colors ${
-                  active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  active
+                    ? 'bg-blue-400/12 text-blue-100 shadow-[0_0_16px_rgba(59,130,246,0.16)]'
+                    : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
                 }`}
               >
                 {item.label}
-                {active ? (
-                  <span className="absolute -bottom-2 left-0 right-0 h-px rounded-full bg-blue-300 shadow-[0_0_10px_rgba(147,197,253,0.75)]" />
-                ) : null}
               </Link>
             );
           })}
