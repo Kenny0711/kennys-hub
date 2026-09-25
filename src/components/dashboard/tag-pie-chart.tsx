@@ -1,5 +1,5 @@
 'use client';
-import { BarChart, Bar, XAxis, YAxis, Cell, Tooltip, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, LabelList } from 'recharts';
 import { LeetcodeRecord } from '@/lib/types';
 import { useMemo } from 'react';
 
@@ -7,12 +7,10 @@ interface Props {
   records: LeetcodeRecord[];
 }
 
-const COLORS = [
-  '#0ea5e9', '#22c55e', '#f59e0b', '#ef4444',
-  '#8b5cf6', '#ec4899', '#14b8a6', '#f97316',
-  '#a78bfa', '#34d399', '#fbbf24', '#f87171',
-  '#38bdf8', '#86efac', '#fcd34d', '#fb923c',
-];
+// SVG 的 fill/stroke 屬性不支援 CSS 變數，值需與 globals.css 的 --brand / --paper 保持一致
+const BAR_COLOR = '#d9ff43';
+const LABEL_COLOR = '#f2f0e9';
+const MONO_FONT = 'var(--font-app-mono)';
 
 const CHART_H = 200; // bar 區高度（不含 X 軸 chip）
 const CHIP_H = 22;   // chip 框高度
@@ -29,14 +27,12 @@ interface TickProps {
   index?: number;
 }
 
-function ChipTick({ x = 0, y = 0, payload, index = 0 }: TickProps) {
+function ChipTick({ x = 0, y = 0, payload }: TickProps) {
   if (!payload) return null;
   const tickX = Number(x);
   const tickY = Number(y);
-  const colorIndex = payload.index ?? index;
-  const color = COLORS[colorIndex % COLORS.length];
   const text = String(payload.value ?? '');
-  const chipW = Math.max(text.length * 6.4 + 18, 44);
+  const chipW = chipWidth(text);
 
   return (
     <g>
@@ -45,12 +41,10 @@ function ChipTick({ x = 0, y = 0, payload, index = 0 }: TickProps) {
         y={tickY + 6}
         width={chipW}
         height={CHIP_H}
-        rx={5}
-        fill={color}
-        fillOpacity={0.13}
-        stroke={color}
+        fill="none"
+        stroke={LABEL_COLOR}
         strokeWidth={1}
-        strokeOpacity={0.45}
+        strokeOpacity={0.15}
       />
       <text
         x={tickX}
@@ -58,8 +52,10 @@ function ChipTick({ x = 0, y = 0, payload, index = 0 }: TickProps) {
         textAnchor="middle"
         dominantBaseline="central"
         fontSize={11}
-        fontWeight={600}
-        fill={color}
+        fontWeight={500}
+        style={{ fontFamily: MONO_FONT }}
+        fill={LABEL_COLOR}
+        fillOpacity={0.75}
       >
         {text}
       </text>
@@ -92,9 +88,9 @@ export default function TagChart({ records }: Props) {
 
   return (
     <div className="flex h-full flex-col space-y-4">
-      <h2 className="shrink-0 text-base font-semibold uppercase tracking-widest text-muted-foreground">
-        Tags
-      </h2>
+      <h3 className="shrink-0 font-mono text-[11px] uppercase text-zinc-400">
+        Tags / {data.length}
+      </h3>
 
       {/* 橫向捲動容器 */}
       <div className="overflow-x-auto custom-scrollbar-x pb-1">
@@ -115,42 +111,35 @@ export default function TagChart({ records }: Props) {
               tickLine={false}
               axisLine={false}
               interval={0}
-              tick={(props) => <ChipTick {...props} index={props.index} />}
+              tick={(props) => <ChipTick {...props} />}
               height={AXIS_MARGIN}
             />
             <Tooltip
-              cursor={{ fill: 'rgba(255,255,255,0.04)', radius: 4 }}
+              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
               contentStyle={{
-                background: '#1c1c1c',
-                border: '1px solid #3a3a3a',
-                borderRadius: 8,
+                background: '#111111',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 0,
                 fontSize: 13,
-                color: '#f1f5f9',
+                color: LABEL_COLOR,
               }}
-              labelStyle={{ color: '#94a3b8', marginBottom: 2 }}
-              itemStyle={{ color: '#f1f5f9' }}
+              labelStyle={{ color: '#a1a1aa', marginBottom: 2, fontFamily: MONO_FONT }}
+              itemStyle={{ color: LABEL_COLOR }}
               formatter={(value) => [`${value} 題`, '出現次數']}
             />
-            <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+            <Bar dataKey="value" fill={BAR_COLOR} fillOpacity={0.9}>
               <LabelList
                 dataKey="value"
                 position="top"
-                style={{ fill: '#e2e8f0', fontSize: 12, fontWeight: 700 }}
+                style={{ fill: LABEL_COLOR, fontSize: 12, fontWeight: 600, fontFamily: MONO_FONT }}
               />
-              {data.map((_, i) => (
-                <Cell
-                  key={i}
-                  fill={COLORS[i % COLORS.length]}
-                  fillOpacity={0.85}
-                />
-              ))}
             </Bar>
           </BarChart>
         </div>
       </div>
 
       {data.length > 8 && (
-        <p className="shrink-0 text-right text-xs text-muted-foreground/60">
+        <p className="shrink-0 text-right font-mono text-[11px] uppercase text-zinc-500">
           共 {data.length} 個 Tag · 向右滾動查看更多
         </p>
       )}

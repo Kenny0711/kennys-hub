@@ -88,7 +88,7 @@ function getSolutionStatus(solution: Solution) {
       label: 'Accepted',
       title: 'LeetCode accepted submission',
       icon: CheckCircle2,
-      className: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300',
+      className: 'border-emerald-400/40 text-emerald-400',
     };
   }
 
@@ -97,7 +97,7 @@ function getSolutionStatus(solution: Solution) {
       label: 'Runtime Error',
       title: 'LeetCode runtime error submission',
       icon: AlertTriangle,
-      className: 'border-rose-500/25 bg-rose-500/10 text-rose-300',
+      className: 'border-rose-400/40 text-rose-400',
     };
   }
 
@@ -106,7 +106,7 @@ function getSolutionStatus(solution: Solution) {
       label: '手動同步',
       title: 'Manually captured from the extension popup',
       icon: Hand,
-      className: 'border-amber-500/25 bg-amber-500/10 text-amber-300',
+      className: 'border-amber-400/40 text-amber-400',
     };
   }
 
@@ -114,9 +114,15 @@ function getSolutionStatus(solution: Solution) {
     label: 'Unknown',
     title: 'Legacy solution without submission status',
     icon: AlertTriangle,
-    className: 'border-zinc-600/40 bg-zinc-800/50 text-zinc-400',
+    className: 'border-white/15 text-zinc-400',
   };
 }
+
+const FIELD_LABEL = 'mb-1.5 flex items-center gap-1.5 font-mono text-[11px] uppercase text-zinc-400';
+const FIELD_INPUT =
+  'w-full border border-white/15 bg-transparent px-3 py-2 text-sm text-paper transition-colors placeholder:text-zinc-600 hover:border-white/30 focus:border-brand focus:outline-none';
+const CHIP_BUTTON =
+  'inline-flex items-center gap-1.5 border px-2.5 py-1 font-mono text-[11px] transition-colors disabled:opacity-30';
 
 interface Props {
   solutions: Solution[];
@@ -140,105 +146,97 @@ function EditForm({
   saving: boolean;
 }) {
   return (
-    <div className="space-y-4 rounded-xl border border-sky-500/20 bg-sky-500/[0.03] p-5">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-widest text-sky-400">編輯解法</p>
+    <div className="space-y-5 border border-brand/40 bg-surface p-5">
+      <div className="flex items-center justify-between border-b border-white/10 pb-4">
+        <p className="font-mono text-xs font-semibold uppercase text-brand">Edit solution</p>
         <div className="flex gap-2">
           <button
             onClick={onCancel}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground border border-white/10 hover:border-white/20 transition-colors"
+            className={`${CHIP_BUTTON} border-white/20 text-zinc-300 hover:border-white/50 hover:text-white`}
           >
-            <X className="w-3 h-3" /> 取消
+            <X className="h-3 w-3" /> 取消
           </button>
           <button
             onClick={onSave}
             disabled={saving}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30 hover:bg-sky-500/25 disabled:opacity-50 transition-colors"
+            className={`${CHIP_BUTTON} border-brand bg-brand font-semibold text-brand-foreground hover:bg-brand/85`}
           >
             {saving
-              ? <><Loader2 className="w-3 h-3 animate-spin" /> 儲存中</>
-              : <><Check className="w-3 h-3" /> 儲存</>}
+              ? <><Loader2 className="h-3 w-3 animate-spin" /> 儲存中</>
+              : <><Check className="h-3 w-3" /> 儲存</>}
           </button>
         </div>
       </div>
 
-      {/* Method name */}
       <div>
-        <label className="block text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">
-          解法名稱
-        </label>
+        <label className={FIELD_LABEL}>解法名稱</label>
         <input
           type="text"
           value={draft.method}
           onChange={(e) => onChange('method', e.target.value)}
           placeholder="e.g. Two Pointers, BFS..."
-          className="w-full px-3 py-2 text-sm rounded-lg bg-white/5 border border-white/10 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-sky-500/40 focus:border-sky-500/30 transition-colors"
+          className={FIELD_INPUT}
         />
       </div>
 
       <div>
-        <label className="block text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">
-          Submission Status
-        </label>
+        <label className={FIELD_LABEL}>Submission Status</label>
         <select
           value={draft.status ?? 'unknown'}
           onChange={(e) => onChange('status', e.target.value)}
-          className="w-full px-3 py-2 text-sm rounded-lg bg-zinc-950 border border-white/10 text-zinc-100 focus:outline-none focus:ring-1 focus:ring-sky-500/40 focus:border-sky-500/30 transition-colors"
+          className={`${FIELD_INPUT} bg-ink`}
         >
-          <option className="bg-zinc-950 text-zinc-100" value="accepted">Accepted</option>
-          <option className="bg-zinc-950 text-zinc-100" value="runtime_error">Runtime Error</option>
-          <option className="bg-zinc-950 text-zinc-100" value="manual_sync">手動同步</option>
-          <option className="bg-zinc-950 text-zinc-100" value="unknown">Unknown</option>
+          <option className="bg-ink text-paper" value="accepted">Accepted</option>
+          <option className="bg-ink text-paper" value="runtime_error">Runtime Error</option>
+          <option className="bg-ink text-paper" value="manual_sync">手動同步</option>
+          <option className="bg-ink text-paper" value="unknown">Unknown</option>
         </select>
       </div>
 
-      {/* Time + Space */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">
-            <Clock className="w-3 h-3" /> 時間複雜度
+          <label className={FIELD_LABEL}>
+            <Clock className="h-3 w-3" /> 時間複雜度
           </label>
           <input
             type="text"
             value={draft.time_complexity}
             onChange={(e) => onChange('time_complexity', e.target.value)}
             placeholder="O(n)"
-            className="w-full px-3 py-2 text-sm font-mono rounded-lg bg-white/5 border border-white/10 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-sky-500/40 focus:border-sky-500/30 transition-colors"
+            className={`${FIELD_INPUT} font-mono`}
           />
         </div>
         <div>
-          <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">
-            <Database className="w-3 h-3" /> 空間複雜度
+          <label className={FIELD_LABEL}>
+            <Database className="h-3 w-3" /> 空間複雜度
           </label>
           <input
             type="text"
             value={draft.space_complexity}
             onChange={(e) => onChange('space_complexity', e.target.value)}
             placeholder="O(1)"
-            className="w-full px-3 py-2 text-sm font-mono rounded-lg bg-white/5 border border-white/10 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-sky-500/40 focus:border-sky-500/30 transition-colors"
+            className={`${FIELD_INPUT} font-mono`}
           />
         </div>
       </div>
 
-      {/* Notes */}
       <div>
-        <label className="block text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5 font-semibold">
-          筆記 <span className="normal-case text-muted-foreground/40 tracking-normal ml-1">支援 Markdown</span>
+        <label className={FIELD_LABEL}>
+          筆記 <span className="normal-case text-zinc-600">支援 Markdown</span>
         </label>
         <Textarea
           value={draft.notes}
           onChange={(e) => onChange('notes', e.target.value)}
           placeholder="記錄思路、技巧、易錯點..."
           rows={6}
-          className="text-sm font-mono bg-white/5 border-white/10 resize-y placeholder:text-muted-foreground/40 focus:ring-sky-500/40 focus:border-sky-500/30"
+          className="resize-y border-white/15 bg-transparent font-mono text-sm placeholder:text-zinc-600 focus-visible:border-brand focus-visible:ring-0 dark:bg-transparent"
         />
       </div>
 
-      {/* Preview */}
       {draft.notes && (
-        <div className="rounded-lg border border-white/6 bg-white/[0.02] p-4">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 font-semibold">預覽</p>
-          <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap [&_p]:my-2 [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
+        <div className="border border-white/10 bg-ink p-4">
+          <p className="mb-2 font-mono text-[11px] uppercase text-zinc-400">預覽</p>
+          <div className="whitespace-pre-wrap text-sm leading-relaxed text-paper/80 [&_p]:my-2 [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs">
             <Markdown rehypePlugins={[rehypeHighlight]}>{formatMarkdownNotes(draft.notes)}</Markdown>
           </div>
         </div>
@@ -363,20 +361,20 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
   return (
     <div className="space-y-5">
       {solutions.length === 0 ? (
-        <div className="rounded-xl border border-white/8 bg-white/[0.02] flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-muted-foreground text-sm">尚無解法記錄</p>
-          <p className="text-muted-foreground/40 text-xs mt-1">
+        <div className="flex flex-col items-center justify-center border border-white/15 bg-surface py-24 text-center">
+          <p className="font-mono text-xs uppercase text-zinc-500">No solutions yet</p>
+          <p className="mt-2 text-sm text-zinc-400">
             透過 Chrome Extension 擷取解題後會自動顯示
           </p>
         </div>
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white/5 border border-white/8 mb-5">
+          <TabsList className="custom-scrollbar-x mb-5 max-w-full justify-start gap-px overflow-x-auto border border-white/15 bg-white/15 p-0 group-data-horizontal/tabs:h-10">
             {solutions.map((s, i) => (
               <TabsTrigger
                 key={i}
                 value={String(i)}
-                className="text-xs data-[state=active]:bg-white/10"
+                className="h-full flex-none bg-surface px-4 font-mono text-xs uppercase text-zinc-400 hover:text-paper data-active:bg-brand data-active:text-brand-foreground dark:data-active:border-transparent dark:data-active:bg-brand dark:data-active:text-brand-foreground"
               >
                 {displayMethod(s.method, i)}
               </TabsTrigger>
@@ -403,7 +401,7 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                       return (
                         <span
                           title={status.title}
-                          className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-semibold ${status.className}`}
+                          className={`inline-flex items-center gap-1.5 border px-2.5 py-1 font-mono text-[11px] font-semibold uppercase ${status.className}`}
                         >
                           <StatusIcon className="h-3 w-3" />
                           {status.label}
@@ -414,40 +412,40 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                       onClick={() => startEdit(i)}
                       disabled={editingIndex !== null}
                       title={s.time_complexity ? s.time_complexity : '點擊填入時間複雜度'}
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono border transition-colors ${
+                      className={`${CHIP_BUTTON} ${
                         s.time_complexity
-                          ? 'bg-white/5 text-muted-foreground border-white/10 hover:border-white/20'
-                          : 'bg-transparent text-muted-foreground/30 border-dashed border-white/15 hover:border-white/25 hover:text-muted-foreground/50'
+                          ? 'border-white/15 text-zinc-300 hover:border-white/40'
+                          : 'border-dashed border-white/15 text-zinc-600 hover:border-white/30 hover:text-zinc-400'
                       }`}
                     >
-                      <Clock className="w-3 h-3 shrink-0" />
-                      Time: {s.time_complexity || 'O(?)'}
+                      <Clock className="h-3 w-3 shrink-0" />
+                      Time {s.time_complexity || 'O(?)'}
                     </button>
                     <button
                       onClick={() => startEdit(i)}
                       disabled={editingIndex !== null}
                       title={s.space_complexity ? s.space_complexity : '點擊填入空間複雜度'}
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono border transition-colors ${
+                      className={`${CHIP_BUTTON} ${
                         s.space_complexity
-                          ? 'bg-white/5 text-muted-foreground border-white/10 hover:border-white/20'
-                          : 'bg-transparent text-muted-foreground/30 border-dashed border-white/15 hover:border-white/25 hover:text-muted-foreground/50'
+                          ? 'border-white/15 text-zinc-300 hover:border-white/40'
+                          : 'border-dashed border-white/15 text-zinc-600 hover:border-white/30 hover:text-zinc-400'
                       }`}
                     >
-                      <Database className="w-3 h-3 shrink-0" />
-                      Space: {s.space_complexity || 'O(?)'}
+                      <Database className="h-3 w-3 shrink-0" />
+                      Space {s.space_complexity || 'O(?)'}
                     </button>
                     <div className="ml-auto flex items-center gap-1.5">
                       {confirmDeleteIdx === i ? (
                         <>
                           <button
                             onClick={() => setConfirmDeleteIdx(null)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs text-muted-foreground border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors"
+                            className={`${CHIP_BUTTON} border-white/20 text-zinc-300 hover:border-white/50 hover:text-white`}
                           >
                             取消
                           </button>
                           <button
                             onClick={() => deleteSolution(i)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-rose-400 border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 transition-colors"
+                            className={`${CHIP_BUTTON} border-rose-400 bg-rose-400 font-semibold text-black hover:bg-rose-300`}
                           >
                             確認刪除
                           </button>
@@ -457,46 +455,46 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                           <button
                             onClick={() => startEdit(i)}
                             disabled={editingIndex !== null}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground border border-white/8 hover:border-white/20 hover:bg-white/5 disabled:opacity-30 transition-colors"
+                            className={`${CHIP_BUTTON} border-white/20 text-zinc-300 hover:border-brand hover:text-brand`}
                           >
-                            <Pencil className="w-3 h-3" /> 編輯
+                            <Pencil className="h-3 w-3" /> 編輯
                           </button>
                           <button
                             onClick={() => setConfirmDeleteIdx(i)}
                             disabled={editingIndex !== null}
-                            className="inline-flex items-center p-1.5 rounded-md text-muted-foreground/40 hover:text-rose-400 border border-transparent hover:border-rose-500/20 hover:bg-rose-500/10 disabled:opacity-30 transition-colors"
+                            className={`${CHIP_BUTTON} border-white/20 text-zinc-500 hover:border-rose-400 hover:text-rose-400`}
                             title="刪除此解法"
+                            aria-label="刪除此解法"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </>
                       )}
                     </div>
                   </div>
 
-                  {/* Code block */}
                   {s.code && (
-                    <div className="rounded-xl border border-white/8 overflow-hidden">
-                      <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                    <div className="border border-white/15">
+                      <div className="flex items-center justify-between border-b border-white/15 bg-surface px-4 py-2.5">
                         {(() => {
                           const language = normalizeDisplayLanguage(s.language, s.code);
                           return (
-                            <span className="inline-flex items-center rounded bg-sky-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-sky-400 border border-sky-500/20">
+                            <span className="inline-flex items-center border border-brand/40 px-2 py-0.5 font-mono text-[11px] font-semibold uppercase text-brand">
                               {LANG_DISPLAY[language] ?? language}
                             </span>
                           );
                         })()}
                         <button
                           onClick={() => copyCode(stripCodeFence(s.code), i)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-muted-foreground/50 hover:text-muted-foreground border border-transparent hover:border-white/15 hover:bg-white/5 transition-colors"
+                          className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase text-zinc-400 transition-colors hover:text-paper"
                           title="複製程式碼"
                         >
                           {copiedIdx === i
-                            ? <><CheckCheck className="w-3 h-3 text-emerald-400" /><span className="text-emerald-400">已複製</span></>
-                            : <><Copy className="w-3 h-3" />複製</>}
+                            ? <><CheckCheck className="h-3 w-3 text-brand" /><span className="text-brand">已複製</span></>
+                            : <><Copy className="h-3 w-3" />複製</>}
                         </button>
                       </div>
-                      <div className="overflow-x-auto custom-scrollbar-x bg-[#0d1117]">
+                      <div className="custom-scrollbar-x overflow-x-auto bg-[#0c0c0c]">
                         {(() => {
                           const code = stripCodeFence(s.code);
                           const language = normalizeDisplayLanguage(s.language, code);
@@ -515,20 +513,19 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
                     </div>
                   )}
 
-                  {/* Notes */}
                   {s.notes ? (
-                    <div className="rounded-xl border border-white/8 bg-white/[0.02] p-5">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3 font-semibold">
-                        筆記
+                    <div className="border border-white/15 bg-surface p-5 md:p-6">
+                      <p className="mb-4 border-b border-white/10 pb-3 font-mono text-[11px] uppercase text-zinc-400">
+                        Notes
                       </p>
-                      <div className="text-sm text-foreground/80 leading-relaxed space-y-2 whitespace-pre-wrap [&_p]:my-2 [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono">
+                      <div className="space-y-2 whitespace-pre-wrap text-sm leading-relaxed text-paper/80 [&_p]:my-2 [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs">
                         <Markdown rehypePlugins={[rehypeHighlight]}>{formatMarkdownNotes(s.notes)}</Markdown>
                       </div>
                     </div>
                   ) : (
                     <button
                       onClick={() => startEdit(i)}
-                      className="w-full rounded-xl border border-dashed border-white/10 bg-white/[0.01] py-6 text-sm text-muted-foreground/50 hover:text-muted-foreground hover:border-white/20 hover:bg-white/[0.03] transition-colors"
+                      className="w-full border border-dashed border-white/15 py-6 font-mono text-xs uppercase text-zinc-500 transition-colors hover:border-brand hover:text-brand"
                     >
                       + 新增筆記
                     </button>
@@ -552,25 +549,19 @@ export default function SolutionTabs({ solutions: initialSolutions, createdAt, u
         </Tabs>
       )}
 
-      {/* Meta info */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-white/6 bg-white/[0.015] px-5 py-3.5">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
-          <Layers className="w-3.5 h-3.5" />
-          <span>解法數</span>
-          <span className="text-sky-400 font-semibold ml-1">{solutions.length}</span>
-        </div>
-        <div className="w-px h-4 bg-white/6 hidden sm:block" />
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
-          <CalendarPlus className="w-3.5 h-3.5" />
-          <span>建立</span>
-          <span className="text-foreground/50 ml-1">{fmt(createdAt)}</span>
-        </div>
-        <div className="w-px h-4 bg-white/6 hidden sm:block" />
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
-          <CalendarCheck className="w-3.5 h-3.5" />
-          <span>最後更新</span>
-          <span className="text-foreground/50 ml-1">{fmt(updatedAt)}</span>
-        </div>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/15 pt-4 font-mono text-[11px] uppercase text-zinc-500">
+        <span className="flex items-center gap-1.5">
+          <Layers className="h-3.5 w-3.5" />
+          解法數 <span className="font-semibold text-brand">{solutions.length}</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <CalendarPlus className="h-3.5 w-3.5" />
+          建立 <span className="text-zinc-300">{fmt(createdAt)}</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <CalendarCheck className="h-3.5 w-3.5" />
+          最後更新 <span className="text-zinc-300">{fmt(updatedAt)}</span>
+        </span>
       </div>
     </div>
   );

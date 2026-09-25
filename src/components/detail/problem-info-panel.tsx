@@ -1,36 +1,30 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LeetcodeRecord, Proficiency } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { PAGE_SHELL } from '@/components/layout/page-header';
+import DifficultyTag from '@/components/problems/difficulty-tag';
+import ProficiencyBadge from '@/components/problems/proficiency-badge';
 import {
   AlertTriangle,
+  ArrowLeft,
+  ArrowUpRight,
   CheckCircle2,
   ChevronDown,
   Clock4,
-  Code2,
-  ExternalLink,
+  FileText,
   RotateCcw,
   Trash2,
 } from 'lucide-react';
 
 const PROFICIENCY_ORDER: Proficiency[] = ['生疏', '理解', '熟練'];
 
-const PROFICIENCY_STYLE: Record<Proficiency, string> = {
-  生疏: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-  理解: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  熟練: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-};
-
-const DIFFICULTY_STYLE: Record<string, string> = {
-  Easy: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-  Medium: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-  Hard: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
-};
-
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 const REVIEW_INTERVAL: Record<Proficiency, number> = { 生疏: 1, 理解: 4, 熟練: 14 };
+
+const OUTLINE_BUTTON =
+  'inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-2.5 text-sm transition-colors';
 
 function ReviewBadge({
   proficiency,
@@ -49,7 +43,7 @@ function ReviewBadge({
 
   if (days >= interval * 2) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-400">
+      <span className="inline-flex items-center gap-1.5 text-rose-400">
         <AlertTriangle className="h-3.5 w-3.5" />
         強烈建議複習 · {days} 天
       </span>
@@ -58,7 +52,7 @@ function ReviewBadge({
 
   if (days >= interval) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400">
+      <span className="inline-flex items-center gap-1.5 text-amber-400">
         <Clock4 className="h-3.5 w-3.5" />
         可以複習了 · {days} 天
       </span>
@@ -66,10 +60,19 @@ function ReviewBadge({
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
+    <span className="inline-flex items-center gap-1.5 text-emerald-400">
       <CheckCircle2 className="h-3.5 w-3.5" />
       近期已練習
     </span>
+  );
+}
+
+function InfoCell({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="bg-background p-5">
+      <p className="font-mono text-[11px] uppercase text-zinc-500">{label}</p>
+      <div className="mt-3 text-sm font-semibold text-paper">{children}</div>
+    </div>
   );
 }
 
@@ -132,149 +135,160 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
     }
   };
 
+  const fmt = (d: string) => new Date(d).toLocaleDateString('zh-TW');
+
   return (
     <>
-    <div className="rounded-xl border border-white/8 bg-white/[0.015] p-5 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <span className="text-[11px] font-mono text-muted-foreground/50 select-none">
-            #{record.problem_id}
-          </span>
-          <h1 className="text-xl font-bold leading-snug mt-0.5">{record.title}</h1>
-        </div>
-        <div className="flex items-center gap-2 shrink-0 mt-1">
-          <a
-            href={`https://leetcode.com/problems/${leetcodeSlug}/`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-foreground transition-colors"
-          >
-            LeetCode <ExternalLink className="w-3 h-3" />
-          </a>
-          {confirmDelete ? (
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[11px] text-muted-foreground/50 hover:text-foreground"
-                onClick={() => setConfirmDelete(false)}
-                disabled={deleting}
-              >
-                取消
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[11px] text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? '刪除中...' : '確認刪除'}
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 text-muted-foreground/30 hover:text-rose-400 hover:bg-rose-500/10"
-              onClick={handleDelete}
+      <section className="border-b border-white/15">
+        <div className={`${PAGE_SHELL} py-7 lg:py-10`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/15 pb-5 font-mono text-[11px] uppercase text-zinc-400 sm:text-xs">
+            <Link
+              href="/problems"
+              className="inline-flex items-center gap-2 transition-colors hover:text-brand"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-            </Button>
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Problem Set / #{record.problem_id}
+            </Link>
+            <ReviewBadge proficiency={proficiency} updatedAt={record.updated_at} now={now} />
+          </div>
+
+          <div className="rise grid gap-8 py-10 lg:grid-cols-12 lg:items-end lg:py-14">
+            <h1 className="font-display break-words text-5xl leading-[0.9] text-paper sm:text-7xl lg:col-span-8 xl:text-8xl">
+              {record.title}
+            </h1>
+
+            <div className="flex flex-wrap gap-2 lg:col-span-4 lg:justify-end">
+              <a
+                href={`https://leetcode.com/problems/${leetcodeSlug}/`}
+                target="_blank"
+                rel="noreferrer"
+                className={`${OUTLINE_BUTTON} border-white/20 font-semibold text-zinc-200 hover:border-brand hover:bg-brand hover:text-brand-foreground`}
+              >
+                LeetCode
+                <ArrowUpRight className="h-4 w-4" />
+              </a>
+              {confirmDelete ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={deleting}
+                    className={`${OUTLINE_BUTTON} border-white/20 text-zinc-200 hover:border-white/50 hover:text-white disabled:opacity-40`}
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className={`${OUTLINE_BUTTON} border-rose-400 bg-rose-400 font-semibold text-black hover:bg-rose-300 disabled:opacity-40`}
+                  >
+                    {deleting ? '刪除中...' : '確認刪除'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  aria-label="刪除這題"
+                  title="刪除這題"
+                  className="inline-flex h-11 w-11 items-center justify-center border border-white/20 text-zinc-400 transition-colors hover:border-rose-400 hover:text-rose-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-px border border-white/15 bg-white/15 sm:grid-cols-2 lg:grid-cols-4">
+            <InfoCell label="Difficulty">
+              <DifficultyTag difficulty={record.difficulty} />
+            </InfoCell>
+            <InfoCell label="Proficiency">
+              <span className="flex items-center gap-3">
+                <ProficiencyBadge proficiency={proficiency} />
+                <button
+                  type="button"
+                  onClick={cycleProficiency}
+                  disabled={saving}
+                  className="inline-flex items-center gap-1 border-b border-white/30 font-mono text-[11px] font-normal uppercase text-zinc-400 transition-colors hover:border-brand hover:text-brand disabled:opacity-40"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  更新
+                </button>
+              </span>
+            </InfoCell>
+            <InfoCell label="Solutions">
+              {record.solutions.length} 個解法
+            </InfoCell>
+            <InfoCell label="Timeline">
+              <span className="font-mono text-xs font-normal text-zinc-300">
+                建立 {fmt(record.created_at)} / 更新 {fmt(record.updated_at)}
+              </span>
+            </InfoCell>
+          </div>
+
+          {record.tags.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {record.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="border border-white/15 px-2 py-1 font-mono text-[11px] text-zinc-300"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           )}
         </div>
-      </div>
+      </section>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${DIFFICULTY_STYLE[record.difficulty]}`}
-        >
-          {record.difficulty}
-        </span>
-
-        <span className="h-4 w-px bg-white/12 shrink-0" />
-
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold border ${PROFICIENCY_STYLE[proficiency]}`}
-        >
-          {proficiency}
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 px-1.5 text-[11px] text-muted-foreground/60 hover:text-foreground gap-1 -ml-1"
-          onClick={cycleProficiency}
-          disabled={saving}
-        >
-          <RotateCcw className="w-3 h-3" />
-          更新
-        </Button>
-
-        {record.tags.length > 0 && <span className="h-4 w-px bg-white/12 shrink-0" />}
-
-        {record.tags.map((tag) => (
-          <Badge
-            key={tag}
-            variant="secondary"
-            className="text-[11px] px-2 py-0 bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10"
-          >
-            {tag}
-          </Badge>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-3 border-t border-white/5 text-[11px] text-muted-foreground/50">
-        <span className="flex items-center gap-1">
-          <Code2 className="w-3 h-3" />
-          {record.solutions.length} 個解法
-        </span>
-        <span>建立 {new Date(record.created_at).toLocaleDateString('zh-TW')}</span>
-        <span>最後更新 {new Date(record.updated_at).toLocaleDateString('zh-TW')}</span>
-        <ReviewBadge proficiency={proficiency} updatedAt={record.updated_at} now={now} />
-      </div>
-    </div>
-
-    {/* Collapsible problem description */}
-    <div className="rounded-xl border border-white/8 overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3">
-        <button
-          onClick={() => description && setDescOpen((v) => !v)}
-          className="flex items-center gap-2 text-xs font-semibold text-muted-foreground/60 hover:text-foreground transition-colors"
-        >
-          <span>📄 題目描述</span>
-          {description && (
-            <ChevronDown
-              className={`w-4 h-4 transition-transform duration-200 ${descOpen ? 'rotate-180' : ''}`}
+      <div className={`${PAGE_SHELL} pt-12 lg:pt-16`}>
+        <div className="border border-white/15">
+          <div className="flex items-center justify-between gap-3 bg-surface px-5 py-3">
+            <button
+              type="button"
+              onClick={() => description && setDescOpen((v) => !v)}
+              aria-expanded={description ? descOpen : undefined}
+              className="flex items-center gap-2 font-mono text-xs uppercase text-zinc-400 transition-colors hover:text-paper"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Problem description
+              {description && (
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform duration-200 ${descOpen ? 'rotate-180' : ''}`}
+                />
+              )}
+            </button>
+            {!description && (
+              <button
+                type="button"
+                onClick={fetchDescription}
+                disabled={fetchingDesc}
+                className="border border-white/20 px-3 py-1.5 font-mono text-[11px] uppercase text-zinc-300 transition-colors hover:border-brand hover:text-brand disabled:opacity-40"
+              >
+                {fetchingDesc ? '載入中...' : '載入描述'}
+              </button>
+            )}
+          </div>
+          {descError && (
+            <p className="border-t border-white/15 px-5 py-3 text-xs text-rose-400">{descError}</p>
+          )}
+          {description && descOpen && (
+            <div
+              className="border-t border-white/15 px-6 pb-6 pt-5 text-sm leading-relaxed text-paper/80
+                [&_p]:mb-3 [&_p:last-child]:mb-0
+                [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_li]:mb-1
+                [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3
+                [&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:border [&_pre]:border-white/10 [&_pre]:bg-surface [&_pre]:p-4 [&_pre]:font-mono [&_pre]:text-xs
+                [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs
+                [&_strong]:text-paper [&_em]:text-paper/60
+                [&_sup]:text-[10px]"
+              dangerouslySetInnerHTML={{ __html: description }}
             />
           )}
-        </button>
-        {!description && (
-          <button
-            onClick={fetchDescription}
-            disabled={fetchingDesc}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border border-white/12 text-muted-foreground/60 hover:text-foreground hover:border-white/25 hover:bg-white/5 disabled:opacity-40 transition-colors"
-          >
-            {fetchingDesc ? '載入中...' : '載入描述'}
-          </button>
-        )}
+        </div>
       </div>
-      {descError && (
-        <p className="px-5 pb-3 text-xs text-rose-400">{descError}</p>
-      )}
-      {description && descOpen && (
-        <div
-          className="px-6 pb-6 pt-1 border-t border-white/5 bg-white/[0.01] text-sm text-foreground/75 leading-relaxed
-            [&_p]:mb-3 [&_p:last-child]:mb-0
-            [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_li]:mb-1
-            [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3
-            [&_pre]:bg-white/5 [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:my-3 [&_pre]:text-xs [&_pre]:font-mono
-            [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono
-            [&_strong]:text-foreground [&_em]:text-foreground/60
-            [&_sup]:text-[10px]"
-          dangerouslySetInnerHTML={{ __html: description }}
-        />
-      )}
-    </div>
     </>
   );
 }

@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { LeetcodeRecord } from '@/lib/types';
-import { AlertCircle, ChevronRight, Clock } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
+import { SectionHeader } from '@/components/layout/page-header';
+import DifficultyTag from '@/components/problems/difficulty-tag';
+import ProficiencyBadge from '@/components/problems/proficiency-badge';
 
 interface Props {
   records: LeetcodeRecord[];
@@ -16,64 +19,52 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(days / 30)} 個月前`;
 }
 
-const DIFFICULTY_COLOR: Record<string, string> = {
-  Easy: 'text-emerald-400',
-  Medium: 'text-amber-400',
-  Hard: 'text-rose-400',
-};
-
 export default function NeedsReview({ records }: Props) {
-  const toReview = records
-    .filter((r) => r.proficiency === '生疏')
+  const unfamiliar = records.filter((r) => r.proficiency === '生疏');
+  const toReview = [...unfamiliar]
     .sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime())
     .slice(0, 3);
 
   if (toReview.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-amber-500/15">
-        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-        <h2 className="text-sm font-semibold text-amber-300">近期建議複習</h2>
-        <span className="ml-auto text-xs text-amber-500/70 bg-amber-500/15 px-2 py-0.5 rounded-full font-medium">
-          {records.filter((r) => r.proficiency === '生疏').length} 題待加強
-        </span>
-      </div>
+    <section>
+      <SectionHeader
+        eyebrow="Review / 03"
+        title="Needs review."
+        description="標記為「生疏」且最久沒碰的題目，優先回來複習。"
+        action={<span className="text-coral">{unfamiliar.length} 題待加強</span>}
+      />
 
-      {/* List */}
-      <div className="divide-y divide-amber-500/10">
+      <div className="divide-y divide-white/15 border-y border-white/15">
         {toReview.map((r) => (
           <Link
             key={r.id}
             href={`/problems/${r.id}`}
-            className="flex items-center gap-4 px-5 py-3.5 hover:bg-amber-500/8 transition-colors group"
+            className="group grid grid-cols-[3.5rem_1fr_auto] items-center gap-4 py-5 transition-colors hover:bg-surface sm:grid-cols-[5rem_1fr_7rem_6rem_auto] lg:px-3"
           >
-            <span className="text-xs font-mono text-muted-foreground w-8 shrink-0">
-              {r.problem_id}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground/90 truncate group-hover:text-foreground transition-colors">
-                {r.title}
+            <span className="font-mono text-xs text-zinc-500">#{r.problem_id}</span>
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-paper">{r.title}</p>
+              <p className="mt-1 font-mono text-[11px] uppercase text-zinc-500 sm:hidden">
+                {r.difficulty} · {timeAgo(r.updated_at)}
               </p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className={`text-xs font-medium ${DIFFICULTY_COLOR[r.difficulty]}`}>
-                  {r.difficulty}
-                </span>
-                <span className="text-muted-foreground/30">·</span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground/60">
-                  <Clock className="w-3 h-3" />
-                  {timeAgo(r.updated_at)}
-                </span>
-              </div>
             </div>
-            <span className="text-xs text-rose-400/70 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-md font-medium shrink-0">
-              生疏
+            <span className="hidden sm:block">
+              <DifficultyTag difficulty={r.difficulty} />
             </span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground/60 group-hover:translate-x-0.5 transition-all shrink-0" />
+            <span className="hidden font-mono text-[11px] uppercase text-zinc-400 sm:block">
+              {timeAgo(r.updated_at)}
+            </span>
+            <span className="flex items-center gap-3">
+              <span className="hidden sm:inline-flex">
+                <ProficiencyBadge proficiency={r.proficiency} />
+              </span>
+              <ArrowUpRight className="h-4 w-4 text-zinc-500 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand" />
+            </span>
           </Link>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

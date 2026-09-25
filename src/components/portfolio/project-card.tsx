@@ -25,7 +25,7 @@ export default function ProjectCard({ project, showFeaturedBadge = false, index 
         <div className="pointer-events-none absolute inset-0 bg-black/5 transition-colors duration-500 group-hover:bg-transparent" />
         {showFeaturedBadge && project.is_featured ? (
           <div className="absolute right-3 top-3 inline-flex items-center gap-1 border border-black bg-[#d9ff43] px-2 py-1 text-xs font-semibold text-black">
-            <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
+            <Star className="h-3 w-3 fill-black text-black" />
             Featured
           </div>
         ) : null}
@@ -43,7 +43,7 @@ export default function ProjectCard({ project, showFeaturedBadge = false, index 
             {project.tags.map((tag) => (
               <span
                 key={tag}
-              className="border border-white/15 px-2 py-1 font-mono text-[11px] font-medium text-zinc-300"
+                className="border border-white/15 px-2 py-1 font-mono text-[11px] font-medium text-zinc-300"
               >
                 {tag}
               </span>

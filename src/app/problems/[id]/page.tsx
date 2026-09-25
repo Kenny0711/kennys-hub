@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { PAGE_SHELL, SectionHeader } from '@/components/layout/page-header';
 import { MOCK_RECORDS } from '@/lib/mock-data';
 import { getLeetcodeReadClient } from '@/lib/leetcode-read-client';
 import ProblemInfoPanel from '@/components/detail/problem-info-panel';
@@ -33,33 +32,23 @@ export default async function ProblemDetailPage({
 
   return (
     <div className="min-h-screen">
-      {/* Top bar */}
-      <div className="border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
-        <div className="container mx-auto px-6 py-4">
-          <Link
-            href="/problems"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            題庫
-          </Link>
-        </div>
-      </div>
+      <ProblemInfoPanel record={record} now={now} />
 
-      {/* Content */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="space-y-8">
-          <ProblemInfoPanel record={record} now={now} />
-          <SolutionTabs
-            key={record.id}
-            solutions={record.solutions}
-            createdAt={record.created_at}
-            updatedAt={record.updated_at}
-            recordId={record.id}
-            problemTitle={record.title}
-          />
-        </div>
-      </div>
+      <section className={`${PAGE_SHELL} py-12 lg:py-16`}>
+        <SectionHeader
+          eyebrow="Solutions / 02"
+          title="Solutions."
+          description="每一種寫法、複雜度與筆記。"
+        />
+        <SolutionTabs
+          key={record.id}
+          solutions={record.solutions}
+          createdAt={record.created_at}
+          updatedAt={record.updated_at}
+          recordId={record.id}
+          problemTitle={record.title}
+        />
+      </section>
     </div>
   );
 }

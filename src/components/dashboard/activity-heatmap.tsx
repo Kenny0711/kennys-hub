@@ -18,10 +18,10 @@ const TAIPEI_TIME_ZONE = 'Asia/Taipei';
 const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
 
 function getColorClass(count: number): string {
-  if (count === 0) return 'bg-[#2e2e2e] hover:bg-[#3a3a3a]';
-  if (count === 1) return 'bg-emerald-800 hover:bg-emerald-700';
-  if (count === 2) return 'bg-emerald-600 hover:bg-emerald-500';
-  return 'bg-emerald-400 hover:bg-emerald-300';
+  if (count === 0) return 'bg-white/[0.07] hover:bg-white/[0.14]';
+  if (count === 1) return 'bg-brand/30 hover:bg-brand/45';
+  if (count === 2) return 'bg-brand/60 hover:bg-brand/75';
+  return 'bg-brand hover:bg-brand/85';
 }
 
 function getTaipeiDateKey(date: Date): string {
@@ -155,35 +155,30 @@ export default function ActivityHeatmap({ records }: Props) {
       label: '今日新增',
       value: `${todayCount} 題`,
       icon: CalendarCheck,
-      color: 'text-sky-300',
     },
     {
       label: '本週目標',
       value: `${weekCount}/${WEEKLY_GOAL}`,
       suffix: '題',
       icon: Target,
-      color: 'text-emerald-300',
     },
     {
       label: '本月累積',
       value: `${monthCount} 題`,
       icon: CalendarRange,
-      color: 'text-violet-300',
     },
   ];
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <CalendarDays className="h-[18px] w-[18px] text-muted-foreground" />
-          <h2 className="text-base font-semibold uppercase tracking-widest text-muted-foreground">
-            Activity
-          </h2>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 font-mono text-[11px] uppercase">
+        <div className="flex items-center gap-2 text-zinc-400">
+          <CalendarDays className="h-3.5 w-3.5" />
+          <h3>Accepted / 26 weeks</h3>
         </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-4 text-zinc-400">
           {streak > 0 && (
-            <span className="font-semibold text-emerald-400">連續 {streak} 天</span>
+            <span className="font-semibold text-brand">連續 {streak} 天</span>
           )}
           <span>
             {totalSolved} 題 · {activeDays} 個活躍日
@@ -195,7 +190,7 @@ export default function ActivityHeatmap({ records }: Props) {
         <div className="flex flex-col gap-1 pt-0.5">
           {DAY_LABELS.map((day, index) => (
             <div key={`${day}-${index}`} className="flex h-3.5 items-center">
-              <span className="w-8 pr-1 text-right text-[11px] text-muted-foreground">
+              <span className="w-8 pr-1 text-right font-mono text-[10px] uppercase text-zinc-500">
                 {day}
               </span>
             </div>
@@ -213,43 +208,38 @@ export default function ActivityHeatmap({ records }: Props) {
             <div
               key={cell.date}
               title={`${cell.date}: ${cell.count} 題`}
-              className={`h-3.5 w-3.5 cursor-default rounded-sm transition-colors ${getColorClass(cell.count)}`}
+              className={`h-3.5 w-3.5 cursor-default transition-colors ${getColorClass(cell.count)}`}
             />
           ))}
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-1.5">
-        <span className="text-xs text-muted-foreground">少</span>
+      <div className="flex items-center justify-end gap-1.5 font-mono text-[10px] uppercase text-zinc-500">
+        <span>Less</span>
         {[0, 1, 2, 3].map((count) => (
-          <div key={count} className={`h-3.5 w-3.5 rounded-sm ${getColorClass(count)}`} />
+          <div key={count} className={`h-3.5 w-3.5 ${getColorClass(count)}`} />
         ))}
-        <span className="text-xs text-muted-foreground">多</span>
+        <span>More</span>
       </div>
 
-      <div className="border-t border-zinc-800/50 pt-5">
-        <div className="grid min-w-0 gap-3 md:grid-cols-3">
-          {habitInsights.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.label}
-                className="flex min-w-0 items-start gap-3 rounded-lg bg-white/[0.015] p-3.5"
-              >
-                <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${item.color}`} />
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-muted-foreground">{item.label}</p>
-                  <p className="mt-1 flex min-w-0 items-baseline gap-1 text-base font-semibold text-zinc-100">
-                    <span className="truncate">{item.value}</span>
-                    {'suffix' in item && item.suffix ? (
-                      <span className="shrink-0 text-sm text-muted-foreground">{item.suffix}</span>
-                    ) : null}
-                  </p>
-                </div>
+      <div className="grid min-w-0 gap-px border border-white/15 bg-white/15 md:grid-cols-3">
+        {habitInsights.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.label} className="flex min-w-0 items-start gap-3 bg-surface p-4">
+              <Icon className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500" />
+              <div className="min-w-0">
+                <p className="truncate font-mono text-[11px] uppercase text-zinc-400">{item.label}</p>
+                <p className="mt-1.5 flex min-w-0 items-baseline gap-1 text-lg font-semibold text-paper">
+                  <span className="truncate">{item.value}</span>
+                  {'suffix' in item && item.suffix ? (
+                    <span className="shrink-0 text-sm text-zinc-400">{item.suffix}</span>
+                  ) : null}
+                </p>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

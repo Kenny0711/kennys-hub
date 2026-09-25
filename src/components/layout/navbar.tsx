@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Braces, Search } from 'lucide-react';
+import { Braces } from 'lucide-react';
+import { PAGE_SHELL } from '@/components/layout/page-header';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -16,24 +17,19 @@ function isActivePath(pathname: string, href: string): boolean {
 
 export default function Navbar() {
   const pathname = usePathname();
-  const isHome = pathname === '/';
 
   return (
-    <nav className={`sticky top-0 z-50 border-b border-white/10 backdrop-blur ${isHome ? 'bg-[#090909]/95' : 'bg-background/95 supports-[backdrop-filter]:bg-background/60'}`}>
-      <div className={`${isHome ? 'mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12' : 'container mx-auto px-6'} flex h-14 items-center gap-6`}>
+    <nav className="sticky top-0 z-50 border-b border-white/10 bg-ink/95 backdrop-blur">
+      <div className={`${PAGE_SHELL} flex h-14 items-center gap-6`}>
         <Link href="/" className="group flex min-w-0 items-center gap-2 text-lg font-bold">
-          <span className={`relative inline-flex h-8 w-8 shrink-0 items-center justify-center border transition ${isHome ? 'border-[#d9ff43] bg-[#d9ff43] text-black group-hover:bg-[#ff5c35]' : 'glow-brand-sm rounded-lg border-brand/20 bg-brand/10 text-brand group-hover:border-brand/40'}`}>
+          <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center border border-brand bg-brand text-brand-foreground transition group-hover:border-coral group-hover:bg-coral">
             <Braces className="h-4 w-4" />
           </span>
-          <span className={`hidden truncate sm:inline ${isHome ? 'text-[#f2f0e9]' : 'bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent'}`}>
-            Kenny&apos;s Hub
-          </span>
-          <span className={`truncate sm:hidden ${isHome ? 'text-[#f2f0e9]' : 'bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent'}`}>
-            Hub
-          </span>
+          <span className="hidden truncate text-paper sm:inline">Kenny&apos;s Hub</span>
+          <span className="truncate text-paper sm:hidden">Hub</span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {NAV_ITEMS.map((item) => {
             const active = isActivePath(pathname, item.href);
             return (
@@ -41,31 +37,16 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`${isHome ? 'border-b px-1 py-2 font-mono text-xs uppercase' : 'rounded-lg border px-3.5 py-1.5 text-sm font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.18)]'} transition-all ${
+                className={`border-b px-1 py-2 font-mono text-xs uppercase transition-colors ${
                   active
-                    ? isHome ? 'border-[#d9ff43] text-[#d9ff43]' : 'glow-brand-sm border-brand/35 bg-brand/12 text-brand'
-                    : isHome ? 'border-transparent text-zinc-400 hover:border-white/50 hover:text-white' : 'border-white/10 bg-zinc-950/40 text-muted-foreground hover:border-brand/25 hover:bg-brand/8 hover:text-brand'
+                    ? 'border-brand text-brand'
+                    : 'border-transparent text-zinc-400 hover:border-white/50 hover:text-white'
                 }`}
               >
                 {item.label}
               </Link>
             );
           })}
-        </div>
-
-        <div className="ml-auto flex items-center gap-4">
-          <div className={`relative hidden w-64 items-center md:flex ${isHome ? 'md:hidden' : ''}`}>
-            <Search className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-zinc-500" />
-            <input
-              type="search"
-              placeholder="Search..."
-              aria-label="Search"
-              className="h-9 w-full rounded-md border border-white/10 bg-zinc-950/50 py-1.5 pl-9 pr-12 text-sm text-zinc-100 outline-none transition-colors placeholder:text-zinc-500 hover:border-white/15 focus:border-white/20 focus:bg-zinc-950/70"
-            />
-            <span className="pointer-events-none absolute right-2.5 rounded border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              Ctrl K
-            </span>
-          </div>
         </div>
       </div>
     </nav>

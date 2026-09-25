@@ -76,7 +76,7 @@ export default async function HomePage() {
             </div>
             <div className="border-t border-white/15 py-5 md:border-t-0 md:pl-6">
               <p className="font-mono text-[11px] uppercase text-zinc-500">Current work</p>
-              <p className="mt-2 text-sm font-semibold text-zinc-100">Affact labeling</p>
+              <p className="mt-2 text-sm font-semibold text-zinc-100">Affect Labeling</p>
             </div>
           </div>
         </div>

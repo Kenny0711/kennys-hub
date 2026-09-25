@@ -28,7 +28,7 @@ export default function GoalBanner() {
           setIsRevealed((value) => !value);
         }
       }}
-      className="relative cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-[#080808] outline-none transition-colors hover:border-white/15 focus-visible:ring-2 focus-visible:ring-sky-300/40"
+      className="relative cursor-pointer overflow-hidden border border-white/15 bg-surface outline-none transition-colors hover:border-white/30 focus-visible:ring-2 focus-visible:ring-brand/60"
     >
       <div className="absolute inset-0 opacity-60">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-blue-400 via-yellow-300 to-red-400" />
@@ -42,37 +42,34 @@ export default function GoalBanner() {
         />
       </div>
 
-      <div className="relative p-7 md:p-8">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              <Target className="h-3.5 w-3.5 text-sky-300" />
-              North Star
-            </div>
+      <div className="relative p-7 md:p-10">
+        <div className="flex items-center justify-between gap-4 font-mono text-xs uppercase">
+          <p className="flex items-center gap-2 font-semibold text-coral">
+            <Target className="h-3.5 w-3.5" />
+            North Star
+          </p>
+          <p className="text-zinc-500">{isRevealed ? 'Click to hide' : 'Click to reveal'}</p>
+        </div>
 
-            <div className={isRevealed ? 'opacity-100' : 'pointer-events-none select-none opacity-20 blur-md'}>
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white/35">
-                Target Company
-              </p>
-              <div className="mt-2 flex items-end gap-1.5">
-                {GOOGLE_LETTERS.map((item, index) => (
-                  <span
-                    key={`${item.letter}-${index}`}
-                    className={`relative font-mono text-5xl font-black leading-none md:text-6xl ${item.color}`}
-                  >
-                    {item.letter}
-                    <span className={`absolute -bottom-1 left-1 right-1 h-0.5 rounded-full ${item.line}`} />
-                  </span>
-                ))}
-              </div>
-              <h2 className="mt-5 text-3xl font-bold tracking-tight text-foreground">
-                SWE Interview Ready
-              </h2>
-              <p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground">
-                每一道題都往同一個方向前進：想清楚、寫乾淨、講明白。
-              </p>
-            </div>
+        <div className={`mt-8 transition-[opacity,filter] duration-300 ${isRevealed ? 'opacity-100' : 'pointer-events-none select-none opacity-20 blur-md'}`}>
+          <p className="font-mono text-xs uppercase text-zinc-500">Target Company</p>
+          <div className="mt-3 flex items-end gap-1.5">
+            {GOOGLE_LETTERS.map((item, index) => (
+              <span
+                key={`${item.letter}-${index}`}
+                className={`relative font-mono text-5xl font-black leading-none md:text-6xl ${item.color}`}
+              >
+                {item.letter}
+                <span className={`absolute -bottom-1 left-1 right-1 h-0.5 ${item.line}`} />
+              </span>
+            ))}
           </div>
+          <h2 className="font-display mt-6 text-5xl leading-none text-paper sm:text-6xl">
+            SWE Interview Ready.
+          </h2>
+          <p className="mt-3 max-w-xl text-base leading-7 text-zinc-400">
+            每一道題都往同一個方向前進：想清楚、寫乾淨、講明白。
+          </p>
         </div>
       </div>
     </section>
