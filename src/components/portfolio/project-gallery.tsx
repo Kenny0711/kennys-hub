@@ -16,20 +16,16 @@ export default function ProjectGallery({ projects, isAdmin = false }: ProjectGal
       className="relative"
     >
       <div className="mb-10 grid gap-7 border-b border-white/15 pb-8 lg:grid-cols-12 lg:items-end">
-        <div>
+        <div className="lg:col-span-8">
           <p className="font-mono text-xs font-semibold uppercase text-[#ff5c35]">
-            Portfolio / 03
+            Portfolio / 2025-Present
           </p>
           <h2 className="font-display mt-3 text-6xl leading-none text-[#f2f0e9] sm:text-7xl">
             Projects.
           </h2>
         </div>
 
-        <p className="max-w-2xl text-base leading-7 text-zinc-400 lg:col-span-5 lg:col-start-6">
-          從生成式模型、強化學習到個人開發工具。每個專案都從一個具體問題開始，最後留下可以驗證的成果。
-        </p>
-
-        <div className="flex shrink-0 items-center gap-4 lg:col-span-2 lg:justify-end">
+        <div className="flex shrink-0 items-center gap-4 lg:col-span-4 lg:col-start-9 lg:justify-end">
           {isAdmin ? (
             <>
               <Link
