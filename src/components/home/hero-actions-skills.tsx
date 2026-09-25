@@ -63,13 +63,13 @@ const contactLinks = [
 ];
 
 const secondaryButtonClass =
-  'inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-zinc-950/40 px-3 py-2.5 text-sm text-zinc-300 transition-colors hover:border-brand/30 hover:bg-brand/10 hover:text-white';
+  'inline-flex min-h-11 items-center justify-center gap-2 border border-white/20 bg-transparent px-4 py-2.5 text-sm text-zinc-200 transition-colors hover:border-[#d9ff43] hover:bg-[#d9ff43] hover:text-black';
 
 export default function HeroActionsSkills() {
   const [isSkillsOpen, setIsSkillsOpen] = useState(false);
 
   return (
-    <div className="mt-5">
+    <div className="mt-10 lg:mt-14">
       <div className="flex flex-wrap items-center gap-3">
         <ResumeDialog />
 
@@ -78,9 +78,9 @@ export default function HeroActionsSkills() {
           aria-expanded={isSkillsOpen}
           aria-controls="home-skills-panel"
           onClick={() => setIsSkillsOpen((open) => !open)}
-          className={`${secondaryButtonClass} font-semibold ${isSkillsOpen ? 'border-brand/35 bg-brand/10 text-white' : ''}`}
+          className={`${secondaryButtonClass} font-semibold ${isSkillsOpen ? 'border-[#d9ff43] bg-[#d9ff43] text-black' : ''}`}
         >
-          <FaListCheckIcon className="h-4 w-4 text-brand" />
+          <FaListCheckIcon className="h-4 w-4" />
           Skills
         </button>
 
@@ -96,7 +96,7 @@ export default function HeroActionsSkills() {
               rel={isExternal ? 'noreferrer' : undefined}
               className={secondaryButtonClass}
             >
-              <Icon className="h-4 w-4 shrink-0 text-brand transition-colors" />
+              <Icon className="h-4 w-4 shrink-0 transition-colors" />
               <span className="truncate">{item.label}</span>
             </Link>
           );
@@ -115,14 +115,14 @@ export default function HeroActionsSkills() {
             className="overflow-hidden"
           >
             <div className="pt-6">
-              <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid auto-rows-fr gap-px border border-white/15 bg-white/15 sm:grid-cols-2 xl:grid-cols-4">
                 {skillGroups.map((group) => (
                   <div
                     key={group.title}
-                    className="flex min-h-36 flex-col rounded-lg bg-white/[0.035] p-4 ring-1 ring-white/[0.04] transition-colors hover:bg-brand/[0.055] hover:ring-brand/15"
+                    className="flex min-h-36 flex-col bg-[#111] p-4 transition-colors hover:bg-[#171717]"
                   >
                     <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
-                      <h2 className="text-sm font-semibold text-brand">
+                      <h2 className="text-sm font-semibold text-[#d9ff43]">
                         {group.title}
                       </h2>
                       <span className="font-mono text-[11px] text-zinc-500">
@@ -135,7 +135,7 @@ export default function HeroActionsSkills() {
                           {row.map((skill) => (
                             <span
                               key={skill}
-                              className="rounded-md bg-zinc-800/70 px-2.5 py-1 text-xs leading-5 text-zinc-300"
+                              className="border border-white/10 bg-black/40 px-2.5 py-1 text-xs leading-5 text-zinc-300"
                             >
                               {skill}
                             </span>

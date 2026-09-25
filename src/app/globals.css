@@ -51,8 +51,8 @@
 }
 
 :root {
-  --font-app-sans: "Segoe UI", "Noto Sans TC", Arial, sans-serif;
-  --font-app-mono: "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  --font-app-sans: var(--font-archivo), "Noto Sans TC", sans-serif;
+  --font-app-mono: var(--font-ibm-plex-mono), "Noto Sans Mono CJK TC", monospace;
   /* 品牌強調色：全站唯一的裝飾性強調色，語意色（難度/熟練度）不受影響 */
   --brand: #38bdf8;
   --brand-foreground: #0a0a0a;
@@ -88,6 +88,40 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+.font-display {
+  font-family: var(--font-bebas-neue), Impact, sans-serif;
+}
+
+.home-page {
+  --home-ink: #090909;
+  --home-paper: #f2f0e9;
+  --home-acid: #d9ff43;
+  --home-coral: #ff5c35;
+  background: var(--home-ink);
+  color: var(--home-paper);
+}
+
+@keyframes home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.home-rise {
+  animation: home-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-rise {
+    animation: none;
+  }
 }
 
 .dark {

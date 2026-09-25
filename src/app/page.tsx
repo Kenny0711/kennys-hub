@@ -3,7 +3,7 @@ import JourneyTimeline from '@/components/home/journey-timeline';
 import ProjectGallery from '@/components/portfolio/project-gallery';
 import { ADMIN_AUTH_COOKIE, isValidAdminToken } from '@/lib/admin-auth';
 import { getFeaturedProjects } from '@/lib/projects';
-import { CircuitBoard } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { cookies } from 'next/headers';
 
@@ -15,46 +15,76 @@ export default async function HomePage() {
     getFeaturedProjects(),
     isValidAdminToken(cookieStore.get(ADMIN_AUTH_COOKIE)?.value),
   ]);
-
   return (
-    <div className="min-h-screen">
-      <div className="border-b border-white/5 bg-gradient-to-b from-white/[0.04] to-transparent">
-        <div className="container mx-auto flex flex-col justify-between gap-8 px-6 py-10 md:flex-row md:items-center">
-          <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand/15 bg-brand/8 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-brand">
-              <CircuitBoard className="h-3.5 w-3.5" />
-              Kenny&apos;s Dev Hub
+    <div className="home-page min-h-screen overflow-hidden">
+      <section className="border-b border-white/15">
+        <div className="mx-auto max-w-[1440px] px-5 py-7 sm:px-8 lg:px-12 lg:py-10">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/15 pb-5 font-mono text-[11px] uppercase text-zinc-400 sm:text-xs">
+            <p>Kenny&apos;s Dev Hub / Portfolio 2026</p>
+            <div className="flex items-center gap-2 text-[#d9ff43]">
+              <span className="h-2 w-2 bg-[#d9ff43]" aria-hidden="true" />
+              Open to research collaborations
             </div>
-
-            <h1 className="bg-gradient-to-b from-white to-zinc-500 bg-clip-text text-2xl font-bold tracking-tight text-transparent md:text-4xl">
-              Kenny Yang
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-zinc-400">
-              國立陽明交通大學 多媒體工程所碩士生。
-            </p>
-
-            <HeroActionsSkills />
           </div>
 
-          <div className="shrink-0">
-            <div className="relative inline-block">
-              <Image
-                src="https://github.com/Kenny0711.png"
-                alt="Kenny GitHub avatar"
-                width={104}
-                height={104}
-                className="glow-brand-sm h-24 w-24 rounded-full border border-brand/20 bg-zinc-900 object-cover md:h-28 md:w-28"
-              />
-              <div className="glow-brand-sm absolute bottom-0 right-0 z-10 translate-x-[10%] translate-y-[10%] rounded-full border border-brand/80 bg-zinc-900 px-2 py-0.5 font-mono text-[10px] font-bold text-brand sm:text-xs">
-                Lv.24
+          <div className="grid gap-10 py-10 lg:grid-cols-12 lg:gap-12 lg:py-14">
+            <div className="home-rise flex flex-col lg:col-span-7">
+              <div>
+                <p className="mb-6 flex items-center gap-2 font-mono text-xs uppercase text-zinc-400">
+                  <MapPin className="h-3.5 w-3.5 text-[#ff5c35]" />
+                  Hsinchu, Taiwan / NYCU
+                </p>
+                <h1 className="font-display whitespace-nowrap text-6xl leading-none text-[#f2f0e9] sm:text-8xl md:text-9xl lg:text-[8rem]">
+                  Kenny<span className="text-[#d9ff43]">Yang.</span>
+                </h1>
+                <p className="mt-7 max-w-xl text-lg leading-8 text-zinc-300 md:text-xl">
+                  我研究社群媒體，也打造能被真正使用的軟體。現為國立陽明交通大學多媒體工程研究所碩士生。
+                </p>
+              </div>
+
+              <HeroActionsSkills />
+            </div>
+
+            <div className="home-rise relative lg:col-span-5" style={{ animationDelay: '120ms' }}>
+              <div className="relative mx-auto aspect-square w-full max-w-[420px] overflow-hidden border border-white/20 bg-zinc-900 lg:mr-0">
+                <Image
+                  src="https://github.com/Kenny0711.png"
+                  alt="Kenny 的 GitHub 個人頭像"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 42vw"
+                  className="object-cover"
+                />
+                <div className="absolute left-0 top-0 bg-[#ff5c35] px-3 py-2 font-mono text-[11px] font-semibold uppercase text-black">
+                  Engineer / Researcher
+                </div>
+                <div className="absolute bottom-0 right-0 border-l border-t border-black bg-[#d9ff43] px-4 py-3 font-mono text-sm font-semibold text-black">
+                  Lv.24
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto space-y-8 px-6 py-8">
-        <JourneyTimeline />
+          <div className="grid border-t border-white/15 md:grid-cols-3">
+            <div className="py-5 md:border-r md:border-white/15 md:pr-6">
+              <p className="font-mono text-[11px] uppercase text-zinc-500">Current focus</p>
+              <p className="mt-2 text-sm font-semibold text-zinc-100">Social Media Analysis</p>
+            </div>
+            <div className="border-t border-white/15 py-5 md:border-r md:border-t-0 md:border-white/15 md:px-6">
+              <p className="font-mono text-[11px] uppercase text-zinc-500">Building with</p>
+              <p className="mt-2 text-sm font-semibold text-zinc-100">Next.js / Supabase / PyTorch</p>
+            </div>
+            <div className="border-t border-white/15 py-5 md:border-t-0 md:pl-6">
+              <p className="font-mono text-[11px] uppercase text-zinc-500">Current work</p>
+              <p className="mt-2 text-sm font-semibold text-zinc-100">Affact labeling</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <JourneyTimeline />
+
+      <div className="mx-auto max-w-[1440px] px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
         <ProjectGallery projects={featuredProjects} isAdmin={isAdmin} />
       </div>
     </div>

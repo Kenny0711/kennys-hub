@@ -16,18 +16,19 @@ function isActivePath(pathname: string, href: string): boolean {
 
 export default function Navbar() {
   const pathname = usePathname();
+  const isHome = pathname === '/';
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center gap-6 px-6">
+    <nav className={`sticky top-0 z-50 border-b border-white/10 backdrop-blur ${isHome ? 'bg-[#090909]/95' : 'bg-background/95 supports-[backdrop-filter]:bg-background/60'}`}>
+      <div className={`${isHome ? 'mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12' : 'container mx-auto px-6'} flex h-14 items-center gap-6`}>
         <Link href="/" className="group flex min-w-0 items-center gap-2 text-lg font-bold">
-          <span className="glow-brand-sm relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-brand/20 bg-brand/10 transition group-hover:border-brand/40">
-            <Braces className="h-4 w-4 text-brand" />
+          <span className={`relative inline-flex h-8 w-8 shrink-0 items-center justify-center border transition ${isHome ? 'border-[#d9ff43] bg-[#d9ff43] text-black group-hover:bg-[#ff5c35]' : 'glow-brand-sm rounded-lg border-brand/20 bg-brand/10 text-brand group-hover:border-brand/40'}`}>
+            <Braces className="h-4 w-4" />
           </span>
-          <span className="hidden truncate bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent sm:inline">
+          <span className={`hidden truncate sm:inline ${isHome ? 'text-[#f2f0e9]' : 'bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent'}`}>
             Kenny&apos;s Hub
           </span>
-          <span className="truncate bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent sm:hidden">
+          <span className={`truncate sm:hidden ${isHome ? 'text-[#f2f0e9]' : 'bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent'}`}>
             Hub
           </span>
         </Link>
@@ -40,10 +41,10 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`rounded-lg border px-3.5 py-1.5 text-sm font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.18)] transition-all ${
+                className={`${isHome ? 'border-b px-1 py-2 font-mono text-xs uppercase' : 'rounded-lg border px-3.5 py-1.5 text-sm font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.18)]'} transition-all ${
                   active
-                    ? 'glow-brand-sm border-brand/35 bg-brand/12 text-brand'
-                    : 'border-white/10 bg-zinc-950/40 text-muted-foreground hover:border-brand/25 hover:bg-brand/8 hover:text-brand'
+                    ? isHome ? 'border-[#d9ff43] text-[#d9ff43]' : 'glow-brand-sm border-brand/35 bg-brand/12 text-brand'
+                    : isHome ? 'border-transparent text-zinc-400 hover:border-white/50 hover:text-white' : 'border-white/10 bg-zinc-950/40 text-muted-foreground hover:border-brand/25 hover:bg-brand/8 hover:text-brand'
                 }`}
               >
                 {item.label}
@@ -53,7 +54,7 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-4">
-          <div className="relative hidden w-64 items-center md:flex">
+          <div className={`relative hidden w-64 items-center md:flex ${isHome ? 'md:hidden' : ''}`}>
             <Search className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-zinc-500" />
             <input
               type="search"

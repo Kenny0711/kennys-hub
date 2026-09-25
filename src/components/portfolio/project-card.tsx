@@ -4,28 +4,35 @@ import { ArrowUpRight, Star } from 'lucide-react';
 interface ProjectCardProps {
   project: Project;
   showFeaturedBadge?: boolean;
+  index?: number;
 }
 
-export default function ProjectCard({ project, showFeaturedBadge = false }: ProjectCardProps) {
+export default function ProjectCard({ project, showFeaturedBadge = false, index }: ProjectCardProps) {
   const card = (
-    <article className="group flex h-full flex-col rounded-xl border border-white/10 bg-zinc-900/50 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-600 hover:bg-zinc-900/70 hover:shadow-[0_24px_70px_rgba(56,189,248,0.14)]">
+    <article className="group flex h-full flex-col bg-[#111] p-4 transition-colors duration-300 hover:bg-[#181818] sm:p-5">
+      {index ? (
+        <div className="mb-4 flex items-center justify-between font-mono text-[11px] uppercase text-zinc-500">
+          <span>Project</span>
+          <span>{String(index).padStart(2, '0')}</span>
+        </div>
+      ) : null}
       <div
         role="img"
         aria-label={`${project.title} cover`}
-        className="relative aspect-[16/9] overflow-hidden rounded-lg border border-white/10 bg-zinc-950 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]"
+        className="relative aspect-[4/3] overflow-hidden border border-white/10 bg-zinc-950 bg-cover bg-center"
         style={{ backgroundImage: `url(${project.image_url})` }}
       >
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-zinc-950/45 via-transparent to-white/5" />
+        <div className="pointer-events-none absolute inset-0 bg-black/5 transition-colors duration-500 group-hover:bg-transparent" />
         {showFeaturedBadge && project.is_featured ? (
-          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md border border-amber-300/20 bg-amber-300/10 px-2 py-1 text-xs font-semibold text-amber-100">
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1 border border-black bg-[#d9ff43] px-2 py-1 text-xs font-semibold text-black">
             <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
             Featured
           </div>
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col px-1 pb-1 pt-4">
-        <h3 className="text-lg font-semibold tracking-tight text-zinc-50">{project.title}</h3>
+      <div className="flex flex-1 flex-col pt-5">
+        <h3 className="text-xl font-semibold text-zinc-50">{project.title}</h3>
 
         <p className="mt-2 line-clamp-3 text-sm leading-6 text-zinc-400">
           {project.description}
@@ -36,7 +43,7 @@ export default function ProjectCard({ project, showFeaturedBadge = false }: Proj
             {project.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-md border border-brand/15 bg-brand/8 px-2 py-1 text-xs font-medium text-brand"
+              className="border border-white/15 px-2 py-1 font-mono text-[11px] font-medium text-zinc-300"
               >
                 {tag}
               </span>
@@ -44,7 +51,9 @@ export default function ProjectCard({ project, showFeaturedBadge = false }: Proj
           </div>
 
           <div className="flex justify-end pt-5">
-            <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-brand" />
+            <span className="inline-flex h-10 w-10 items-center justify-center border border-white/15 transition-colors group-hover:border-[#d9ff43] group-hover:bg-[#d9ff43] group-hover:text-black">
+              <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </span>
           </div>
         </div>
       </div>
