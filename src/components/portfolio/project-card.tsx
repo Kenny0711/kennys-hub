@@ -8,7 +8,7 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ project, showFeaturedBadge = false }: ProjectCardProps) {
   const card = (
-    <article className="group flex h-full flex-col rounded-xl border border-white/10 bg-zinc-900/50 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-600 hover:bg-zinc-900/70 hover:shadow-[0_24px_70px_rgba(59,130,246,0.14)]">
+    <article className="group flex h-full flex-col rounded-xl border border-white/10 bg-zinc-900/50 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-600 hover:bg-zinc-900/70 hover:shadow-[0_24px_70px_rgba(56,189,248,0.14)]">
       <div
         role="img"
         aria-label={`${project.title} cover`}
@@ -36,7 +36,7 @@ export default function ProjectCard({ project, showFeaturedBadge = false }: Proj
             {project.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-md border border-blue-400/15 bg-blue-400/8 px-2 py-1 text-xs font-medium text-blue-100/90"
+                className="rounded-md border border-brand/15 bg-brand/8 px-2 py-1 text-xs font-medium text-brand"
               >
                 {tag}
               </span>
@@ -44,7 +44,7 @@ export default function ProjectCard({ project, showFeaturedBadge = false }: Proj
           </div>
 
           <div className="flex justify-end pt-5">
-            <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-blue-300" />
+            <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-brand" />
           </div>
         </div>
       </div>

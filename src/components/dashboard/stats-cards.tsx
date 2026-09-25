@@ -1,5 +1,5 @@
 import { LeetcodeRecord } from '@/lib/types';
-import { ArrowUpRight, BookOpen, Flame, TrendingUp, Trophy, Zap } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Flame, Target, TrendingUp, Trophy, Zap } from 'lucide-react';
 
 interface Props {
   records: LeetcodeRecord[];
@@ -68,16 +68,16 @@ function MasteryCard({
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-violet-500/25 bg-violet-500/8 p-[18px]">
-      <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-violet-400 opacity-5 blur-xl" />
+    <div className="relative overflow-hidden rounded-xl border border-brand/25 bg-brand/8 p-[18px]">
+      <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-brand opacity-5 blur-xl" />
       <div className="mb-3 flex items-start justify-between gap-3">
         <span className="text-sm font-medium tracking-wide text-muted-foreground">熟練</span>
-        <Trophy className="h-[18px] w-[18px] text-violet-400 opacity-70" />
+        <Trophy className="h-[18px] w-[18px] text-brand opacity-70" />
       </div>
 
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-3xl font-bold leading-none text-violet-400">{mastered}</p>
+          <p className="text-3xl font-bold leading-none text-brand">{mastered}</p>
           <p className="mt-2 text-xs font-medium text-muted-foreground">
             {mastered}/{total || 0} 題
           </p>
@@ -104,10 +104,10 @@ function MasteryCard({
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              className="text-violet-400 drop-shadow-[0_0_8px_rgba(167,139,250,0.35)] transition-all"
+              className="text-brand drop-shadow-[0_0_8px_rgba(56,189,248,0.35)] transition-all"
             />
           </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-violet-100">
+          <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-foreground">
             {percentage}%
           </span>
         </div>
@@ -139,11 +139,11 @@ export default function StatsCards({ records }: Props) {
           label="總題數"
           value={total}
           icon={BookOpen}
-          color="text-sky-400"
-          border="border-sky-500/25"
-          bg="bg-sky-500/8"
+          color="text-brand"
+          border="border-brand/25"
+          bg="bg-brand/8"
           trend="+3 本週"
-          trendClassName="border-sky-400/15 bg-sky-400/8 text-sky-400"
+          trendClassName="border-brand/15 bg-brand/8 text-brand"
         />
         <MasteryCard mastered={mastered} total={total} />
       </div>
@@ -207,13 +207,13 @@ export default function StatsCards({ records }: Props) {
           <div className="mb-3 flex items-end justify-between gap-4">
             <div>
               <p className="flex items-center gap-2 text-sm font-medium text-zinc-400">
-                <span aria-hidden="true">🎯</span>
+                <Target className="h-4 w-4 text-brand" aria-hidden="true" />
                 Next Milestone
               </p>
               <p className="mt-1 text-2xl font-bold text-white">{targetTotal} 題</p>
             </div>
             <div className="text-right">
-              <p className="font-mono text-3xl font-bold leading-none text-cyan-400">
+              <p className="font-mono text-3xl font-bold leading-none text-brand">
                 {targetProgress}%
               </p>
               <p className="mt-1 text-sm text-zinc-500">還差 {remainingToTarget} 題</p>

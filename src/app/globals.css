@@ -39,6 +39,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand: var(--brand);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -51,14 +53,17 @@
 :root {
   --font-app-sans: "Segoe UI", "Noto Sans TC", Arial, sans-serif;
   --font-app-mono: "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  /* 品牌強調色：全站唯一的裝飾性強調色，語意色（難度/熟練度）不受影響 */
+  --brand: #38bdf8;
+  --brand-foreground: #0a0a0a;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -68,7 +73,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: var(--brand);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -86,14 +91,16 @@
 }
 
 .dark {
+  --brand: #38bdf8;
+  --brand-foreground: #0a0a0a;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -103,7 +110,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: var(--brand);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -129,6 +136,14 @@
   html {
     @apply font-sans;
   }
+}
+
+/* 品牌強調光暈：取代散落各元件、深淺不一的手刻 shadow rgba 值 */
+.glow-brand-sm {
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.22);
+}
+.glow-brand-md {
+  box-shadow: 0 0 28px rgba(56, 189, 248, 0.32);
 }
 
 /* 暗色主題自定義滾動條 */

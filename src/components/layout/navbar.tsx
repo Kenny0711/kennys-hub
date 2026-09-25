@@ -21,8 +21,8 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-white/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 items-center gap-6 px-6">
         <Link href="/" className="group flex min-w-0 items-center gap-2 text-lg font-bold">
-          <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-blue-300/20 bg-blue-400/10 shadow-[0_0_22px_rgba(59,130,246,0.18)] transition group-hover:border-blue-300/40">
-            <Braces className="h-4 w-4 text-blue-200" />
+          <span className="glow-brand-sm relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-brand/20 bg-brand/10 transition group-hover:border-brand/40">
+            <Braces className="h-4 w-4 text-brand" />
           </span>
           <span className="hidden truncate bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent sm:inline">
             Kenny&apos;s Hub
@@ -42,8 +42,8 @@ export default function Navbar() {
                 aria-current={active ? 'page' : undefined}
                 className={`rounded-lg border px-3.5 py-1.5 text-sm font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.18)] transition-all ${
                   active
-                    ? 'border-blue-300/35 bg-blue-400/12 text-blue-100 shadow-[0_0_18px_rgba(59,130,246,0.22)]'
-                    : 'border-white/10 bg-zinc-950/40 text-muted-foreground hover:border-blue-300/25 hover:bg-blue-400/8 hover:text-blue-50 hover:shadow-[0_0_16px_rgba(59,130,246,0.12)]'
+                    ? 'glow-brand-sm border-brand/35 bg-brand/12 text-brand'
+                    : 'border-white/10 bg-zinc-950/40 text-muted-foreground hover:border-brand/25 hover:bg-brand/8 hover:text-brand'
                 }`}
               >
                 {item.label}

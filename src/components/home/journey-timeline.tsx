@@ -29,16 +29,16 @@ export default function JourneyTimeline() {
           <div className="grid grid-cols-3 gap-8">
             {journeyPoints.map((point) => (
               <div key={point.period} className="group relative text-center">
-                <p className="mb-7 font-mono text-sm text-zinc-500 transition-colors duration-300 group-hover:text-blue-200">
+                <p className="mb-7 font-mono text-sm text-zinc-500 transition-colors duration-300 group-hover:text-brand">
                   {point.period}
                 </p>
 
                 <div className="relative z-10 flex justify-center">
-                  <span className="h-4 w-4 rounded-full border border-blue-200/40 bg-zinc-950 shadow-[0_0_0_6px_rgba(9,9,11,0.95),0_0_18px_rgba(59,130,246,0.32)] transition-all duration-300 group-hover:scale-125 group-hover:border-cyan-200 group-hover:bg-cyan-200 group-hover:shadow-[0_0_0_7px_rgba(8,47,73,0.7),0_0_28px_rgba(34,211,238,0.72)]" />
+                  <span className="h-4 w-4 rounded-full border border-brand/40 bg-zinc-950 shadow-[0_0_0_6px_rgba(9,9,11,0.95),0_0_18px_rgba(56,189,248,0.32)] transition-all duration-300 group-hover:scale-125 group-hover:border-brand group-hover:bg-brand group-hover:shadow-[0_0_0_7px_rgba(8,47,73,0.7),0_0_28px_rgba(56,189,248,0.72)]" />
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-base font-bold text-white transition-colors duration-300 group-hover:text-cyan-100">
+                  <h3 className="text-base font-bold text-white transition-colors duration-300 group-hover:text-brand">
                     {point.title}
                   </h3>
                   <p className="mt-1 text-sm leading-6 text-zinc-400">{point.description}</p>
@@ -55,13 +55,13 @@ export default function JourneyTimeline() {
 
         {journeyPoints.map((point) => (
           <div key={point.period} className="group relative flex gap-4">
-            <span className="relative z-10 mt-1 h-4 w-4 shrink-0 rounded-full border border-blue-200/40 bg-zinc-950 shadow-[0_0_0_6px_rgba(9,9,11,0.95),0_0_18px_rgba(59,130,246,0.32)] transition-all duration-300 group-hover:scale-125 group-hover:border-cyan-200 group-hover:bg-cyan-200 group-hover:shadow-[0_0_0_7px_rgba(8,47,73,0.7),0_0_28px_rgba(34,211,238,0.72)]" />
+            <span className="relative z-10 mt-1 h-4 w-4 shrink-0 rounded-full border border-brand/40 bg-zinc-950 shadow-[0_0_0_6px_rgba(9,9,11,0.95),0_0_18px_rgba(56,189,248,0.32)] transition-all duration-300 group-hover:scale-125 group-hover:border-brand group-hover:bg-brand group-hover:shadow-[0_0_0_7px_rgba(8,47,73,0.7),0_0_28px_rgba(56,189,248,0.72)]" />
 
             <div className="min-w-0 pb-1">
-              <p className="font-mono text-xs text-zinc-500 transition-colors duration-300 group-hover:text-blue-200">
+              <p className="font-mono text-xs text-zinc-500 transition-colors duration-300 group-hover:text-brand">
                 {point.period}
               </p>
-              <h3 className="mt-2 text-base font-bold text-white transition-colors duration-300 group-hover:text-cyan-100">
+              <h3 className="mt-2 text-base font-bold text-white transition-colors duration-300 group-hover:text-brand">
                 {point.title}
               </h3>
               <p className="mt-1 text-sm leading-6 text-zinc-400">{point.description}</p>

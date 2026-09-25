@@ -63,7 +63,7 @@ const contactLinks = [
 ];
 
 const secondaryButtonClass =
-  'inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-zinc-950/40 px-3 py-2.5 text-sm text-zinc-300 transition-colors hover:border-blue-300/30 hover:bg-blue-400/10 hover:text-white';
+  'inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-zinc-950/40 px-3 py-2.5 text-sm text-zinc-300 transition-colors hover:border-brand/30 hover:bg-brand/10 hover:text-white';
 
 export default function HeroActionsSkills() {
   const [isSkillsOpen, setIsSkillsOpen] = useState(false);
@@ -78,9 +78,9 @@ export default function HeroActionsSkills() {
           aria-expanded={isSkillsOpen}
           aria-controls="home-skills-panel"
           onClick={() => setIsSkillsOpen((open) => !open)}
-          className={`${secondaryButtonClass} font-semibold ${isSkillsOpen ? 'border-blue-300/35 bg-blue-400/10 text-white' : ''}`}
+          className={`${secondaryButtonClass} font-semibold ${isSkillsOpen ? 'border-brand/35 bg-brand/10 text-white' : ''}`}
         >
-          <FaListCheckIcon className="h-4 w-4 text-blue-200" />
+          <FaListCheckIcon className="h-4 w-4 text-brand" />
           Skills
         </button>
 
@@ -96,7 +96,7 @@ export default function HeroActionsSkills() {
               rel={isExternal ? 'noreferrer' : undefined}
               className={secondaryButtonClass}
             >
-              <Icon className="h-4 w-4 shrink-0 text-blue-200 transition-colors group-hover:text-cyan-200" />
+              <Icon className="h-4 w-4 shrink-0 text-brand transition-colors" />
               <span className="truncate">{item.label}</span>
             </Link>
           );
@@ -119,10 +119,10 @@ export default function HeroActionsSkills() {
                 {skillGroups.map((group) => (
                   <div
                     key={group.title}
-                    className="flex min-h-36 flex-col rounded-lg bg-white/[0.035] p-4 ring-1 ring-white/[0.04] transition-colors hover:bg-blue-400/[0.055] hover:ring-blue-300/15"
+                    className="flex min-h-36 flex-col rounded-lg bg-white/[0.035] p-4 ring-1 ring-white/[0.04] transition-colors hover:bg-brand/[0.055] hover:ring-brand/15"
                   >
                     <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
-                      <h2 className="text-sm font-semibold text-blue-100">
+                      <h2 className="text-sm font-semibold text-brand">
                         {group.title}
                       </h2>
                       <span className="font-mono text-[11px] text-zinc-500">

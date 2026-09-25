@@ -16,7 +16,7 @@ export default async function DashboardPage() {
     <div className="min-h-screen">
       <div className="border-b border-white/5 bg-gradient-to-b from-white/[0.035] to-transparent">
         <div className="container mx-auto px-6 py-10">
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/15 bg-cyan-400/8 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/80">
+          <div className="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-brand/8 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-brand">
             <BarChart3 className="h-3.5 w-3.5" />
             Algorithm Training
           </div>
