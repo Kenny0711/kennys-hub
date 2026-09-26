@@ -4,8 +4,6 @@ import { VizResponse } from '@/lib/visualize-types';
 
 const SYSTEM_PROMPT = `You are a LeetCode algorithm visualizer. Given a code solution, generate a step-by-step data structure visualization.
 
-Return ONLY valid JSON — no prose, no markdown fences, no backticks. The response must be directly parseable by JSON.parse().
-
 Rules:
 1. Maximum 8 steps showing KEY algorithm moments (skip trivial setup lines)
 2. Write step descriptions in Traditional Chinese (繁體中文)
@@ -19,23 +17,93 @@ Color scheme for highlights:
 - "#22c55e" = current element / left pointer / active index
 - "#3b82f6" = right pointer / second element / comparison target
 - "#f59e0b" = result found / answer
-- "#ef4444" = mismatch / element to skip
+- "#ef4444" = mismatch / element to skip`;
 
-Return JSON matching this EXACT schema (no extra fields):
-{
-  "title": "Algorithm approach name (e.g. Two Pointers, Hash Map)",
-  "steps": [
-    {
-      "step": 1,
-      "description": "繁體中文說明這一步做了什麼",
-      "structures": [
-        { "type": "array", "label": "nums", "values": [2, 7, 11, 15], "highlights": [{"index": 0, "color": "#22c55e", "label": "i"}] },
-        { "type": "hashmap", "label": "seen", "entries": [{"key": "2", "value": "0", "highlight": true}] },
-        { "type": "variable", "name": "target", "value": 9 }
-      ]
-    }
-  ]
-}`;
+// Mirrors VizResponse in @/lib/visualize-types; enforced server-side via structured outputs.
+const HIGHLIGHT_COLOR = { type: 'string', enum: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444'] };
+
+const VIZ_SCHEMA = {
+  type: 'object',
+  properties: {
+    title: { type: 'string', description: 'Algorithm approach name, e.g. Two Pointers, Hash Map' },
+    steps: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          step: { type: 'integer' },
+          description: { type: 'string', description: '繁體中文說明這一步做了什麼' },
+          structures: {
+            type: 'array',
+            items: {
+              anyOf: [
+                {
+                  type: 'object',
+                  properties: {
+                    type: { const: 'array' },
+                    label: { type: 'string' },
+                    values: { type: 'array', items: { type: ['string', 'number', 'null'] } },
+                    highlights: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          index: { type: 'integer' },
+                          color: HIGHLIGHT_COLOR,
+                          label: { type: 'string' },
+                        },
+                        required: ['index', 'color'],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ['type', 'label', 'values', 'highlights'],
+                  additionalProperties: false,
+                },
+                {
+                  type: 'object',
+                  properties: {
+                    type: { const: 'hashmap' },
+                    label: { type: 'string' },
+                    entries: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          key: { type: 'string' },
+                          value: { type: 'string' },
+                          highlight: { type: 'boolean' },
+                        },
+                        required: ['key', 'value'],
+                        additionalProperties: false,
+                      },
+                    },
+                  },
+                  required: ['type', 'label', 'entries'],
+                  additionalProperties: false,
+                },
+                {
+                  type: 'object',
+                  properties: {
+                    type: { const: 'variable' },
+                    name: { type: 'string' },
+                    value: { type: ['string', 'number'] },
+                  },
+                  required: ['type', 'name', 'value'],
+                  additionalProperties: false,
+                },
+              ],
+            },
+          },
+        },
+        required: ['step', 'description', 'structures'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['title', 'steps'],
+  additionalProperties: false,
+};
 
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -61,9 +129,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const response = await client.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5',
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
+      output_config: { format: { type: 'json_schema', schema: VIZ_SCHEMA } },
       messages: [
         {
           role: 'user',
@@ -78,13 +147,16 @@ Generate the step-by-step data structure visualization JSON.`,
       ],
     });
 
-    const raw =
-      response.content[0].type === 'text' ? response.content[0].text : '';
+    // A refused or truncated response may not match the schema
+    if (response.stop_reason === 'refusal' || response.stop_reason === 'max_tokens') {
+      return NextResponse.json(
+        { error: `生成失敗：${response.stop_reason}` },
+        { status: 502 }
+      );
+    }
 
-    // Strip any accidental markdown fences before parsing
-    const clean = raw.replace(/```json\n?|```/g, '').trim();
-
-    const vizData: VizResponse = JSON.parse(clean);
+    const textBlock = response.content.find((b) => b.type === 'text');
+    const vizData: VizResponse = JSON.parse(textBlock?.text ?? '');
 
     return NextResponse.json(vizData);
   } catch (err) {
