@@ -1,12 +1,12 @@
 import { slidingWindowList } from './sliding-window';
 import { starterLists } from './starter-lists';
-import { verifiedAcceptedSnapshot } from './verified-accepted';
+import { recordedCompletionSnapshot } from './recorded-completions';
 import type { ListProblem, ProblemList, ProblemListSection } from './types';
 
 export const problemLists: ProblemList[] = [slidingWindowList, ...starterLists].map((list) => ({
   ...list,
   initialCompleted: getListProblems(list)
-    .filter((problem) => verifiedAcceptedSnapshot.has(problem.id))
+    .filter((problem) => recordedCompletionSnapshot.has(problem.id))
     .map((problem) => problem.id),
 }));
 

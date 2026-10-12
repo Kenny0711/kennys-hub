@@ -66,16 +66,16 @@ function saveListProgress(list: ProblemList, update: (current: ListProgress) => 
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-export function useProblemListProgress(list: ProblemList, acceptedIds: ReadonlySet<string>) {
+export function useProblemListProgress(list: ProblemList, completedRecordIds: ReadonlySet<string>) {
   const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const saved = readStore(raw).lists[list.id];
   const progress: ListProgress = saved && Array.isArray(saved.completed) && Array.isArray(saved.review)
     ? saved
     : { completed: list.initialCompleted, review: [], updatedAt: '' };
   const listIds = new Set(getListProblems(list).map((problem) => problem.id));
-  const accepted = new Set([...list.initialCompleted, ...acceptedIds].filter((id) => listIds.has(id)));
+  const automatic = new Set([...list.initialCompleted, ...completedRecordIds].filter((id) => listIds.has(id)));
   const excluded = new Set(Array.isArray(progress.excludedAccepted) ? progress.excludedAccepted : []);
-  const completed = new Set([...accepted, ...progress.completed]);
+  const completed = new Set([...automatic, ...progress.completed]);
   for (const id of excluded) completed.delete(id);
 
   function toggle(field: 'completed' | 'review', problemId: string) {
@@ -85,7 +85,7 @@ export function useProblemListProgress(list: ProblemList, acceptedIds: ReadonlyS
         const blocked = new Set(Array.isArray(current.excludedAccepted) ? current.excludedAccepted : []);
         if (completed.has(problemId)) {
           stored.delete(problemId);
-          if (accepted.has(problemId)) blocked.add(problemId);
+          if (automatic.has(problemId)) blocked.add(problemId);
         } else {
           stored.add(problemId);
           blocked.delete(problemId);
@@ -103,7 +103,7 @@ export function useProblemListProgress(list: ProblemList, acceptedIds: ReadonlyS
     saveListProgress(list, () => ({
       completed: [],
       review: [],
-      excludedAccepted: [...accepted],
+      excludedAccepted: [...automatic],
       updatedAt: new Date().toISOString(),
     }));
   }

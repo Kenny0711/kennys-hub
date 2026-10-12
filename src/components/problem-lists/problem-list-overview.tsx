@@ -5,21 +5,21 @@ import { ArrowRight, ExternalLink } from 'lucide-react';
 import { getListProblems, type ProblemList } from '@/data/problem-lists';
 import { useProblemListProgress } from '@/hooks/use-problem-list-progress';
 import { useRecords } from '@/hooks/use-records';
-import { getVerifiedAcceptedIds } from '@/data/problem-lists/verified-accepted';
+import { getRecordedCompletionIds } from '@/data/problem-lists/recorded-completions';
 import { ProgressMeter } from './progress-meter';
 
 export function ProblemListOverview({ lists }: { lists: ProblemList[] }) {
   const { records } = useRecords();
-  const acceptedIds = getVerifiedAcceptedIds(records);
+  const completedRecordIds = getRecordedCompletionIds(records);
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      {lists.map((list) => <ProblemListCard key={list.id} list={list} acceptedIds={acceptedIds} />)}
+      {lists.map((list) => <ProblemListCard key={list.id} list={list} completedRecordIds={completedRecordIds} />)}
     </div>
   );
 }
 
-function ProblemListCard({ list, acceptedIds }: { list: ProblemList; acceptedIds: ReadonlySet<string> }) {
-  const { completed, updatedAt } = useProblemListProgress(list, acceptedIds);
+function ProblemListCard({ list, completedRecordIds }: { list: ProblemList; completedRecordIds: ReadonlySet<string> }) {
+  const { completed, updatedAt } = useProblemListProgress(list, completedRecordIds);
   const problems = getListProblems(list);
   const done = problems.filter((problem) => completed.has(problem.id)).length;
   const next = problems.find((problem) => !completed.has(problem.id));

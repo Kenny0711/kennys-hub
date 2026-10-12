@@ -12,7 +12,7 @@ import {
 } from '@/data/problem-lists';
 import { useProblemListProgress } from '@/hooks/use-problem-list-progress';
 import { useRecords } from '@/hooks/use-records';
-import { getVerifiedAcceptedIds } from '@/data/problem-lists/verified-accepted';
+import { getRecordedCompletionIds } from '@/data/problem-lists/recorded-completions';
 import { PAGE_SHELL } from '@/components/layout/page-header';
 import { ProblemListSection } from './problem-list-section';
 import { ProgressMeter } from './progress-meter';
@@ -37,7 +37,7 @@ function sectionTitle(sections: Section[], id: string): string {
 
 export function ProblemListChecklist({ list }: { list: ProblemList }) {
   const { records } = useRecords();
-  const progress = useProblemListProgress(list, getVerifiedAcceptedIds(records));
+  const progress = useProblemListProgress(list, getRecordedCompletionIds(records));
   const problems = getListProblems(list);
   const done = problems.filter((problem) => progress.completed.has(problem.id)).length;
   const reviewCount = problems.filter((problem) => progress.review.has(problem.id)).length;

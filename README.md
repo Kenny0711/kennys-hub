@@ -79,7 +79,7 @@ Features:
 - Bottom target-company section is hidden by default and reveals only when clicked
 - Realtime or fallback refresh for solution updates
 - Curated learning lists: the sliding-window checklist and beginner chapters for the other 11 topics in [Ling Shen's study route](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/)
-- List checkmarks start from explicitly Accepted solutions only; unchecked/legacy submissions are not inferred as solved
+- List checkmarks include Accepted solutions and historical AC imports; statusless saved code counts, but unknown/failed submissions do not
 - Personal checklist and review marks persist in browser localStorage, separate from the problem archive
 
 ### Chrome Extension
@@ -193,6 +193,7 @@ docs/log/12_Portfolio_Card_Layout_And_Copy.md
 - Preserved manual checklist overrides and review marks in localStorage
 - Aligned the new pages with the site's editorial Problem Archive design
 - Documented the list sources and progress model in `docs/log/13_Problem_Lists.md`
+- Restored checkmarks for historical LeetCode AC imports and statusless saved solutions (167 recorded completions); unknown submissions remain unchecked
 
 2026-05-21:
 
