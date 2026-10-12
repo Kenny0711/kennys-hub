@@ -52,6 +52,9 @@ The goal is not only to remember what changed, but also to make future code revi
 13. `12_Portfolio_Card_Layout_And_Copy.md`
     - Portfolio card bottom alignment, project copy cleanup, and Supabase description sync.
 
+14. `13_Problem_Lists.md`
+    - Curated topic lists, verified Accepted checkmarks, and independent browser progress.
+
 ## Review Checklist
 
 Before pushing meaningful changes:

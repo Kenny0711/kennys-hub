@@ -4,6 +4,7 @@ import { useFilter } from '@/hooks/use-filter';
 import FilterBar from '@/components/problems/filter-bar';
 import ProblemTable from '@/components/problems/problem-table';
 import { PAGE_SHELL, PageHeader } from '@/components/layout/page-header';
+import { ProblemsNavigation } from '@/components/problem-lists/problems-navigation';
 
 export default function ProblemsPage() {
   const { records, loading } = useRecords();
@@ -17,7 +18,9 @@ export default function ProblemsPage() {
         title="Problem "
         accent="Set."
         description="管理你的解題記錄與學習筆記。"
-      />
+      >
+        <ProblemsNavigation active="archive" />
+      </PageHeader>
 
       <div className={`${PAGE_SHELL} space-y-6 py-12 lg:py-16`}>
         {loading ? (

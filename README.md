@@ -64,6 +64,8 @@ Routes:
 /dashboard
 /problems
 /problems/[id]
+/problems/lists
+/problems/lists/[slug]
 ```
 
 Features:
@@ -76,6 +78,9 @@ Features:
 - Weekly, daily, and monthly counts focus on accepted problems instead of duplicate solution attempts
 - Bottom target-company section is hidden by default and reveals only when clicked
 - Realtime or fallback refresh for solution updates
+- Curated learning lists: the sliding-window checklist and beginner chapters for the other 11 topics in [Ling Shen's study route](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/)
+- List checkmarks start from explicitly Accepted solutions only; unchecked/legacy submissions are not inferred as solved
+- Personal checklist and review marks persist in browser localStorage, separate from the problem archive
 
 ### Chrome Extension
 
@@ -180,6 +185,14 @@ docs/log/12_Portfolio_Card_Layout_And_Copy.md
 ---
 
 ## Latest Update
+
+2026-10-12:
+
+- Added 12 topic-based Problem Lists, with the current sliding-window checklist and starter sections for the other topics
+- Matched list questions to verified Accepted records; new Accepted records update checkmarks without counting failed or unverified submissions
+- Preserved manual checklist overrides and review marks in localStorage
+- Aligned the new pages with the site's editorial Problem Archive design
+- Documented the list sources and progress model in `docs/log/13_Problem_Lists.md`
 
 2026-05-21:
 
