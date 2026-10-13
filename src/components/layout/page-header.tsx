@@ -15,11 +15,11 @@ export function PageHeader({ meta, status, title, accent, description, children 
   return (
     <section className="border-b border-white/15">
       <div className={`${PAGE_SHELL} py-7 lg:py-10`}>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/15 pb-5 font-mono text-[11px] uppercase text-zinc-400 sm:text-xs">
+        <div className="grid gap-3 border-b border-white/15 pb-5 font-mono text-[11px] uppercase text-zinc-400 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:text-xs">
           <div>{meta}</div>
           {status ? (
-            <div className="flex items-center gap-2 text-brand">
-              <span className="h-2 w-2 bg-brand" aria-hidden="true" />
+            <div className="flex shrink-0 items-center gap-2 text-brand">
+              <span className="h-2 w-2 shrink-0 bg-brand" aria-hidden="true" />
               {status}
             </div>
           ) : null}

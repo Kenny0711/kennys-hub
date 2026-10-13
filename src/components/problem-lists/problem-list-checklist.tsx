@@ -3,13 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowDown, ArrowLeft, ExternalLink, RotateCcw, Search } from 'lucide-react';
-import {
-  getListProblems,
-  getProblemSectionPath,
-  type ListProblem,
-  type ProblemList,
-  type ProblemListSection as Section,
-} from '@/data/problem-lists';
+import { getListProblems, getProblemSectionPath } from '@/data/problem-lists/utils';
+import type { ListProblem, ProblemList, ProblemListSection as Section } from '@/data/problem-lists/types';
 import { useProblemListProgress } from '@/hooks/use-problem-list-progress';
 import { useRecords } from '@/hooks/use-records';
 import { getRecordedCompletionIds } from '@/data/problem-lists/recorded-completions';
@@ -37,8 +32,12 @@ function sectionTitle(sections: Section[], id: string): string {
 
 export function ProblemListChecklist({ list }: { list: ProblemList }) {
   const { records } = useRecords();
-  const progress = useProblemListProgress(list, getRecordedCompletionIds(records));
   const problems = getListProblems(list);
+  const progress = useProblemListProgress({
+    id: list.id,
+    initialCompleted: list.initialCompleted,
+    problemIds: problems.map((problem) => problem.id),
+  }, getRecordedCompletionIds(records));
   const done = problems.filter((problem) => progress.completed.has(problem.id)).length;
   const reviewCount = problems.filter((problem) => progress.review.has(problem.id)).length;
   const next = problems.find((problem) => !progress.completed.has(problem.id));

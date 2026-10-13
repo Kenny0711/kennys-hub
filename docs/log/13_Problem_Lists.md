@@ -1,6 +1,6 @@
 # Problem Lists
 
-The `/problems` page now separates the personal problem archive from `/problems/lists`. The list index follows [Ling Shen's study route](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/) in topic order. The sliding-window list contains the previously curated sections through 2.4; each of the other 11 lists contains selected beginner sections, not the full original article. Each card links back to its source.
+The `/problems` page separates the personal problem archive from `/problems/lists`. The list index follows [Ling Shen's study route](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/) in topic order. All 12 original topic lists and their chapters are now included, with 3,463 per-list distinct problems (2,824 unique IDs across topics) as of 2026-10-13. Each card links back to its source.
 
 ## Completion rules
 
@@ -12,7 +12,8 @@ The `/problems` page now separates the personal problem archive from `/problems/
 
 ## Source and maintenance
 
-- `src/data/problem-lists/starter-lists.ts` contains selected problem IDs and titles from the linked original lists.
-- `src/data/problem-lists/starter-slugs.json` is the generated ID-to-slug map for direct LeetCode links. After changing starter IDs, run `node scripts/generate-starter-slugs.mjs` and inspect the generated diff.
-- The slug generator uses public question metadata from [Zanger67/leetcode-question-data](https://github.com/Zanger67/leetcode-question-data). Missing IDs fail generation instead of producing broken links.
+- `src/data/problem-lists/full-lists.json` is the generated snapshot of the 12 source articles. It stores only chapter structure, problem IDs/titles, direct problem URLs, and available score/premium/optional markers; it does not copy explanations or code.
+- Run `node scripts/sync-full-problem-lists.mjs --dry-run` to validate current sources, then `node scripts/sync-full-problem-lists.mjs` to refresh the snapshot. The script reads the original LeetCode articles through Jina's text proxy because direct requests from this environment receive HTTP 403. Use `--cache` to resume after rate limits; it saves temporary source copies outside the repository.
+- The importer rejects unrecognized numbered problem links and unexpectedly short lists. Existing problem-list IDs and the browser storage key were retained, so saved checkmarks and review flags survive this data expansion.
+- The list overview receives only IDs/titles for progress summaries. The detail view receives its selected list instead of bundling all 12 lists into each client page.
 - Refresh the completion snapshot from the public records API after checking solution statuses and historical import provenance. Do not add `unknown` or failed submissions merely because code exists.

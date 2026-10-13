@@ -1,11 +1,8 @@
 'use client';
 
 import { Bookmark, ChevronDown, ExternalLink } from 'lucide-react';
-import {
-  getSectionProblems,
-  type ListProblem,
-  type ProblemListSection as Section,
-} from '@/data/problem-lists';
+import { getSectionProblems } from '@/data/problem-lists/utils';
+import type { ListProblem, ProblemListSection as Section } from '@/data/problem-lists/types';
 
 interface Props {
   section: Section;

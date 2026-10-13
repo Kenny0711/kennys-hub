@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { ArrowRight, ExternalLink } from 'lucide-react';
-import { getListProblems, type ProblemList } from '@/data/problem-lists';
+import type { ProblemListSummary } from '@/data/problem-lists/types';
 import { useProblemListProgress } from '@/hooks/use-problem-list-progress';
 import { useRecords } from '@/hooks/use-records';
 import { getRecordedCompletionIds } from '@/data/problem-lists/recorded-completions';
 import { ProgressMeter } from './progress-meter';
 
-export function ProblemListOverview({ lists }: { lists: ProblemList[] }) {
+export function ProblemListOverview({ lists }: { lists: ProblemListSummary[] }) {
   const { records } = useRecords();
   const completedRecordIds = getRecordedCompletionIds(records);
   return (
@@ -18,9 +18,13 @@ export function ProblemListOverview({ lists }: { lists: ProblemList[] }) {
   );
 }
 
-function ProblemListCard({ list, completedRecordIds }: { list: ProblemList; completedRecordIds: ReadonlySet<string> }) {
-  const { completed, updatedAt } = useProblemListProgress(list, completedRecordIds);
-  const problems = getListProblems(list);
+function ProblemListCard({ list, completedRecordIds }: { list: ProblemListSummary; completedRecordIds: ReadonlySet<string> }) {
+  const problems = list.problems;
+  const { completed, updatedAt } = useProblemListProgress({
+    id: list.id,
+    initialCompleted: list.initialCompleted,
+    problemIds: problems.map((problem) => problem.id),
+  }, completedRecordIds);
   const done = problems.filter((problem) => completed.has(problem.id)).length;
   const next = problems.find((problem) => !completed.has(problem.id));
   const percent = problems.length ? Math.round((done / problems.length) * 100) : 0;
@@ -29,7 +33,7 @@ function ProblemListCard({ list, completedRecordIds }: { list: ProblemList; comp
     <article className="flex h-full flex-col border border-white/15 bg-surface p-5 transition-colors hover:border-white/30 hover:bg-surface-hover sm:p-7">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="mb-3 font-mono text-[11px] font-semibold uppercase text-coral">{list.id === 'sliding-window' ? 'Curated / Problem List' : 'Curated / 入門章節'}</div>
+          <div className="mb-3 font-mono text-[11px] font-semibold uppercase text-coral">Curated / Problem List</div>
           <h2 className="text-xl font-semibold leading-snug text-paper sm:text-2xl">
             <Link href={`/problems/lists/${list.id}`} className="transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-brand">
               {list.title}

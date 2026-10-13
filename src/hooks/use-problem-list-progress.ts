@@ -1,7 +1,11 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { getListProblems, type ProblemList } from '@/data/problem-lists';
+interface ProgressList {
+  id: string;
+  initialCompleted: string[];
+  problemIds: string[];
+}
 
 const STORAGE_KEY = 'leetcode-problem-list-progress';
 const CHANGE_EVENT = 'problem-list-progress-changed';
@@ -53,7 +57,7 @@ function subscribe(callback: () => void) {
   };
 }
 
-function saveListProgress(list: ProblemList, update: (current: ListProgress) => ListProgress) {
+function saveListProgress(list: ProgressList, update: (current: ListProgress) => ListProgress) {
   const store = readStore(window.localStorage.getItem(STORAGE_KEY));
   const current = store.lists[list.id] ?? {
     completed: list.initialCompleted,
@@ -66,13 +70,13 @@ function saveListProgress(list: ProblemList, update: (current: ListProgress) => 
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-export function useProblemListProgress(list: ProblemList, completedRecordIds: ReadonlySet<string>) {
+export function useProblemListProgress(list: ProgressList, completedRecordIds: ReadonlySet<string>) {
   const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const saved = readStore(raw).lists[list.id];
   const progress: ListProgress = saved && Array.isArray(saved.completed) && Array.isArray(saved.review)
     ? saved
     : { completed: list.initialCompleted, review: [], updatedAt: '' };
-  const listIds = new Set(getListProblems(list).map((problem) => problem.id));
+  const listIds = new Set(list.problemIds);
   const automatic = new Set([...list.initialCompleted, ...completedRecordIds].filter((id) => listIds.has(id)));
   const excluded = new Set(Array.isArray(progress.excludedAccepted) ? progress.excludedAccepted : []);
   const completed = new Set([...automatic, ...progress.completed]);

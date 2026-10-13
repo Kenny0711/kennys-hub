@@ -78,7 +78,7 @@ Features:
 - Weekly, daily, and monthly counts focus on accepted problems instead of duplicate solution attempts
 - Bottom target-company section is hidden by default and reveals only when clicked
 - Realtime or fallback refresh for solution updates
-- Curated learning lists: the sliding-window checklist and beginner chapters for the other 11 topics in [Ling Shen's study route](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/)
+- Curated learning lists: all 12 complete topics in [Ling Shen's study route](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/), including their original chapters and problem links
 - List checkmarks include Accepted solutions and historical AC imports; statusless saved code counts, but unknown/failed submissions do not
 - Personal checklist and review marks persist in browser localStorage, separate from the problem archive
 
@@ -185,6 +185,12 @@ docs/log/12_Portfolio_Card_Layout_And_Copy.md
 ---
 
 ## Latest Update
+
+2026-10-13:
+
+- Expanded all 12 Ling Shen lists from starter chapters to the complete source lists (3,463 per-list distinct problems)
+- Kept existing completion/review progress and deduplicated repeated questions within each list
+- Added `scripts/sync-full-problem-lists.mjs` for validated source refreshes and reduced list-overview client data
 
 2026-10-12:
 

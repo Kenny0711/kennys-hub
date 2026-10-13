@@ -24,3 +24,10 @@ export interface ProblemList {
   sections: ProblemListSection[];
   initialCompleted: string[];
 }
+
+export type ProblemListSummary = Pick<
+  ProblemList,
+  'id' | 'title' | 'author' | 'sourceUrl' | 'description' | 'initialCompleted'
+> & {
+  problems: Pick<ListProblem, 'id' | 'title'>[];
+};
