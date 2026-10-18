@@ -1,6 +1,7 @@
-import type { LeetcodeRecord, Solution } from './types';
+import type { LeetcodeRecord, Proficiency, Solution } from './types';
 
 export interface NotionProperty {
+  id?: string;
   type?: string;
   number?: number | null;
   title?: { plain_text?: string }[];
@@ -62,6 +63,29 @@ export function notionWebhookPageId(event: {
     ? event.entity.id : null;
 }
 
+export function notionWebhookUpdatedPropertyIds(event: { type?: unknown; data?: unknown }): string[] {
+  if (event.type !== 'page.properties_updated' || !event.data || typeof event.data !== 'object') {
+    return [];
+  }
+  const properties = (event.data as Record<string, unknown>).updated_properties;
+  return Array.isArray(properties) ? properties.filter((id): id is string => typeof id === 'string') : [];
+}
+
+export function proficiencyFromNotionProgress(
+  page: NotionPage,
+  updatedPropertyIds: string[],
+): Proficiency | null {
+  const progress = page.properties['Problem Progress'];
+  if (!progress?.id || !updatedPropertyIds.includes(progress.id)) return null;
+  const byStatus: Record<string, Proficiency> = {
+    Completed: '熟練',
+    'In Progress': '理解',
+    'Need Review': '生疏',
+    'To Do': '理解',
+  };
+  return byStatus[progress.select?.name ?? ''] ?? null;
+}
+
 export function problemIdFromPage(page: NotionPage): number | null {
   const numeric = page.properties['LeetCode ID']?.number;
   if (Number.isSafeInteger(numeric) && Number(numeric) > 0) return Number(numeric);
@@ -121,8 +145,13 @@ export function hubOwnedProperties(
     'LeetCode ID': { number: record.problem_id },
     Name: { title: [{ text: { content: `${record.problem_id}. ${record.title.replace(/^\d+\s*[.．]\s*/, '')}` } }] },
     'Difficulty Level': { select: { name: record.difficulty } },
-    'Problem Progress': { select: { name: 'Completed' } },
   };
+  if (!page) {
+    const progress: Record<Proficiency, string> = {
+      生疏: 'Need Review', 理解: 'To Do', 熟練: 'Completed',
+    };
+    properties['Problem Progress'] = { select: { name: progress[record.proficiency] } };
+  }
   const date = firstVerifiedAcceptedDate(record.solutions);
   if (!page?.properties['Date Solved']?.date?.start && date) {
     properties['Date Solved'] = { date: { start: date } };
@@ -151,9 +180,6 @@ export function changedHubProperties(page: NotionPage, desired: Record<string, u
     if (name === 'Name') {
       const title = (target.title as { text: { content: string } }[])[0].text.content;
       matches = current.Name?.title?.map((part) => part.plain_text ?? '').join('') === title;
-    }
-    if (name === 'Problem Progress') {
-      matches = current[name]?.select?.name === (target.select as { name: string }).name;
     }
     if (name === 'Difficulty Level') {
       matches = current[name]?.select?.name === (target.select as { name: string }).name;

@@ -4,7 +4,8 @@ import { getSupabaseAdmin } from './supabase-admin';
 import type { LeetcodeRecord } from './types';
 import {
   changedHubProperties, firstVerifiedAcceptedDate, hubOwnedProperties,
-  problemIdFromPage, readNotionFields, shouldRecoverNotionPush, uniquePageForProblem, type NotionPage,
+  problemIdFromPage, proficiencyFromNotionProgress, readNotionFields,
+  shouldRecoverNotionPush, uniquePageForProblem, type NotionPage,
 } from './notion-sync-core';
 import {
   createNotionPage, getNotionSchema, notionConfigured, queryNotionPages,
@@ -36,13 +37,17 @@ async function findNotionPage(problemId: number, cachedPageId: string | null): P
   return uniquePageForProblem(problemId, byTitle.filter(assertSource));
 }
 
-export async function cacheNotionPage(page: NotionPage, knownProblemId?: number): Promise<'updated' | 'skipped'> {
+export async function cacheNotionPage(
+  page: NotionPage,
+  knownProblemId?: number,
+  updatedPropertyIds: string[] = [],
+): Promise<'updated' | 'skipped'> {
   if (!assertSource(page)) return 'skipped';
   const problemId = problemIdFromPage(page);
   if (!problemId || (knownProblemId && problemId !== knownProblemId)) return 'skipped';
   const supabase = getSupabaseAdmin();
   const { data: record, error: recordError } = await supabase
-    .from('leetcode_records').select('problem_id').eq('problem_id', problemId).maybeSingle();
+    .from('leetcode_records').select('problem_id, proficiency').eq('problem_id', problemId).maybeSingle();
   if (recordError) throw recordError;
   if (!record) return 'skipped';
   const { data: cached, error: cacheError } = await supabase
@@ -53,9 +58,19 @@ export async function cacheNotionPage(page: NotionPage, knownProblemId?: number)
   if (state?.notion_page_id && state.notion_page_id !== page.id) {
     throw new Error(`Notion page mapping conflict for #${problemId}`);
   }
+  const nextProficiency = proficiencyFromNotionProgress(page, updatedPropertyIds);
   if (state?.notion_last_edited_at && state.notes_markdown !== null &&
-      new Date(state.notion_last_edited_at).getTime() >= new Date(page.last_edited_time).getTime()) {
+      (nextProficiency
+        ? new Date(state.notion_last_edited_at).getTime() > new Date(page.last_edited_time).getTime()
+        : new Date(state.notion_last_edited_at).getTime() >= new Date(page.last_edited_time).getTime())) {
     return 'skipped';
+  }
+  if (nextProficiency && record.proficiency !== nextProficiency) {
+    const { error: proficiencyError } = await supabase.from('leetcode_records')
+      .update({ proficiency: nextProficiency })
+      .eq('problem_id', problemId)
+      .eq('proficiency', record.proficiency);
+    if (proficiencyError) throw proficiencyError;
   }
   const markdown = await retrieveNotionMarkdown(page.id);
   if (markdown === null) throw new Error(`Notion notes incomplete for #${problemId}`);
@@ -183,7 +198,7 @@ export async function reconcileNotion(limit = 50): Promise<{ examined: number; u
   return { examined, updated };
 }
 
-export async function pullNotionPage(pageId: string): Promise<'updated' | 'skipped'> {
+export async function pullNotionPage(pageId: string, updatedPropertyIds: string[] = []): Promise<'updated' | 'skipped'> {
   const page = await retrieveNotionPage(pageId);
-  return cacheNotionPage(page);
+  return cacheNotionPage(page, undefined, updatedPropertyIds);
 }

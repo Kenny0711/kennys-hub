@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { after, NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { pullNotionPage } from '@/lib/notion-sync';
-import { notionWebhookPageId } from '@/lib/notion-sync-core';
+import { notionWebhookPageId, notionWebhookUpdatedPropertyIds } from '@/lib/notion-sync-core';
 
 function validSignature(raw: string, signature: string | null, token: string): boolean {
   if (!signature) return false;
@@ -41,9 +41,10 @@ export async function POST(req: NextRequest) {
   }
   const pageId = notionWebhookPageId(event);
   if (!pageId) return NextResponse.json({ status: 'ignored' });
+  const updatedPropertyIds = notionWebhookUpdatedPropertyIds(event);
   after(async () => {
     try {
-      await pullNotionPage(pageId);
+      await pullNotionPage(pageId, updatedPropertyIds);
     } catch (cause) {
       console.error(`Notion webhook pull failed for page ${pageId}:`, cause);
     }

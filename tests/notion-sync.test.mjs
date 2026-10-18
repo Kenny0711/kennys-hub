@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import {
   changedHubProperties, dateInTaipei, firstVerifiedAcceptedDate,
   hubOwnedProperties, languageForNotion, normalizedTopics, problemIdFromPage,
-  readNotionFields, uniquePageForProblem, isAcceptedStatus, hasNewVerifiedSubmission,
-  notionWebhookPageId, shouldRecoverNotionPush,
+  proficiencyFromNotionProgress, readNotionFields, uniquePageForProblem,
+  isAcceptedStatus, hasNewVerifiedSubmission, notionWebhookPageId,
+  notionWebhookUpdatedPropertyIds, shouldRecoverNotionPush,
 } from '../src/lib/notion-sync-core.ts';
 
 const record = {
@@ -27,7 +28,7 @@ function page(id = 1146, extras = {}) {
       Topic: { multi_select: [{ name: 'Arrays' }, { name: 'Hash Table' }] },
       Language: { multi_select: [{ name: 'C++' }] },
       'LeetCode URL': { url: 'https://leetcode.com/problems/snapshot-array/' },
-      'Problem Progress': { select: { name: 'Completed' } },
+      'Problem Progress': { id: 'progress-id', select: { name: 'Completed' } },
       'Difficulty Level': { select: { name: 'Medium' } },
       'Time Complexity': { multi_select: [{ name: 'O(log n)' }] },
       'Space Complexity': { multi_select: [{ name: 'O(n + S)' }] },
@@ -88,6 +89,30 @@ test('Notion webhook accepts documented page events without a data_source_id in 
   assert.equal(notionWebhookPageId({ ...event, entity: { type: 'block', id: event.entity.id } }), null);
 });
 
+test('only a changed Problem Progress property can update Hub proficiency', () => {
+  const event = {
+    type: 'page.properties_updated',
+    data: { updated_properties: ['progress-id', 'notes-id'] },
+  };
+  assert.deepEqual(notionWebhookUpdatedPropertyIds(event), ['progress-id', 'notes-id']);
+  assert.deepEqual(notionWebhookUpdatedPropertyIds({ ...event, type: 'page.content_updated' }), []);
+  assert.deepEqual(notionWebhookUpdatedPropertyIds({ ...event, data: {} }), []);
+  assert.equal(proficiencyFromNotionProgress(page(), ['notes-id']), null);
+  assert.equal(proficiencyFromNotionProgress(page(), ['progress-id']), '熟練');
+  assert.equal(proficiencyFromNotionProgress(page(1146, {
+    'Problem Progress': { id: 'progress-id', select: { name: 'Need Review' } },
+  }), ['progress-id']), '生疏');
+  assert.equal(proficiencyFromNotionProgress(page(1146, {
+    'Problem Progress': { id: 'progress-id', select: { name: 'In Progress' } },
+  }), ['progress-id']), '理解');
+  assert.equal(proficiencyFromNotionProgress(page(1146, {
+    'Problem Progress': { id: 'progress-id', select: { name: 'To Do' } },
+  }), ['progress-id']), '理解');
+  assert.equal(proficiencyFromNotionProgress(page(1146, {
+    'Problem Progress': { select: { name: 'Completed' } },
+  }), ['progress-id']), null);
+});
+
 test('historical page matches by exact numeric prefix when ID property is empty', () => {
   assert.equal(problemIdFromPage(page(1146, { 'LeetCode ID': { number: null } })), 1146);
   assert.equal(problemIdFromPage(page(11146, { 'LeetCode ID': { number: null } })), 11146);
@@ -131,6 +156,14 @@ test('outbound payload contains only Hub-owned fields', () => {
     ['LeetCode ID', 'Name', 'Difficulty Level', 'Problem Progress', 'Date Solved', 'Topic', 'LeetCode URL', 'Language'].sort());
   assert.equal(props['Date Solved'].date.start, '2026-10-18');
   assert.equal(props['Difficulty Level'].select.name, 'Medium');
+  assert.equal(props['Problem Progress'].select.name, 'To Do');
+});
+
+test('Accepted sync does not overwrite progress on an existing Notion page', () => {
+  const existing = page();
+  const desired = hubOwnedProperties(record, existing, ['Arrays', 'Hash Table'], ['C++']);
+  assert.equal('Problem Progress' in desired, false);
+  assert.equal('Problem Progress' in changedHubProperties(existing, desired), false);
 });
 
 test('existing historical Date Solved is not overwritten by a later Accepted', () => {
