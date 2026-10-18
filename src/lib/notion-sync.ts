@@ -23,18 +23,39 @@ function assertSource(page: NotionPage): boolean {
 }
 
 async function findNotionPage(problemId: number, cachedPageId: string | null): Promise<NotionPage | null> {
+  let deletedPageId: string | null = null;
   if (cachedPageId) {
     const page = await retrieveNotionPage(cachedPageId);
     if (!assertSource(page) || problemIdFromPage(page) !== problemId) {
       throw new Error(`Notion page mapping mismatch for #${problemId}`);
     }
-    return page;
+    if (!page.in_trash) return page;
+    deletedPageId = cachedPageId;
   }
   const byId = await queryNotionPages({ property: 'LeetCode ID', number: { equals: problemId } });
   const idMatch = uniquePageForProblem(problemId, byId);
-  if (idMatch) return idMatch;
-  const byTitle = await queryNotionPages({ property: 'Name', title: { contains: `${problemId}.` } });
-  return uniquePageForProblem(problemId, byTitle.filter(assertSource));
+  let activePage = idMatch;
+  if (!activePage) {
+    const byTitle = await queryNotionPages({ property: 'Name', title: { contains: `${problemId}.` } });
+    activePage = uniquePageForProblem(problemId, byTitle.filter(assertSource));
+  }
+  if (deletedPageId) {
+    const { data, error } = await getSupabaseAdmin().from('notion_problem_sync').update({
+      notion_page_id: null,
+      notion_url: null,
+      notion_last_edited_at: null,
+      date_solved: null,
+      difficulty: null,
+      time_complexity: null,
+      space_complexity: null,
+      notes_markdown: null,
+      last_synced_at: null,
+    }).eq('problem_id', problemId).eq('notion_page_id', deletedPageId)
+      .select('problem_id').maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error(`Notion page mapping changed for #${problemId}`);
+  }
+  return activePage;
 }
 
 export async function cacheNotionPage(
@@ -42,7 +63,7 @@ export async function cacheNotionPage(
   knownProblemId?: number,
   updatedPropertyIds: string[] = [],
 ): Promise<'updated' | 'skipped'> {
-  if (!assertSource(page)) return 'skipped';
+  if (!assertSource(page) || page.in_trash) return 'skipped';
   const problemId = problemIdFromPage(page);
   if (!problemId || (knownProblemId && problemId !== knownProblemId)) return 'skipped';
   const supabase = getSupabaseAdmin();

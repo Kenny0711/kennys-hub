@@ -127,6 +127,12 @@ test('duplicate historical pages are rejected instead of creating another', () =
   assert.equal(uniquePageForProblem(1146, [page()])?.id, 'page-1146');
 });
 
+test('trashed pages are ignored when finding an existing Notion page', () => {
+  const trashed = { ...page(), id: 'deleted-page', in_trash: true };
+  assert.equal(uniquePageForProblem(1146, [trashed]), null);
+  assert.equal(uniquePageForProblem(1146, [trashed, page()])?.id, 'page-1146');
+});
+
 test('Accepted timestamps use Asia/Taipei date boundary', () => {
   assert.equal(dateInTaipei('2026-10-17T16:10:00Z'), '2026-10-18');
 });
@@ -160,6 +166,15 @@ test('C++ custom-class code overrides a stale Python language label', () => {
     { ...record.solutions[0], language: 'cpp', code },
   ] };
   assert.deepEqual(hubOwnedProperties(mixed, page(), ['Arrays'], ['C++', 'Python']).Language,
+    { multi_select: [{ name: 'C++' }] });
+});
+
+test('an empty legacy Python placeholder does not add Python to Notion languages', () => {
+  const mixed = { ...record, solutions: [
+    { language: 'python', code: '' },
+    { ...record.solutions[0], code: 'class Solution { public: int value() { return 1; } };' },
+  ] };
+  assert.deepEqual(hubOwnedProperties(mixed, null, [], ['C++', 'Python']).Language,
     { multi_select: [{ name: 'C++' }] });
 });
 

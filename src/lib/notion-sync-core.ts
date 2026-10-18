@@ -16,6 +16,7 @@ export interface NotionPage {
   id: string;
   url: string;
   last_edited_time: string;
+  in_trash?: boolean;
   parent?: { type?: string; data_source_id?: string };
   properties: Record<string, NotionProperty>;
 }
@@ -95,7 +96,7 @@ export function problemIdFromPage(page: NotionPage): number | null {
 }
 
 export function uniquePageForProblem(problemId: number, pages: NotionPage[]): NotionPage | null {
-  const matches = pages.filter((page) => problemIdFromPage(page) === problemId);
+  const matches = pages.filter((page) => !page.in_trash && problemIdFromPage(page) === problemId);
   if (matches.length > 1) throw new Error(`Ambiguous Notion pages for #${problemId}`);
   return matches[0] ?? null;
 }
@@ -178,6 +179,8 @@ export function hubOwnedProperties(
     properties['LeetCode URL'] = { url: `https://leetcode.com/problems/${record.lc_slug}/` };
   }
   const languages = [...new Set(record.solutions
+    .filter((item) => item.code?.trim() &&
+      (item.status === 'accepted' || isAcceptedStatus(item.submission_status)))
     .map((item) => languageForNotion(item.language, item.code))
     .filter((item): item is string => item !== null && allowedLanguages.includes(item)))];
   if (languages.length) properties.Language = { multi_select: languages.map((name) => ({ name })) };
