@@ -4,6 +4,7 @@ import {
   changedHubProperties, dateInTaipei, firstVerifiedAcceptedDate,
   hubOwnedProperties, languageForNotion, normalizedTopics, problemIdFromPage,
   readNotionFields, uniquePageForProblem, isAcceptedStatus, hasNewVerifiedSubmission,
+  notionWebhookPageId, shouldRecoverNotionPush,
 } from '../src/lib/notion-sync-core.ts';
 
 const record = {
@@ -55,6 +56,35 @@ test('fallback requeues only new Accepted records with a submission ID', () => {
   assert.equal(hasNewVerifiedSubmission({ ...record, solutions: [
     { ...record.solutions[0], submission_id: '123456', status: 'runtime_error' },
   ] }), false);
+});
+
+test('fallback also recovers a newer Accepted on an already-linked problem', () => {
+  const verified = { ...record, solutions: [
+    { ...record.solutions[0], submission_id: '123456' },
+  ] };
+  assert.equal(shouldRecoverNotionPush(verified, undefined), true);
+  assert.equal(shouldRecoverNotionPush(verified, {
+    last_pushed_record_at: '2026-10-17T00:00:00Z', needs_push: false,
+  }), true);
+  assert.equal(shouldRecoverNotionPush(verified, {
+    last_pushed_record_at: record.updated_at, needs_push: false,
+  }), false);
+  assert.equal(shouldRecoverNotionPush(verified, {
+    last_pushed_record_at: '2026-10-17T00:00:00Z', needs_push: true,
+  }), false);
+});
+
+test('Notion webhook accepts documented page events without a data_source_id in the payload', () => {
+  const event = {
+    type: 'page.properties_updated',
+    entity: { type: 'page', id: '153104cd-477e-809d-8dc4-ff2d96ae3090' },
+    data: { parent: { id: '13950b26-c203-4f3b-b97d-93ec06319565', type: 'space' } },
+  };
+  assert.equal(notionWebhookPageId(event), event.entity.id);
+  assert.equal(notionWebhookPageId({ ...event, type: 'page.content_updated' }), event.entity.id);
+  assert.equal(notionWebhookPageId({ ...event, type: 'page.created' }), event.entity.id);
+  assert.equal(notionWebhookPageId({ ...event, type: 'page.deleted' }), null);
+  assert.equal(notionWebhookPageId({ ...event, entity: { type: 'block', id: event.entity.id } }), null);
 });
 
 test('historical page matches by exact numeric prefix when ID property is empty', () => {

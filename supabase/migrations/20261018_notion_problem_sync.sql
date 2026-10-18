@@ -10,6 +10,7 @@ create table if not exists public.notion_problem_sync (
   notes_markdown text,
   notion_last_edited_at timestamptz,
   pushed_fingerprint text,
+  last_pushed_record_at timestamptz,
   generation bigint not null default 0,
   needs_push boolean not null default false,
   lease_until timestamptz,
@@ -18,6 +19,9 @@ create table if not exists public.notion_problem_sync (
   last_error text,
   last_synced_at timestamptz
 );
+
+alter table public.notion_problem_sync
+  add column if not exists last_pushed_record_at timestamptz;
 
 create index if not exists idx_notion_problem_sync_queue
   on public.notion_problem_sync (next_attempt_at)
@@ -129,13 +133,16 @@ begin
 end;
 $$;
 
+drop function if exists public.complete_notion_push(integer, bigint, text, date);
 create or replace function public.complete_notion_push(
-  p_problem_id integer, p_generation bigint, p_fingerprint text, p_date_solved date
+  p_problem_id integer, p_generation bigint, p_fingerprint text,
+  p_date_solved date, p_record_updated_at timestamptz
 ) returns void language sql security definer set search_path = public as $$
   update public.notion_problem_sync
   set needs_push = case when generation = p_generation then false else needs_push end,
       lease_until = null, attempts = 0, last_error = null,
-      pushed_fingerprint = p_fingerprint,
+      pushed_fingerprint = case when generation = p_generation then p_fingerprint else pushed_fingerprint end,
+      last_pushed_record_at = greatest(last_pushed_record_at, p_record_updated_at),
       date_solved = coalesce(date_solved, p_date_solved),
       last_synced_at = now()
   where problem_id = p_problem_id;
@@ -158,11 +165,11 @@ revoke all on function public.enqueue_notion_problem(integer) from public, anon,
 revoke all on function public.append_accepted_solution(integer, text, text, text[], text, jsonb) from public, anon, authenticated;
 revoke all on function public.claim_notion_problem() from public, anon, authenticated;
 revoke all on function public.store_notion_snapshot(integer, uuid, text, timestamptz, jsonb) from public, anon, authenticated;
-revoke all on function public.complete_notion_push(integer, bigint, text, date) from public, anon, authenticated;
+revoke all on function public.complete_notion_push(integer, bigint, text, date, timestamptz) from public, anon, authenticated;
 revoke all on function public.fail_notion_push(integer, bigint, text) from public, anon, authenticated;
 grant execute on function public.enqueue_notion_problem(integer) to service_role;
 grant execute on function public.append_accepted_solution(integer, text, text, text[], text, jsonb) to service_role;
 grant execute on function public.claim_notion_problem() to service_role;
 grant execute on function public.store_notion_snapshot(integer, uuid, text, timestamptz, jsonb) to service_role;
-grant execute on function public.complete_notion_push(integer, bigint, text, date) to service_role;
+grant execute on function public.complete_notion_push(integer, bigint, text, date, timestamptz) to service_role;
 grant execute on function public.fail_notion_push(integer, bigint, text) to service_role;

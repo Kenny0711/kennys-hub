@@ -3,8 +3,8 @@ import { createHash } from 'node:crypto';
 import { getSupabaseAdmin } from './supabase-admin';
 import type { LeetcodeRecord } from './types';
 import {
-  changedHubProperties, firstVerifiedAcceptedDate, hasNewVerifiedSubmission, hubOwnedProperties,
-  problemIdFromPage, readNotionFields, uniquePageForProblem, type NotionPage,
+  changedHubProperties, firstVerifiedAcceptedDate, hubOwnedProperties,
+  problemIdFromPage, readNotionFields, shouldRecoverNotionPush, uniquePageForProblem, type NotionPage,
 } from './notion-sync-core';
 import {
   createNotionPage, getNotionSchema, notionConfigured, queryNotionPages,
@@ -57,12 +57,8 @@ export async function cacheNotionPage(page: NotionPage, knownProblemId?: number)
       new Date(state.notion_last_edited_at).getTime() >= new Date(page.last_edited_time).getTime()) {
     return 'skipped';
   }
-  let markdown: string | null = null;
-  try {
-    markdown = await retrieveNotionMarkdown(page.id);
-  } catch (error) {
-    console.error(`Notion notes read failed for #${problemId}:`, error);
-  }
+  const markdown = await retrieveNotionMarkdown(page.id);
+  if (markdown === null) throw new Error(`Notion notes incomplete for #${problemId}`);
   const fields = readNotionFields(page, markdown);
   const { error } = await supabase.rpc('store_notion_snapshot', {
     p_problem_id: problemId,
@@ -110,6 +106,7 @@ async function pushClaimed(problemId: number, generation: number): Promise<void>
     p_generation: generation,
     p_fingerprint: fingerprint,
     p_date_solved: saved.properties['Date Solved']?.date?.start ?? firstVerifiedAcceptedDate(record.solutions),
+    p_record_updated_at: record.updated_at,
   });
   if (error) throw error;
 }
@@ -142,17 +139,22 @@ export async function drainNotionQueue(limit = 3): Promise<{ processed: number; 
 export async function enqueueMissedAccepted(): Promise<number> {
   if (!notionConfigured()) return 0;
   const supabase = getSupabaseAdmin();
-  const { data: states, error: stateError } = await supabase
-    .from('notion_problem_sync').select('problem_id');
-  if (stateError) throw stateError;
-  const known = new Set((states ?? []).map((state) => state.problem_id));
+  const byProblem = new Map<number, { last_pushed_record_at: string | null; needs_push: boolean }>();
+  for (let offset = 0; ; offset += 1000) {
+    const { data: states, error } = await supabase.from('notion_problem_sync')
+      .select('problem_id, last_pushed_record_at, needs_push')
+      .order('problem_id').range(offset, offset + 999);
+    if (error) throw error;
+    for (const state of states ?? []) byProblem.set(state.problem_id, state);
+    if (!states || states.length < 1000) break;
+  }
   let queued = 0;
   for (let offset = 0; ; offset += 1000) {
     const { data, error } = await supabase.from('leetcode_records')
-      .select('problem_id, solutions').order('problem_id').range(offset, offset + 999);
+      .select('problem_id, solutions, updated_at').order('problem_id').range(offset, offset + 999);
     if (error) throw error;
     for (const record of (data ?? []) as LeetcodeRecord[]) {
-      if (known.has(record.problem_id) || !hasNewVerifiedSubmission(record)) continue;
+      if (!shouldRecoverNotionPush(record, byProblem.get(record.problem_id))) continue;
       const { error: enqueueError } = await supabase.rpc('enqueue_notion_problem', {
         p_problem_id: record.problem_id,
       });

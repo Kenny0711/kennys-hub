@@ -42,6 +42,26 @@ export function hasNewVerifiedSubmission(record: LeetcodeRecord): boolean {
     (solution.status === 'accepted' || isAcceptedStatus(solution.submission_status)));
 }
 
+export function shouldRecoverNotionPush(
+  record: LeetcodeRecord,
+  state: { last_pushed_record_at: string | null; needs_push: boolean } | undefined,
+): boolean {
+  return hasNewVerifiedSubmission(record) && !state?.needs_push &&
+    (!state?.last_pushed_record_at ||
+      new Date(record.updated_at).getTime() > new Date(state.last_pushed_record_at).getTime());
+}
+
+export function notionWebhookPageId(event: {
+  type?: unknown;
+  entity?: { type?: unknown; id?: unknown };
+}): string | null {
+  if (!['page.properties_updated', 'page.content_updated', 'page.created'].includes(String(event.type))) {
+    return null;
+  }
+  return event.entity?.type === 'page' && typeof event.entity.id === 'string'
+    ? event.entity.id : null;
+}
+
 export function problemIdFromPage(page: NotionPage): number | null {
   const numeric = page.properties['LeetCode ID']?.number;
   if (Number.isSafeInteger(numeric) && Number(numeric) > 0) return Number(numeric);

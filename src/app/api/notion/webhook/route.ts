@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { after, NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { pullNotionPage } from '@/lib/notion-sync';
+import { notionWebhookPageId } from '@/lib/notion-sync-core';
 
 function validSignature(raw: string, signature: string | null, token: string): boolean {
   if (!signature) return false;
@@ -38,20 +39,13 @@ export async function POST(req: NextRequest) {
   if (!validSignature(raw, req.headers.get('x-notion-signature'), token)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
-  if (!['page.properties_updated', 'page.content_updated', 'page.created'].includes(String(event.type))) {
-    return NextResponse.json({ status: 'ignored' });
-  }
-  const entity = event.entity as { type?: string; id?: string } | undefined;
-  const data = event.data as { parent?: { data_source_id?: string } } | undefined;
-  if (entity?.type !== 'page' || !entity.id ||
-      data?.parent?.data_source_id !== process.env.NOTION_DATA_SOURCE_ID) {
-    return NextResponse.json({ status: 'ignored' });
-  }
+  const pageId = notionWebhookPageId(event);
+  if (!pageId) return NextResponse.json({ status: 'ignored' });
   after(async () => {
     try {
-      await pullNotionPage(entity.id!);
+      await pullNotionPage(pageId);
     } catch (cause) {
-      console.error(`Notion webhook pull failed for page ${entity.id}:`, cause);
+      console.error(`Notion webhook pull failed for page ${pageId}:`, cause);
     }
   });
   return NextResponse.json({ status: 'accepted' });
