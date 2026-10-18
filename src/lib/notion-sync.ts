@@ -22,6 +22,23 @@ function assertSource(page: NotionPage): boolean {
   return page.parent?.data_source_id === process.env.NOTION_DATA_SOURCE_ID;
 }
 
+async function unlinkDeletedNotionPage(problemId: number, deletedPageId: string): Promise<void> {
+  const { data, error } = await getSupabaseAdmin().from('notion_problem_sync').update({
+    notion_page_id: null,
+    notion_url: null,
+    notion_last_edited_at: null,
+    date_solved: null,
+    difficulty: null,
+    time_complexity: null,
+    space_complexity: null,
+    notes_markdown: null,
+    last_synced_at: null,
+  }).eq('problem_id', problemId).eq('notion_page_id', deletedPageId)
+    .select('problem_id').maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error(`Notion page mapping changed for #${problemId}`);
+}
+
 async function findNotionPage(problemId: number, cachedPageId: string | null): Promise<NotionPage | null> {
   let deletedPageId: string | null = null;
   if (cachedPageId) {
@@ -40,20 +57,7 @@ async function findNotionPage(problemId: number, cachedPageId: string | null): P
     activePage = uniquePageForProblem(problemId, byTitle.filter(assertSource));
   }
   if (deletedPageId) {
-    const { data, error } = await getSupabaseAdmin().from('notion_problem_sync').update({
-      notion_page_id: null,
-      notion_url: null,
-      notion_last_edited_at: null,
-      date_solved: null,
-      difficulty: null,
-      time_complexity: null,
-      space_complexity: null,
-      notes_markdown: null,
-      last_synced_at: null,
-    }).eq('problem_id', problemId).eq('notion_page_id', deletedPageId)
-      .select('problem_id').maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error(`Notion page mapping changed for #${problemId}`);
+    await unlinkDeletedNotionPage(problemId, deletedPageId);
   }
   return activePage;
 }
@@ -75,9 +79,18 @@ export async function cacheNotionPage(
     .from('notion_problem_sync').select('notion_page_id, notion_last_edited_at, notes_markdown')
     .eq('problem_id', problemId).maybeSingle();
   if (cacheError) throw cacheError;
-  const state = cached as CachedRow | null;
+  let state = cached as CachedRow | null;
   if (state?.notion_page_id && state.notion_page_id !== page.id) {
-    throw new Error(`Notion page mapping conflict for #${problemId}`);
+    const oldPage = await retrieveNotionPage(state.notion_page_id);
+    if (!oldPage.in_trash || !assertSource(oldPage) || problemIdFromPage(oldPage) !== problemId) {
+      throw new Error(`Notion page mapping conflict for #${problemId}`);
+    }
+    const matches = await queryNotionPages({ property: 'LeetCode ID', number: { equals: problemId } });
+    if (uniquePageForProblem(problemId, matches)?.id !== page.id) {
+      throw new Error(`Ambiguous Notion replacement for #${problemId}`);
+    }
+    await unlinkDeletedNotionPage(problemId, oldPage.id);
+    state = null;
   }
   const nextProficiency = proficiencyFromNotionProgress(page, updatedPropertyIds);
   if (state?.notion_last_edited_at && state.notes_markdown !== null &&
