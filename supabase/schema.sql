@@ -15,6 +15,9 @@ create table if not exists public.leetcode_records (
   updated_at   timestamptz not null default now()
 );
 
+alter table public.leetcode_records
+  add column if not exists lc_slug text;
+
 -- problem_id 唯一約束（用於 upsert）
 do $$
 begin

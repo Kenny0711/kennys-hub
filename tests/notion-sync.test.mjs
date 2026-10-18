@@ -28,9 +28,10 @@ function page(id = 1146, extras = {}) {
       Language: { multi_select: [{ name: 'C++' }] },
       'LeetCode URL': { url: 'https://leetcode.com/problems/snapshot-array/' },
       'Problem Progress': { select: { name: 'Completed' } },
-      'Difficulty Level': { select: { name: 'Hard' } },
+      'Difficulty Level': { select: { name: 'Medium' } },
       'Time Complexity': { multi_select: [{ name: 'O(log n)' }] },
       'Space Complexity': { multi_select: [{ name: 'O(n + S)' }] },
+      'Frequency of Review': { select: { name: 'Weekly' } },
       Notes: { rich_text: [{ plain_text: 'Remember boundary cases.' }] },
       ...extras,
     },
@@ -127,8 +128,9 @@ test('language mapping does not invent unsupported values', () => {
 test('outbound payload contains only Hub-owned fields', () => {
   const props = hubOwnedProperties(record, null, ['Arrays', 'Hash Table'], ['C++']);
   assert.deepEqual(Object.keys(props).sort(),
-    ['LeetCode ID', 'Name', 'Problem Progress', 'Date Solved', 'Topic', 'LeetCode URL', 'Language'].sort());
+    ['LeetCode ID', 'Name', 'Difficulty Level', 'Problem Progress', 'Date Solved', 'Topic', 'LeetCode URL', 'Language'].sort());
   assert.equal(props['Date Solved'].date.start, '2026-10-18');
+  assert.equal(props['Difficulty Level'].select.name, 'Medium');
 });
 
 test('existing historical Date Solved is not overwritten by a later Accepted', () => {
@@ -141,15 +143,25 @@ test('unchanged Hub properties produce no Notion update', () => {
   assert.deepEqual(changedHubProperties(page(), desired), {});
 });
 
-test('Hub updates never include manual difficulty, complexity or notes', () => {
-  const changed = changedHubProperties(page(1146, { Name: { title: [{ plain_text: 'old' }] } }),
+test('a blank Notion difficulty is filled from LeetCode without touching manual fields', () => {
+  const existing = page(1146, { 'Difficulty Level': { select: null } });
+  const changed = changedHubProperties(existing,
+    hubOwnedProperties(record, existing, ['Arrays', 'Hash Table'], ['C++']));
+  assert.deepEqual(changed, { 'Difficulty Level': { select: { name: 'Medium' } } });
+});
+
+test('Hub updates difficulty but leaves complexity, review frequency and notes alone', () => {
+  const changed = changedHubProperties(page(1146, {
+    Name: { title: [{ plain_text: 'old' }] },
+    'Difficulty Level': { select: { name: 'Hard' } },
+  }),
     hubOwnedProperties(record, page(), ['Arrays', 'Hash Table'], ['C++']));
-  assert.deepEqual(Object.keys(changed), ['Name']);
+  assert.deepEqual(Object.keys(changed), ['Name', 'Difficulty Level']);
 });
 
 test('Notion values retain exact complexity and formatted markdown', () => {
   const markdown = '## Idea\n\n- use `lower_bound()`\n\n```cpp\nint i = 0;\n```';
-  const fields = readNotionFields(page(), markdown);
+  const fields = readNotionFields(page(1146, { 'Difficulty Level': { select: { name: 'Hard' } } }), markdown);
   assert.equal(fields.difficulty, 'Hard');
   assert.deepEqual(fields.space_complexity, ['O(n + S)']);
   assert.match(fields.notes_markdown, /```cpp/);

@@ -6,14 +6,14 @@ This integration extends the existing Accepted webhook. It does not replace the 
 
 | Direction | Fields |
 |---|---|
-| Hub → Notion | LeetCode ID, Name, Date Solved (only when blank), Topic, LeetCode URL, Language, Problem Progress |
-| Notion → Hub cache | Difficulty Level, Time Complexity, Space Complexity, Notes property and page body |
+| Hub → Notion | LeetCode ID, Name, Difficulty Level, Date Solved (only when blank), Topic, LeetCode URL, Language, Problem Progress |
+| Notion → Hub cache | Time Complexity, Space Complexity, Notes property and page body |
 
-Hub never writes Notion difficulty, complexity, Notes, or page body after creating an empty `解題心得` section. Notion never writes solution code, submissions, tags or title in Supabase. The separate C++ Blog and review checklist are untouched.
+Hub writes the LeetCode difficulty on each Accepted sync and displays the Hub difficulty on the problem page. It never writes Time Complexity, Space Complexity, Frequency of Review, Notes, or existing page body. Notion never writes solution code, submissions, tags or title in Supabase. The separate C++ Blog and review checklist are untouched.
 
-`Date Solved` uses the first **verified Accepted submission timestamp**, converted to a date in `Asia/Taipei`. A later Accepted does not replace an existing date, including historical dates already entered in Notion. Legacy solutions whose actual submission timestamp was not captured do not supply a date. If a Notion field is explicitly cleared, the Hub cache is cleared too. A missing property or incomplete markdown response does not erase the last good value. Once linked, clearing Notion difficulty displays `未設定` on the detail page rather than the old LeetCode value.
+`Date Solved` uses the first **verified Accepted submission timestamp**, converted to a date in `Asia/Taipei`. A later Accepted does not replace an existing date, including historical dates already entered in Notion. Legacy solutions whose actual submission timestamp was not captured do not supply a date. If a Notion-owned field is explicitly cleared, the Hub cache is cleared too. A missing property or incomplete markdown response does not erase the last good value. The Notion difficulty may remain in the cache for compatibility, but the problem page uses the Hub's LeetCode difficulty.
 
-The current Notion data source already has `Name`, `Date Solved`, `Topic`, `LeetCode URL`, `Language`, `Problem Progress`, `Difficulty Level`, `Time Complexity`, `Space Complexity`, and `Notes`. It lacks a numeric `LeetCode ID`; adding that property is the only Notion schema change. Historical pages are initially matched by an exact leading number such as `1146.`; thereafter the numeric property and stable page ID are used. Ambiguous matches fail safely.
+The Notion data source has `Name`, `Date Solved`, `Topic`, `LeetCode URL`, `Language`, `Problem Progress`, `Difficulty Level`, `Time Complexity`, `Space Complexity`, and `Notes`. A numeric `LeetCode ID` property was added for reliable matching; it is the only Notion schema change. Historical pages are initially matched by an exact leading number such as `1146.`; thereafter the numeric property and stable page ID are used. Ambiguous matches fail safely.
 
 ## Architecture
 
@@ -61,7 +61,7 @@ Each request accepts 1–20 IDs. Only records with an Accepted solution and unam
 1. Check the dry-run result for `1146`; it should identify the existing `1146. Snapshot Array` Notion page, not propose a duplicate. If the Hub lacks 1146, submit a verified Accepted solution first.
 2. Apply only `[1146]`, or submit another Accepted solution. Confirm the Hub saves the code even if Notion is unavailable.
 3. Confirm Notion's `LeetCode ID` is `1146`, Name/URL/Topic/Language reflect LeetCode, and any existing `Date Solved` remains unchanged.
-4. In Notion, edit `Difficulty Level`, complexity options, the `Notes` property or page body. Wait for the webhook, then reload the Hub's `/problems/[id]` page (the URL uses the Supabase record UUID). Verify the updated fields, formatted notes and `Edit notes in Notion` link.
+4. Confirm `Difficulty Level` matches the Hub record. In Notion, edit complexity options, the `Notes` property or page body. Wait for the webhook, then reload the Hub's `/problems/[id]` page (the URL uses the Supabase record UUID). Verify the updated fields, formatted notes and `Edit notes in Notion` link.
 5. Submit the same Accepted submission again. Confirm there is still one Notion page and no duplicate solution with the same submission ID.
 
 ## Troubleshooting

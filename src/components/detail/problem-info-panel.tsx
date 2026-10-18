@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Difficulty, LeetcodeRecord, NotionProblemSync, Proficiency } from '@/lib/types';
+import { LeetcodeRecord, NotionProblemSync, Proficiency } from '@/lib/types';
 import { PAGE_SHELL } from '@/components/layout/page-header';
 import DifficultyTag from '@/components/problems/difficulty-tag';
 import ProficiencyBadge from '@/components/problems/proficiency-badge';
@@ -138,9 +138,6 @@ export default function ProblemInfoPanel({
   };
 
   const fmt = (d: string) => new Date(d).toLocaleDateString('zh-TW');
-  const notionDifficulty = notion?.difficulty;
-  const knownDifficulty = ['Easy', 'Medium', 'Hard'].includes(notionDifficulty ?? '');
-
   return (
     <>
       <section className="border-b border-white/15">
@@ -206,10 +203,7 @@ export default function ProblemInfoPanel({
 
           <div className="grid gap-px border border-white/15 bg-white/15 sm:grid-cols-2 lg:grid-cols-4">
             <InfoCell label="Difficulty">
-              {notion?.notion_page_id
-                ? knownDifficulty ? <DifficultyTag difficulty={notionDifficulty as Difficulty} />
-                  : notionDifficulty ?? '未設定'
-                : <DifficultyTag difficulty={record.difficulty} />}
+              <DifficultyTag difficulty={record.difficulty} />
             </InfoCell>
             <InfoCell label="Proficiency">
               <span className="flex items-center gap-3">

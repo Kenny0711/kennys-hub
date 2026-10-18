@@ -120,6 +120,7 @@ export function hubOwnedProperties(
   const properties: Record<string, unknown> = {
     'LeetCode ID': { number: record.problem_id },
     Name: { title: [{ text: { content: `${record.problem_id}. ${record.title.replace(/^\d+\s*[.．]\s*/, '')}` } }] },
+    'Difficulty Level': { select: { name: record.difficulty } },
     'Problem Progress': { select: { name: 'Completed' } },
   };
   const date = firstVerifiedAcceptedDate(record.solutions);
@@ -152,6 +153,9 @@ export function changedHubProperties(page: NotionPage, desired: Record<string, u
       matches = current.Name?.title?.map((part) => part.plain_text ?? '').join('') === title;
     }
     if (name === 'Problem Progress') {
+      matches = current[name]?.select?.name === (target.select as { name: string }).name;
+    }
+    if (name === 'Difficulty Level') {
       matches = current[name]?.select?.name === (target.select as { name: string }).name;
     }
     if (name === 'Date Solved') {
