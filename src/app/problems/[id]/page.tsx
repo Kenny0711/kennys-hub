@@ -4,6 +4,8 @@ import { MOCK_RECORDS } from '@/lib/mock-data';
 import { getLeetcodeReadClient } from '@/lib/leetcode-read-client';
 import ProblemInfoPanel from '@/components/detail/problem-info-panel';
 import SolutionTabs from '@/components/detail/solution-tabs';
+import NotionNotes from '@/components/detail/notion-notes';
+import type { NotionProblemSync } from '@/lib/types';
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
 
@@ -15,6 +17,7 @@ export default async function ProblemDetailPage({
   const { id } = await params;
 
   let record = null;
+  let notion: NotionProblemSync | null = null;
   if (USE_MOCK) {
     record = MOCK_RECORDS.find((r) => r.id === id) ?? null;
   } else {
@@ -25,6 +28,12 @@ export default async function ProblemDetailPage({
       .eq('id', id)
       .maybeSingle();
     record = data;
+    if (record) {
+      const { data: notionData } = await supabase.from('notion_problem_sync')
+        .select('problem_id, notion_page_id, notion_url, date_solved, difficulty, time_complexity, space_complexity, notes_markdown, notion_last_edited_at')
+        .eq('problem_id', record.problem_id).maybeSingle();
+      notion = notionData as NotionProblemSync | null;
+    }
   }
 
   if (!record) return notFound();
@@ -32,7 +41,7 @@ export default async function ProblemDetailPage({
 
   return (
     <div className="min-h-screen">
-      <ProblemInfoPanel record={record} now={now} />
+      <ProblemInfoPanel record={record} notion={notion} now={now} />
 
       <section className={`${PAGE_SHELL} py-12 lg:py-16`}>
         <SectionHeader
@@ -49,6 +58,7 @@ export default async function ProblemDetailPage({
           problemTitle={record.title}
         />
       </section>
+      {notion?.notion_page_id && <NotionNotes notion={notion} />}
     </div>
   );
 }

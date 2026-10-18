@@ -8,6 +8,8 @@
   lc_slug: string;
   description?: string;
   submission_status?: string;
+  submission_id?: string;
+  accepted_at?: string;
   sync_source?: 'auto' | 'manual';
 }
 
@@ -24,6 +26,17 @@ interface SubmissionResult {
   status?: string;
   status_msg?: string;
   submission_id?: string | number;
+}
+
+interface SubmissionSummary {
+  id: string;
+  statusDisplay: string;
+  lang?: string;
+  timestamp?: string;
+}
+
+interface VerifiedSubmission extends SubmissionSummary {
+  code: string;
 }
 
 interface WebhookSyncResponse {
@@ -67,6 +80,8 @@ let lastSubmissionStatus = '';
 let lastSubmissionResultAt = 0;
 let activeSubmissionId = '';
 let pollingSubmissionId = '';
+let submissionStartedAt = 0;
+let pollingRecentSubmission = false;
 
 function getMonacoCode(): Promise<string> {
   return new Promise((resolve) => {
@@ -250,6 +265,57 @@ async function fetchQuestionMeta(titleSlug: string): Promise<LeetCodeQuestionMet
   }
 }
 
+async function queryLeetCode<T>(query: string, variables: Record<string, unknown>): Promise<T | null> {
+  try {
+    const csrfToken = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/)?.[1];
+    const res = await fetch('https://leetcode.com/graphql/', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(csrfToken ? { 'x-csrftoken': decodeURIComponent(csrfToken) } : {}),
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.errors?.length ? null : (json.data as T);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchLatestSubmission(slug: string): Promise<SubmissionSummary | null> {
+  if (!slug) return null;
+  const result = await queryLeetCode<{
+    questionSubmissionList?: { submissions?: SubmissionSummary[] };
+  }>(`query latestSubmission($questionSlug: String!) {
+    questionSubmissionList(offset: 0, limit: 1, questionSlug: $questionSlug) {
+      submissions { id statusDisplay lang timestamp }
+    }
+  }`, { questionSlug: slug });
+  const latest = result?.questionSubmissionList?.submissions?.[0];
+  return latest?.id && latest.statusDisplay ? latest : null;
+}
+
+async function fetchSubmissionCode(id: string): Promise<string> {
+  const submissionId = Number(id);
+  if (!Number.isSafeInteger(submissionId)) return '';
+  const result = await queryLeetCode<{ submissionDetails?: { code?: string } }>(
+    `query submittedCode($submissionId: Int!) {
+      submissionDetails(submissionId: $submissionId) { code }
+    }`,
+    { submissionId }
+  );
+  return result?.submissionDetails?.code ?? '';
+}
+
+async function verifyAcceptedSubmission(latest: SubmissionSummary | null): Promise<VerifiedSubmission | null> {
+  if (latest?.statusDisplay !== 'Accepted') return null;
+  const code = normalizeCode(await fetchSubmissionCode(latest.id));
+  return isLikelyCompleteCode(code) ? { ...latest, code } : null;
+}
+
 async function extractProblemData(): Promise<ProblemData> {
   const titleSlug = parseSlugFromUrl();
   const meta = await fetchQuestionMeta(titleSlug);
@@ -323,16 +389,23 @@ function sendWebhookSync(data: ProblemData): Promise<WebhookSyncResponse> {
   });
 }
 
-async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
+async function syncToWebhook(source: 'manual' | 'auto', verified?: VerifiedSubmission): Promise<void> {
   if (!isActiveContentRun()) return;
   if (syncing) return;
 
   syncing = true;
   try {
     let data = await extractProblemData();
+    if (verified) {
+      data.code = verified.code;
+      data.language = verified.lang
+        ? normalizeLanguage(verified.lang)
+        : inferLanguageFromCode(verified.code, data.language);
+    }
     for (let attempt = 0; attempt < 4 && !isLikelyCompleteCode(data.code); attempt++) {
       await delay(500);
       data = await extractProblemData();
+      if (verified) data.code = verified.code;
     }
 
     if (!isLikelyCompleteCode(data.code)) {
@@ -341,6 +414,14 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
 
     data.sync_source = source;
     data.submission_status = source === 'auto' ? 'Accepted' : data.submission_status;
+    if (verified) {
+      data.submission_id = verified.id;
+      const timestamp = verified.timestamp;
+      const milliseconds = /^\d+$/.test(timestamp ?? '')
+        ? Number(timestamp) * 1000
+        : Date.parse(timestamp ?? '');
+      if (Number.isFinite(milliseconds)) data.accepted_at = new Date(milliseconds).toISOString();
+    }
 
     if (!isAcceptedStatus(data.submission_status)) {
       throw new Error(`Submission is not Accepted; sync skipped. Current status: ${data.submission_status || 'unknown'}`);
@@ -366,21 +447,12 @@ async function syncToWebhook(source: 'manual' | 'auto'): Promise<void> {
   }
 }
 
-async function syncAcceptedSubmission(): Promise<void> {
+async function syncAcceptedSubmission(verified?: VerifiedSubmission): Promise<void> {
   if (!isActiveContentRun()) return;
   if (Date.now() < acceptedSyncCooldownUntil) return;
   acceptedSyncCooldownUntil = Date.now() + 5000;
   stopWaitingForAccepted('accepted');
-  await syncToWebhook('auto');
-}
-
-function getVisiblePageText(): string {
-  return document.body?.innerText ?? '';
-}
-
-function hasJudgingState(): boolean {
-  const pageText = getVisiblePageText();
-  return JUDGING_STATUSES.some((status) => pageText.includes(status));
+  await syncToWebhook('auto', verified);
 }
 
 function normalizeSubmissionStatus(detail: SubmissionResult): string {
@@ -399,20 +471,6 @@ async function fetchSubmissionResult(submissionId: string): Promise<SubmissionRe
   }
 }
 
-function mutationContainsStatus(mutations: MutationRecord[], status: string): boolean {
-  return mutations.some((mutation) => {
-    const addedText = Array.from(mutation.addedNodes)
-      .map((node) => node.textContent ?? '')
-      .join(' ');
-    const changedText = mutation.type === 'characterData' ? mutation.target.textContent ?? '' : '';
-    return addedText.includes(status) || changedText.includes(status);
-  });
-}
-
-function mutationContainsAnyStatus(mutations: MutationRecord[], statuses: string[]): string {
-  return statuses.find((status) => mutationContainsStatus(mutations, status)) ?? '';
-}
-
 function parseSubmissionDetail(event: Event): SubmissionResult | null {
   const detail = (event as CustomEvent<string | SubmissionResult>).detail;
   if (!detail) return null;
@@ -429,7 +487,9 @@ function parseSubmissionDetail(event: Event): SubmissionResult | null {
 function startSubmissionWindow(): void {
   if (waitingForAccepted) return;
   waitingForAccepted = true;
+  submissionStartedAt = Date.now();
   void captureSubmissionSnapshot();
+  void pollRecentSubmission();
   console.info('[Kenny 的研發日誌] Submission detected; waiting for Accepted result.');
 }
 
@@ -439,9 +499,9 @@ function stopWaitingForAccepted(reason?: string): void {
 }
 
 function processSubmissionResult(detail: SubmissionResult): boolean {
-  if (!isActiveContentRun()) return false;
+  if (!isActiveContentRun() || !waitingForAccepted) return false;
   const submissionId = detail.submission_id ? String(detail.submission_id) : '';
-  if (submissionId && activeSubmissionId && submissionId !== activeSubmissionId) {
+  if (!submissionId || !activeSubmissionId || submissionId !== activeSubmissionId) {
     return false;
   }
 
@@ -452,7 +512,7 @@ function processSubmissionResult(detail: SubmissionResult): boolean {
   console.info(`[Kenny 的研發日誌] Submission status: ${status}`);
 
   if (status === 'Accepted') {
-    void syncAcceptedSubmission();
+    void syncVerifiedResult(submissionId);
     return true;
   }
 
@@ -462,6 +522,64 @@ function processSubmissionResult(detail: SubmissionResult): boolean {
   }
 
   return false;
+}
+
+async function syncVerifiedResult(submissionId: string): Promise<void> {
+  const code = normalizeCode(await fetchSubmissionCode(submissionId));
+  if (!waitingForAccepted || !isLikelyCompleteCode(code)) return;
+  const latest = await fetchLatestSubmission(parseSlugFromUrl());
+  await syncAcceptedSubmission({
+    id: submissionId,
+    statusDisplay: 'Accepted',
+    code,
+    timestamp: latest?.id === submissionId ? latest.timestamp : undefined,
+  });
+}
+
+async function pollRecentSubmission(): Promise<void> {
+  if (pollingRecentSubmission) return;
+  pollingRecentSubmission = true;
+  const startedAt = submissionStartedAt;
+  const slug = parseSlugFromUrl();
+
+  try {
+    while (isActiveContentRun() && waitingForAccepted && submissionStartedAt === startedAt &&
+      Date.now() - startedAt < SUBMISSION_TIMEOUT_MS && parseSlugFromUrl() === slug) {
+      await delay(1500);
+      const latest = await fetchLatestSubmission(slug);
+      if (!latest || !waitingForAccepted || Date.now() - startedAt >= SUBMISSION_TIMEOUT_MS) continue;
+      if (activeSubmissionId && latest.id !== activeSubmissionId) continue;
+      if (!activeSubmissionId && !pendingSubmittedCode) continue;
+      const submittedAt = /^\d+$/.test(latest.timestamp ?? '')
+        ? Number(latest.timestamp) * 1000
+        : Date.parse(latest.timestamp ?? '');
+      if (!Number.isFinite(submittedAt) || submittedAt < startedAt - 1500 || submittedAt > Date.now() + 5000) {
+        continue;
+      }
+
+      if (latest.statusDisplay === 'Accepted') {
+        const verified = await verifyAcceptedSubmission(latest);
+        if (!verified || !waitingForAccepted) continue;
+        if (!activeSubmissionId && normalizeCode(pendingSubmittedCode) !== verified.code) continue;
+        activeSubmissionId = verified.id;
+        lastSubmissionStatus = 'Accepted';
+        lastSubmissionResultAt = Date.now();
+        void syncAcceptedSubmission(verified);
+        return;
+      }
+      if (FAILURE_STATUSES.includes(latest.statusDisplay)) {
+        stopWaitingForAccepted(latest.statusDisplay);
+        return;
+      }
+    }
+  } finally {
+    pollingRecentSubmission = false;
+    if (submissionStartedAt === startedAt && waitingForAccepted) {
+      stopWaitingForAccepted('timeout or page changed');
+    } else if (isActiveContentRun() && waitingForAccepted) {
+      void pollRecentSubmission();
+    }
+  }
 }
 
 function handleSubmissionResult(event: Event): void {
@@ -496,6 +614,7 @@ async function pollSubmissionResult(submissionId: string): Promise<void> {
 function handleSubmissionStarted(event: Event): void {
   if (!isActiveContentRun()) return;
   const detail = parseSubmissionDetail(event);
+  if (!waitingForAccepted) pendingSubmittedCode = '';
   activeSubmissionId = detail?.submission_id ? String(detail.submission_id) : '';
   lastSubmissionStatus = 'Submitting';
   lastSubmissionResultAt = Date.now();
@@ -546,50 +665,9 @@ function findClickableSubmitAncestor(element: HTMLElement): HTMLElement | null {
 
 function waitForAcceptedSubmission(): void {
   if (waitingForAccepted) return;
+  activeSubmissionId = '';
+  pendingSubmittedCode = '';
   startSubmissionWindow();
-
-  const startedAt = Date.now();
-  let sawSubmissionActivity = false;
-
-  const observer = new MutationObserver((mutations) => {
-    const judgingStatus = mutationContainsAnyStatus(mutations, JUDGING_STATUSES);
-    if (judgingStatus || hasJudgingState()) sawSubmissionActivity = true;
-
-    if (mutationContainsStatus(mutations, 'Accepted') && sawSubmissionActivity) {
-      cleanup();
-      lastSubmissionStatus = 'Accepted';
-      lastSubmissionResultAt = Date.now();
-      void syncAcceptedSubmission();
-      return;
-    }
-
-    const failureStatus = mutationContainsAnyStatus(mutations, FAILURE_STATUSES);
-    if (failureStatus) {
-      lastSubmissionStatus = failureStatus;
-      lastSubmissionResultAt = Date.now();
-      cleanup();
-    }
-  });
-
-  const intervalId = window.setInterval(() => {
-    if (Date.now() - startedAt > SUBMISSION_TIMEOUT_MS) {
-      cleanup();
-      return;
-    }
-
-    if (lastSubmissionStatus === 'Accepted' && Date.now() - lastSubmissionResultAt < SUBMISSION_TIMEOUT_MS) {
-      cleanup();
-      void syncAcceptedSubmission();
-    }
-  }, 1000);
-
-  const cleanup = () => {
-    stopWaitingForAccepted();
-    observer.disconnect();
-    window.clearInterval(intervalId);
-  };
-
-  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 }
 
 document.addEventListener(
@@ -709,11 +787,25 @@ chrome.runtime.onMessage.addListener(
   (message, _sender, sendResponse: (data: ProblemData | FetchSolvedResult | { status: string }) => void) => {
     if (!isActiveContentRun()) return false;
     if (message.type === 'EXTRACT') {
-      extractProblemData().then((data) => {
+      void extractProblemData().then(async (data) => {
+        const latest = await fetchLatestSubmission(data.lc_slug);
+        const verified = latest?.statusDisplay === 'Accepted'
+          ? await verifyAcceptedSubmission(latest)
+          : null;
         sendResponse({
           ...data,
+          code: verified?.code ?? data.code,
+          language: verified?.lang ? normalizeLanguage(verified.lang) : data.language,
           sync_source: 'manual',
-          submission_status: data.submission_status || resolveSubmissionStatus() || undefined,
+          submission_status: verified
+            ? 'Accepted'
+            : latest?.statusDisplay === 'Accepted'
+              ? 'Verification failed'
+              : latest?.statusDisplay ?? 'unknown',
+          submission_id: verified?.id,
+          accepted_at: verified?.timestamp && /^\d+$/.test(verified.timestamp)
+            ? new Date(Number(verified.timestamp) * 1000).toISOString()
+            : undefined,
         });
       });
     }
