@@ -113,9 +113,14 @@ function asSubmissionResult(value: unknown): SubmissionResult | null {
   };
 }
 
-function dispatchSubmissionResult(value: unknown) {
+function submissionIdFromCheckUrl(input: RequestInfo | URL): string {
+  return urlFromRequest(input).match(/\/submissions\/detail\/(\d+)\/check\/?/)?.[1] ?? '';
+}
+
+function dispatchSubmissionResult(value: unknown, submissionId: string) {
   const result = asSubmissionResult(value);
   if (!result) return;
+  result.submission_id = submissionId;
   console.info('[Kenny 的研發日誌] submission check intercepted', result);
   document.dispatchEvent(new CustomEvent('__lc_submission_result__', { detail: JSON.stringify(result) }));
 }
@@ -139,10 +144,11 @@ window.fetch = async (...args: Parameters<typeof fetch>) => {
       .then(dispatchSubmissionStarted)
       .catch(() => dispatchSubmissionStarted());
   } else if (isSubmissionCheckUrl(args[0])) {
+    const submissionId = submissionIdFromCheckUrl(args[0]);
     response
       .clone()
       .json()
-      .then(dispatchSubmissionResult)
+      .then((json) => dispatchSubmissionResult(json, submissionId))
       .catch(() => {});
   }
   return response;
@@ -177,7 +183,7 @@ XMLHttpRequest.prototype.send = function (
       try {
         const json = JSON.parse(this.responseText);
         if (requestKind === 'submit') dispatchSubmissionStarted(json);
-        else dispatchSubmissionResult(json);
+        else dispatchSubmissionResult(json, submissionIdFromCheckUrl(this.responseURL));
       } catch {}
     });
   }

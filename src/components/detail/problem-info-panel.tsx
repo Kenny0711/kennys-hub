@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LeetcodeRecord, Proficiency } from '@/lib/types';
+import { Difficulty, LeetcodeRecord, NotionProblemSync, Proficiency } from '@/lib/types';
 import { PAGE_SHELL } from '@/components/layout/page-header';
 import DifficultyTag from '@/components/problems/difficulty-tag';
 import ProficiencyBadge from '@/components/problems/proficiency-badge';
@@ -76,7 +76,9 @@ function InfoCell({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export default function ProblemInfoPanel({ record, now }: { record: LeetcodeRecord; now: string }) {
+export default function ProblemInfoPanel({
+  record, notion, now,
+}: { record: LeetcodeRecord; notion: NotionProblemSync | null; now: string }) {
   const router = useRouter();
   const [proficiency, setProficiency] = useState<Proficiency>(record.proficiency);
   const [saving, setSaving] = useState(false);
@@ -136,6 +138,8 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
   };
 
   const fmt = (d: string) => new Date(d).toLocaleDateString('zh-TW');
+  const notionDifficulty = notion?.difficulty;
+  const knownDifficulty = ['Easy', 'Medium', 'Hard'].includes(notionDifficulty ?? '');
 
   return (
     <>
@@ -202,7 +206,10 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
 
           <div className="grid gap-px border border-white/15 bg-white/15 sm:grid-cols-2 lg:grid-cols-4">
             <InfoCell label="Difficulty">
-              <DifficultyTag difficulty={record.difficulty} />
+              {notion?.notion_page_id
+                ? knownDifficulty ? <DifficultyTag difficulty={notionDifficulty as Difficulty} />
+                  : notionDifficulty ?? '未設定'
+                : <DifficultyTag difficulty={record.difficulty} />}
             </InfoCell>
             <InfoCell label="Proficiency">
               <span className="flex items-center gap-3">
@@ -227,6 +234,20 @@ export default function ProblemInfoPanel({ record, now }: { record: LeetcodeReco
               </span>
             </InfoCell>
           </div>
+
+          {notion?.notion_page_id && (
+            <div className="mt-px grid gap-px border border-white/15 bg-white/15 sm:grid-cols-3">
+              <InfoCell label="Date solved">
+                {notion.date_solved?.replaceAll('-', '/') ?? '未記錄'}
+              </InfoCell>
+              <InfoCell label="Time complexity">
+                {notion.time_complexity?.length ? notion.time_complexity.join(' · ') : '未設定'}
+              </InfoCell>
+              <InfoCell label="Space complexity">
+                {notion.space_complexity?.length ? notion.space_complexity.join(' · ') : '未設定'}
+              </InfoCell>
+            </div>
+          )}
 
           {record.tags.length > 0 && (
             <div className="mt-5 flex flex-wrap gap-2">

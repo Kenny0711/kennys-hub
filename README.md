@@ -81,6 +81,7 @@ Features:
 - Curated learning lists: all 12 complete topics in [Ling Shen's study route](https://leetcode.cn/discuss/post/3141566/ru-he-ke-xue-shua-ti-by-endlesscheng-q3yd/), including their original chapters and problem links
 - List checkmarks include Accepted solutions and historical AC imports; statusless saved code counts, but unknown/failed submissions do not
 - Personal checklist and review marks persist in browser localStorage, separate from the problem archive
+- Optional two-way Notion Problem Tracker synchronization for Accepted metadata and manually written study notes
 
 ### Chrome Extension
 
@@ -138,6 +139,7 @@ npm run ext:build
 Validate before pushing:
 
 ```bash
+npm test
 npm run lint
 npm run build
 ```
@@ -156,12 +158,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 WEBHOOK_SECRET=
 ADMIN_PASSWORD=
+NOTION_TOKEN=
+NOTION_DATA_SOURCE_ID=
+NOTION_WEBHOOK_VERIFICATION_TOKEN=
+CRON_SECRET=
 ```
 
 Notes:
 
 - Public read pages such as `/`, `/dashboard`, `/projects`, `/problems`, and `/problems/[id]` use the Supabase anon key.
 - `SUPABASE_SERVICE_ROLE_KEY` is still required for trusted server-side writes such as webhook sync, record edits, deletes, description updates, and admin project mutations.
+- Notion synchronization requires the migration and setup in [docs/NOTION_SYNC.md](docs/NOTION_SYNC.md). Notion secrets are server-side only.
 
 ---
 

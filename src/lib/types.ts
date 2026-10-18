@@ -12,6 +12,20 @@ export interface Solution {
   status?: 'accepted' | 'runtime_error' | 'manual_sync' | 'unknown' | string;
   submission_status?: string;
   sync_source?: 'auto' | 'manual' | string;
+  submission_id?: string;
+  accepted_at_verified?: boolean;
+}
+
+export interface NotionProblemSync {
+  problem_id: number;
+  notion_page_id: string | null;
+  notion_url: string | null;
+  date_solved: string | null;
+  difficulty: string | null;
+  time_complexity: string[] | null;
+  space_complexity: string[] | null;
+  notes_markdown: string | null;
+  notion_last_edited_at: string | null;
 }
 
 export interface LeetcodeRecord {
@@ -48,6 +62,8 @@ export interface WebhookPayload {
   code: string;
   language: string;
   submission_status?: string;
+  submission_id?: string;
+  accepted_at?: string;
   sync_source?: 'auto' | 'manual' | string;
   lc_slug?: string;
   description?: string;
