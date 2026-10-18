@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
   }
   try {
     const recovered = await enqueueMissedAccepted();
-    const push = await drainNotionQueue(10);
     const pull = await reconcileNotion(50);
+    const push = await drainNotionQueue(10);
     return NextResponse.json({ recovered, push, pull });
   } catch (error) {
     console.error('Notion reconciliation failed:', error);

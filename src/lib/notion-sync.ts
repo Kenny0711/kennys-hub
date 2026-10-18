@@ -202,8 +202,8 @@ export async function enqueueMissedAccepted(): Promise<number> {
   return queued;
 }
 
-export async function reconcileNotion(limit = 50): Promise<{ examined: number; updated: number }> {
-  if (!notionConfigured()) return { examined: 0, updated: 0 };
+export async function reconcileNotion(limit = 50): Promise<{ examined: number; updated: number; requeued: number }> {
+  if (!notionConfigured()) return { examined: 0, updated: 0, requeued: 0 };
   const pages = await queryNotionPages();
   let examined = 0;
   let updated = 0;
@@ -216,7 +216,31 @@ export async function reconcileNotion(limit = 50): Promise<{ examined: number; u
       console.error(`Notion reconcile failed for page ${page.id}:`, error);
     }
   }
-  return { examined, updated };
+  const activePageIds = new Set(pages.filter((page) => !page.in_trash).map((page) => page.id));
+  const supabase = getSupabaseAdmin();
+  let requeued = 0;
+  for (let offset = 0; ; offset += 1000) {
+    const { data: states, error } = await supabase.from('notion_problem_sync')
+      .select('problem_id, notion_page_id, needs_push').not('notion_page_id', 'is', null)
+      .order('problem_id').range(offset, offset + 999);
+    if (error) throw error;
+    for (const state of states ?? []) {
+      if (state.needs_push || activePageIds.has(state.notion_page_id)) continue;
+      try {
+        const page = await retrieveNotionPage(state.notion_page_id);
+        if (!page.in_trash || !assertSource(page) || problemIdFromPage(page) !== state.problem_id) continue;
+        const { error: enqueueError } = await supabase.rpc('enqueue_notion_problem', {
+          p_problem_id: state.problem_id,
+        });
+        if (enqueueError) throw enqueueError;
+        requeued++;
+      } catch (cause) {
+        console.error(`Notion deleted-page check failed for #${state.problem_id}:`, cause);
+      }
+    }
+    if (!states || states.length < 1000) break;
+  }
+  return { examined, updated, requeued };
 }
 
 export async function pullNotionPage(pageId: string, updatedPropertyIds: string[] = []): Promise<'updated' | 'skipped'> {
