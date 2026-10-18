@@ -2,7 +2,7 @@ import { after, NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { notionConfigured } from '@/lib/notion-api';
 import { drainNotionQueue } from '@/lib/notion-sync';
-import { isAcceptedStatus } from '@/lib/notion-sync-core';
+import { isAcceptedStatus, normalizeSolutionLanguage } from '@/lib/notion-sync-core';
 import { Solution, WebhookPayload } from '@/lib/types';
 
 function stripCodeFence(code: string): string {
@@ -13,20 +13,6 @@ function stripCodeFence(code: string): string {
     .replace(/\u200b/g, '')
     .replace(/\r\n/g, '\n')
     .trim();
-}
-
-function normalizeLanguage(language: string | undefined, code: string): string {
-  const raw = (language ?? '').toLowerCase();
-  if (
-    (raw === 'python' || raw === 'python3' || !raw) &&
-    /\bclass\s+Solution\b/.test(code) &&
-    /#include|vector<|std::|public:|private:|long long|unordered_map|unordered_set/.test(code)
-  ) {
-    return 'cpp';
-  }
-  if (raw === 'python3') return 'python';
-  if (raw === 'c++') return 'cpp';
-  return raw || 'code';
 }
 
 function isLikelyCompleteCode(code: string): boolean {
@@ -114,7 +100,7 @@ export async function POST(req: NextRequest) {
 
   const supabase = getSupabaseAdmin();
   const code = stripCodeFence(body.code ?? '');
-  const language = normalizeLanguage(body.language, code);
+  const language = normalizeSolutionLanguage(body.language, code);
   const isMetadataOnlySync = Boolean(body.skip_if_exists || body.tags_only);
   const syncSource = body.sync_source ?? 'auto';
   const solutionStatus = normalizeSolutionStatus(body.submission_status, syncSource);

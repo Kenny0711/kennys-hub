@@ -222,8 +222,9 @@ function resolveSubmissionStatus(): string {
 
 function inferLanguageFromCode(code: string, fallback: string): string {
   if (
-    /\bclass\s+Solution\b/.test(code) &&
-    /#include|vector<|std::|public:|private:|long long|unordered_map|unordered_set/.test(code)
+    /#include\s*[<"]|\bstd::/.test(code) ||
+    (/\bclass\s+\w+\s*\{/.test(code) &&
+      /\b(?:public|private|protected)\s*:|\b(?:vector|unordered_map|unordered_set)\s*</.test(code))
   ) {
     return 'cpp';
   }
@@ -398,14 +399,19 @@ async function syncToWebhook(source: 'manual' | 'auto', verified?: VerifiedSubmi
     let data = await extractProblemData();
     if (verified) {
       data.code = verified.code;
-      data.language = verified.lang
-        ? normalizeLanguage(verified.lang)
-        : inferLanguageFromCode(verified.code, data.language);
+      data.language = inferLanguageFromCode(
+        verified.code, verified.lang ? normalizeLanguage(verified.lang) : data.language
+      );
     }
     for (let attempt = 0; attempt < 4 && !isLikelyCompleteCode(data.code); attempt++) {
       await delay(500);
       data = await extractProblemData();
-      if (verified) data.code = verified.code;
+      if (verified) {
+        data.code = verified.code;
+        data.language = inferLanguageFromCode(
+          verified.code, verified.lang ? normalizeLanguage(verified.lang) : data.language
+        );
+      }
     }
 
     if (!isLikelyCompleteCode(data.code)) {
@@ -795,7 +801,9 @@ chrome.runtime.onMessage.addListener(
         sendResponse({
           ...data,
           code: verified?.code ?? data.code,
-          language: verified?.lang ? normalizeLanguage(verified.lang) : data.language,
+          language: verified
+            ? inferLanguageFromCode(verified.code, verified.lang ? normalizeLanguage(verified.lang) : data.language)
+            : data.language,
           sync_source: 'manual',
           submission_status: verified
             ? 'Accepted'

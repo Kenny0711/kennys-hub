@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const esbuild = require('esbuild');
 
 const submittedCode = 'class Solution { public: vector<int> solveQueries(vector<int>& nums) { for (int n : nums) { if (n) return nums; } return nums; } };';
+const customClassCode = 'class RangeFreqQuery { public: unordered_map<int, vector<int>> pos; RangeFreqQuery(vector<int>& arr) { for (int i = 0; i < arr.size(); i++) pos[arr[i]].push_back(i); } int query(int left, int right, int value) { return pos[value].size(); } };';
 const editorCode = 'class Solution { public: vector<int> solveQueries(vector<int>& nums) { return {}; } };';
 const source = fs.readFileSync(path.join(__dirname, '../src/content.ts'), 'utf8');
 const testHooks = `globalThis.__testHooks = {
@@ -20,7 +21,7 @@ const testHooks = `globalThis.__testHooks = {
 };`;
 const compiled = esbuild.transformSync(`${source}\n${testHooks}`, { loader: 'ts', format: 'iife', target: 'chrome110' }).code;
 
-function createHarness(statusDisplay, code = submittedCode) {
+function createHarness(statusDisplay, code = submittedCode, lang = 'cpp') {
   const listeners = new Map();
   const sent = [];
   const addListener = (type, callback) => {
@@ -57,7 +58,7 @@ function createHarness(statusDisplay, code = submittedCode) {
       data = { question: { questionFrontendId: '3488', title: 'Closest Equal Element Queries', difficulty: 'Medium', topicTags: [] } };
     } else if (query.includes('questionSubmissionList')) {
       assert.equal(variables.questionSlug, 'closest-equal-element-queries');
-      data = { questionSubmissionList: { submissions: [{ id: '123456', statusDisplay, lang: 'cpp', timestamp: '1792221720' }] } };
+      data = { questionSubmissionList: { submissions: [{ id: '123456', statusDisplay, lang, timestamp: '1792221720' }] } };
     } else if (query.includes('submissionDetails')) {
       assert.equal(variables.submissionId, 123456);
       data = { submissionDetails: code ? { code } : null };
@@ -142,4 +143,15 @@ test('auto sync trusts the verified submission ID and code when the editor snaps
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(extract.sent.length, 1);
   assert.equal(extract.sent[0].data.code, submittedCode);
+});
+
+test('manual and auto capture recognize C++ custom classes despite stale Python metadata', async () => {
+  const manual = createHarness('Accepted', customClassCode, 'python');
+  assert.equal((await manual()).language, 'cpp');
+
+  const auto = createHarness('Accepted', customClassCode, 'python');
+  auto.testHooks.setPendingSubmission('123456', customClassCode);
+  assert.equal(auto.testHooks.processSubmissionResult({ submission_id: '123456', status_msg: 'Accepted' }), true);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(auto.sent[0].data.language, 'cpp');
 });

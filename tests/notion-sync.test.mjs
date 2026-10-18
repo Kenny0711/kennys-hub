@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   changedHubProperties, dateInTaipei, firstVerifiedAcceptedDate,
   hubOwnedProperties, languageForNotion, normalizedTopics, problemIdFromPage,
-  proficiencyFromNotionProgress, readNotionFields, uniquePageForProblem,
+  normalizeSolutionLanguage, proficiencyFromNotionProgress, readNotionFields, uniquePageForProblem,
   isAcceptedStatus, hasNewVerifiedSubmission, notionWebhookPageId,
   notionWebhookUpdatedPropertyIds, shouldRecoverNotionPush,
 } from '../src/lib/notion-sync-core.ts';
@@ -148,6 +148,19 @@ test('topics use existing Notion options and omit unknown tags', () => {
 test('language mapping does not invent unsupported values', () => {
   assert.equal(languageForNotion('cpp'), 'C++');
   assert.equal(languageForNotion('go'), null);
+});
+
+test('C++ custom-class code overrides a stale Python language label', () => {
+  const code = 'class RangeFreqQuery { public: unordered_map<int, vector<int>> pos; };';
+  assert.equal(normalizeSolutionLanguage('python', code), 'cpp');
+  assert.equal(languageForNotion('python', code), 'C++');
+  assert.equal(normalizeSolutionLanguage('python', 'class RangeFreqQuery:\n    pass'), 'python');
+  const mixed = { ...record, solutions: [
+    { ...record.solutions[0], language: 'python', code },
+    { ...record.solutions[0], language: 'cpp', code },
+  ] };
+  assert.deepEqual(hubOwnedProperties(mixed, page(), ['Arrays'], ['C++', 'Python']).Language,
+    { multi_select: [{ name: 'C++' }] });
 });
 
 test('outbound payload contains only Hub-owned fields', () => {

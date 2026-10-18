@@ -127,12 +127,26 @@ export function normalizedTopics(tags: string[], allowed: string[]): string[] {
   }).filter((tag): tag is string => Boolean(tag)))];
 }
 
-export function languageForNotion(language: string | undefined): string | null {
+function isClearlyCppCode(code: string): boolean {
+  return /#include\s*[<"]|\bstd::/.test(code) ||
+    (/\bclass\s+\w+\s*\{/.test(code) &&
+      /\b(?:public|private|protected)\s*:|\b(?:vector|unordered_map|unordered_set)\s*</.test(code));
+}
+
+export function normalizeSolutionLanguage(language: string | undefined, code: string): string {
+  const raw = (language ?? '').toLowerCase();
+  if ((raw === 'python' || raw === 'python3' || !raw) && isClearlyCppCode(code)) return 'cpp';
+  if (raw === 'python3') return 'python';
+  if (raw === 'c++') return 'cpp';
+  return raw || 'code';
+}
+
+export function languageForNotion(language: string | undefined, code = ''): string | null {
   const names: Record<string, string> = {
     cpp: 'C++', 'c++': 'C++', csharp: 'C#', java: 'JAVA',
     javascript: 'JavaScript', python: 'Python', python3: 'Python', php: 'PHP',
   };
-  return names[(language ?? '').toLowerCase()] ?? null;
+  return names[normalizeSolutionLanguage(language, code)] ?? null;
 }
 
 export function hubOwnedProperties(
@@ -164,7 +178,7 @@ export function hubOwnedProperties(
     properties['LeetCode URL'] = { url: `https://leetcode.com/problems/${record.lc_slug}/` };
   }
   const languages = [...new Set(record.solutions
-    .map((item) => languageForNotion(item.language))
+    .map((item) => languageForNotion(item.language, item.code))
     .filter((item): item is string => item !== null && allowedLanguages.includes(item)))];
   if (languages.length) properties.Language = { multi_select: languages.map((name) => ({ name })) };
   return properties;
