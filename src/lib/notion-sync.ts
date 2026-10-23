@@ -5,7 +5,7 @@ import type { LeetcodeRecord } from './types';
 import {
   changedHubProperties, firstVerifiedAcceptedDate, hubOwnedProperties,
   problemIdFromPage, proficiencyFromNotionProgress, readNotionFields,
-  shouldRecoverNotionPush, uniquePageForProblem, type NotionPage,
+  shouldRecoverNotionPush, shouldSkipNotionSnapshot, uniquePageForProblem, type NotionPage,
 } from './notion-sync-core';
 import {
   createNotionPage, getNotionSchema, notionConfigured, queryNotionPages,
@@ -66,6 +66,7 @@ export async function cacheNotionPage(
   page: NotionPage,
   knownProblemId?: number,
   updatedPropertyIds: string[] = [],
+  reconcileProgress = false,
 ): Promise<'updated' | 'skipped'> {
   if (!assertSource(page) || page.in_trash) return 'skipped';
   const problemId = problemIdFromPage(page);
@@ -92,14 +93,13 @@ export async function cacheNotionPage(
     await unlinkDeletedNotionPage(problemId, oldPage.id);
     state = null;
   }
-  const nextProficiency = proficiencyFromNotionProgress(page, updatedPropertyIds);
-  if (state?.notion_last_edited_at && state.notes_markdown !== null &&
-      (nextProficiency
-        ? new Date(state.notion_last_edited_at).getTime() > new Date(page.last_edited_time).getTime()
-        : new Date(state.notion_last_edited_at).getTime() >= new Date(page.last_edited_time).getTime())) {
+  const nextProficiency = proficiencyFromNotionProgress(page, updatedPropertyIds, reconcileProgress);
+  const proficiencyChanged = nextProficiency !== null && record.proficiency !== nextProficiency;
+  if (shouldSkipNotionSnapshot(state?.notion_last_edited_at ?? null, page.last_edited_time,
+    state?.notes_markdown !== null && state?.notes_markdown !== undefined, proficiencyChanged)) {
     return 'skipped';
   }
-  if (nextProficiency && record.proficiency !== nextProficiency) {
+  if (proficiencyChanged) {
     const { error: proficiencyError } = await supabase.from('leetcode_records')
       .update({ proficiency: nextProficiency })
       .eq('problem_id', problemId)
@@ -148,7 +148,7 @@ async function pushClaimed(problemId: number, generation: number): Promise<void>
     ? Object.keys(changed).length ? await updateNotionPage(page.id, changed) : page
     : await createNotionPage(desired);
   if (!assertSource(saved)) throw new Error(`Unexpected Notion parent for #${problemId}`);
-  await cacheNotionPage(saved, problemId);
+  await cacheNotionPage(saved, problemId, [], true);
   const fingerprint = createHash('sha256').update(JSON.stringify(desired)).digest('hex');
   const { error } = await supabase.rpc('complete_notion_push', {
     p_problem_id: problemId,
@@ -224,7 +224,7 @@ export async function reconcileNotion(limit = 50): Promise<{ examined: number; u
     if (!problemIdFromPage(page)) continue;
     examined++;
     try {
-      if (updated < limit && await cacheNotionPage(page) === 'updated') updated++;
+      if (updated < limit && await cacheNotionPage(page, undefined, [], true) === 'updated') updated++;
     } catch (error) {
       console.error(`Notion reconcile failed for page ${page.id}:`, error);
     }

@@ -4,6 +4,7 @@ import {
   changedHubProperties, dateInTaipei, firstVerifiedAcceptedDate,
   hubOwnedProperties, languageForNotion, normalizedTopics, problemIdFromPage,
   normalizeSolutionLanguage, proficiencyFromNotionProgress, readNotionFields, uniquePageForProblem,
+  shouldSkipNotionSnapshot,
   isAcceptedStatus, hasNewVerifiedSubmission, notionWebhookPageId,
   notionWebhookUpdatedPropertyIds, shouldRecoverNotionPush,
 } from '../src/lib/notion-sync-core.ts';
@@ -111,6 +112,16 @@ test('only a changed Problem Progress property can update Hub proficiency', () =
   assert.equal(proficiencyFromNotionProgress(page(1146, {
     'Problem Progress': { select: { name: 'Completed' } },
   }), ['progress-id']), null);
+});
+
+test('reconciliation repairs missed Completed updates without reprocessing unchanged pages', () => {
+  const notionPage = page(3644);
+  assert.equal(proficiencyFromNotionProgress(notionPage, []), null);
+  assert.equal(proficiencyFromNotionProgress(notionPage, [], true), '熟練');
+  assert.equal(shouldSkipNotionSnapshot(notionPage.last_edited_time,
+    notionPage.last_edited_time, true, false), true);
+  assert.equal(shouldSkipNotionSnapshot(notionPage.last_edited_time,
+    notionPage.last_edited_time, true, true), false);
 });
 
 test('historical page matches by exact numeric prefix when ID property is empty', () => {

@@ -75,9 +75,10 @@ export function notionWebhookUpdatedPropertyIds(event: { type?: unknown; data?: 
 export function proficiencyFromNotionProgress(
   page: NotionPage,
   updatedPropertyIds: string[],
+  reconcile = false,
 ): Proficiency | null {
   const progress = page.properties['Problem Progress'];
-  if (!progress?.id || !updatedPropertyIds.includes(progress.id)) return null;
+  if (!progress?.id || (!reconcile && !updatedPropertyIds.includes(progress.id))) return null;
   const byStatus: Record<string, Proficiency> = {
     Completed: '熟練',
     'In Progress': '理解',
@@ -85,6 +86,18 @@ export function proficiencyFromNotionProgress(
     'To Do': '理解',
   };
   return byStatus[progress.select?.name ?? ''] ?? null;
+}
+
+export function shouldSkipNotionSnapshot(
+  cachedEditedAt: string | null,
+  pageEditedAt: string,
+  hasCachedNotes: boolean,
+  proficiencyChanged: boolean,
+): boolean {
+  if (!cachedEditedAt || !hasCachedNotes) return false;
+  const cachedTime = new Date(cachedEditedAt).getTime();
+  const pageTime = new Date(pageEditedAt).getTime();
+  return cachedTime > pageTime || (cachedTime === pageTime && !proficiencyChanged);
 }
 
 export function problemIdFromPage(page: NotionPage): number | null {
