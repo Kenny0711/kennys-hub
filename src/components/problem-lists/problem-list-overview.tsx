@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 import type { ProblemListSummary } from '@/data/problem-lists/types';
+import { getStudyRouteStep } from '@/data/problem-lists/study-route';
+import { getStudyTargetProgress } from '@/data/problem-lists/utils';
 import { useProblemListProgress } from '@/hooks/use-problem-list-progress';
 import { useRecords } from '@/hooks/use-records';
 import { getRecordedCompletionIds } from '@/data/problem-lists/recorded-completions';
@@ -20,20 +22,20 @@ export function ProblemListOverview({ lists }: { lists: ProblemListSummary[] }) 
 
 function ProblemListCard({ list, completedRecordIds }: { list: ProblemListSummary; completedRecordIds: ReadonlySet<string> }) {
   const problems = list.problems;
+  const routeStep = getStudyRouteStep(list.id);
   const { completed, updatedAt } = useProblemListProgress({
     id: list.id,
     initialCompleted: list.initialCompleted,
     problemIds: problems.map((problem) => problem.id),
   }, completedRecordIds);
-  const done = problems.filter((problem) => completed.has(problem.id)).length;
-  const next = problems.find((problem) => !completed.has(problem.id));
-  const percent = problems.length ? Math.round((done / problems.length) * 100) : 0;
+  const target = getStudyTargetProgress(problems, completed);
+  const percent = target.total ? Math.round((target.completed / target.total) * 100) : 0;
 
   return (
     <article className="flex h-full flex-col border border-white/15 bg-surface p-5 transition-colors hover:border-white/30 hover:bg-surface-hover sm:p-7">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="mb-3 font-mono text-[11px] font-semibold uppercase text-coral">Curated / Problem List</div>
+          <div className="mb-3 font-mono text-[11px] font-semibold uppercase text-coral">{routeStep ? `核心路線 / ${routeStep}` : '延伸主題'}</div>
           <h2 className="text-xl font-semibold leading-snug text-paper sm:text-2xl">
             <Link href={`/problems/lists/${list.id}`} className="transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-brand">
               {list.title}
@@ -53,13 +55,13 @@ function ProblemListCard({ list, completedRecordIds }: { list: ProblemListSummar
       <p className="mt-5 text-sm leading-6 text-zinc-400">{list.description}</p>
 
       <div className="mt-auto flex items-end justify-between gap-4 pt-10">
-        <p className="font-mono text-xs uppercase text-zinc-400"><span className="font-semibold text-paper">{done}</span> / {problems.length} completed</p>
+        <p className="font-mono text-xs uppercase text-zinc-400">1800 以下 <span className="font-semibold text-paper">{target.completed}</span> / {target.total}</p>
         <span className="font-mono text-lg font-semibold text-brand">{percent}%</span>
       </div>
-      <ProgressMeter completed={done} total={problems.length} className="mt-3" />
+      <ProgressMeter completed={target.completed} total={target.total} className="mt-3" />
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/15 pt-4 text-xs text-zinc-400">
-        <span className="min-w-0 break-words">{next ? `Next: #${next.id} ${next.title}` : '題單已完成'}</span>
+        <span className="min-w-0 break-words">{target.next ? `Next: #${target.next.id} ${target.next.title}` : target.total ? '1800 以下題目已完成' : '尚無標示 1800 以下的題目'}</span>
         {updatedAt && (
           <time dateTime={updatedAt}>更新 {new Date(updatedAt).toLocaleDateString('zh-TW')}</time>
         )}

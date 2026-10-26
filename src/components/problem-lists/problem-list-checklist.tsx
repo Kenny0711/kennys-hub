@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowDown, ArrowLeft, ExternalLink, RotateCcw, Search } from 'lucide-react';
-import { getListProblems, getProblemSectionPath } from '@/data/problem-lists/utils';
+import { getListProblems, getProblemSectionPath, getStudyTargetProgress } from '@/data/problem-lists/utils';
 import type { ListProblem, ProblemList, ProblemListSection as Section } from '@/data/problem-lists/types';
 import { useProblemListProgress } from '@/hooks/use-problem-list-progress';
 import { useRecords } from '@/hooks/use-records';
@@ -38,9 +38,9 @@ export function ProblemListChecklist({ list }: { list: ProblemList }) {
     initialCompleted: list.initialCompleted,
     problemIds: problems.map((problem) => problem.id),
   }, getRecordedCompletionIds(records));
-  const done = problems.filter((problem) => progress.completed.has(problem.id)).length;
+  const target = getStudyTargetProgress(problems, progress.completed);
   const reviewCount = problems.filter((problem) => progress.review.has(problem.id)).length;
-  const next = problems.find((problem) => !progress.completed.has(problem.id));
+  const next = target.next;
   const nextId = next?.id;
   const nextPath = useMemo(
     () => nextId ? getProblemSectionPath(list.sections, nextId) : [],
@@ -125,14 +125,14 @@ export function ProblemListChecklist({ list }: { list: ProblemList }) {
       <div className="grid border-b border-white/15 py-7 gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-wrap gap-x-10 gap-y-4">
-            <div><p className="font-mono text-[11px] uppercase text-zinc-500">Completed</p><p className="mt-1 font-display text-4xl leading-none text-paper">{done} <span className="font-mono text-sm font-normal text-zinc-500">/ {problems.length}</span></p></div>
-            <div><p className="font-mono text-[11px] uppercase text-zinc-500">待完成</p><p className="mt-1 font-display text-4xl leading-none text-paper">{problems.length - done}</p></div>
+            <div><p className="font-mono text-[11px] uppercase text-zinc-500">1800 以下已完成</p><p className="mt-1 font-display text-4xl leading-none text-paper">{target.completed} <span className="font-mono text-sm font-normal text-zinc-500">/ {target.total}</span></p></div>
+            <div><p className="font-mono text-[11px] uppercase text-zinc-500">1800 以下待完成</p><p className="mt-1 font-display text-4xl leading-none text-paper">{target.total - target.completed}</p></div>
             <div><p className="font-mono text-[11px] uppercase text-zinc-500">需要複習</p><p className="mt-1 font-display text-4xl leading-none text-paper">{reviewCount}</p></div>
           </div>
         </div>
-        <span className="font-display text-6xl leading-none text-brand">{problems.length ? Math.round(done / problems.length * 100) : 0}%</span>
+        <span className="font-display text-6xl leading-none text-brand">{target.total ? Math.round(target.completed / target.total * 100) : 0}%</span>
         <div className="lg:col-span-2">
-          <ProgressMeter completed={done} total={problems.length} />
+          <ProgressMeter completed={target.completed} total={target.total} />
           {progress.updatedAt && <p className="mt-2 text-right font-mono text-[11px] uppercase text-zinc-500">最後更新 {new Date(progress.updatedAt).toLocaleDateString('zh-TW')}</p>}
         </div>
       </div>
@@ -149,7 +149,7 @@ export function ProblemListChecklist({ list }: { list: ProblemList }) {
               繼續刷題 <ArrowDown className="size-4" />
             </button>
           </div>
-        ) : <p className="mt-2 text-sm text-zinc-400">這份題單已全部完成。</p>}
+        ) : <p className="mt-2 text-sm text-zinc-400">{target.total ? '1800 以下題目已完成。' : '尚無標示 1800 以下的題目。'}</p>}
       </div>
 
       <div className="mt-10 border border-white/15 bg-surface">

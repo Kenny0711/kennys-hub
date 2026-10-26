@@ -11,6 +11,20 @@ export function getListProblems(list: ProblemList): ListProblem[] {
   return uniqueProblems(list.sections.flatMap(getSectionProblems));
 }
 
+export function getStudyTargetProgress<T extends Pick<ListProblem, 'id' | 'difficultyScore'>>(
+  problems: readonly T[],
+  completed: ReadonlySet<string>
+) {
+  const targetProblems = problems.filter((problem) =>
+    typeof problem.difficultyScore === 'number' && problem.difficultyScore <= 1800
+  );
+  return {
+    completed: targetProblems.filter((problem) => completed.has(problem.id)).length,
+    total: targetProblems.length,
+    next: targetProblems.find((problem) => !completed.has(problem.id)),
+  };
+}
+
 function uniqueProblems(problems: ListProblem[]): ListProblem[] {
   const seen = new Set<string>();
   return problems.filter((problem) => {

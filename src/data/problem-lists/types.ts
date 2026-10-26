@@ -29,5 +29,5 @@ export type ProblemListSummary = Pick<
   ProblemList,
   'id' | 'title' | 'author' | 'sourceUrl' | 'description' | 'initialCompleted'
 > & {
-  problems: Pick<ListProblem, 'id' | 'title'>[];
+  problems: Pick<ListProblem, 'id' | 'title' | 'difficultyScore'>[];
 };

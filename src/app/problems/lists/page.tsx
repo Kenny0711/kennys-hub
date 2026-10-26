@@ -35,7 +35,7 @@ export default function ProblemListsPage() {
           sourceUrl: list.sourceUrl,
           description: list.description,
           initialCompleted: list.initialCompleted,
-          problems: getListProblems(list).map(({ id, title }) => ({ id, title })),
+          problems: getListProblems(list).map(({ id, title, difficultyScore }) => ({ id, title, difficultyScore })),
         }))} />
       </div>
     </div>
